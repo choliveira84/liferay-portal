@@ -42,6 +42,7 @@ import com.liferay.dynamic.data.mapping.model.DDMFormRule;
 import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.dynamic.data.mapping.model.Value;
 import com.liferay.dynamic.data.mapping.storage.DDMFormFieldValue;
+import com.liferay.dynamic.data.mapping.storage.constants.FieldConstants;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -56,6 +57,7 @@ import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -145,6 +147,8 @@ public class DDMFormEvaluatorHelper {
 		);
 
 		verifyFieldsMarkedAsRequired();
+
+		_verifyIntegerRange();
 
 		validateFields();
 
@@ -673,10 +677,75 @@ public class DDMFormEvaluatorHelper {
 		return ddmFormFieldContextKeySet.stream();
 	}
 
+	private long _getLong(String stringValue) {
+		return GetterUtil.getLong(
+			stringValue, Integer.MAX_VALUE + Long.valueOf(1));
+	}
+
+	private String _getValue(
+		DDMFormEvaluatorFieldContextKey ddmFormFieldContextKey) {
+
+		DDMFormFieldValue ddmFormFieldValue =
+			_ddmFormEvaluatorFormValuesHelper.getDDMFormFieldValue(
+				ddmFormFieldContextKey);
+
+		Value value = ddmFormFieldValue.getValue();
+
+		return value.getString(value.getDefaultLocale());
+	}
+
+	private boolean _isGreaterThanMaxValue(Long value) {
+		if (value > Integer.MAX_VALUE) {
+			return true;
+		}
+
+		return false;
+	}
+
+	private boolean _isInteger(
+		DDMFormEvaluatorFieldContextKey ddmFormFieldContextKey) {
+
+		DDMFormField ddmFormField = _ddmFormFieldsMap.get(
+			ddmFormFieldContextKey.getName());
+
+		boolean numeric = _isNumericField(ddmFormField);
+
+		if (numeric &&
+			StringUtil.equalsIgnoreCase(
+				ddmFormField.getDataType(), FieldConstants.INTEGER)) {
+
+			return true;
+		}
+
+		return false;
+	}
+
+	private boolean _isNegative(Long value) {
+		if (value < 0) {
+			return true;
+		}
+
+		return false;
+	}
+
 	private boolean _isNumericField(DDMFormField ddmFormField) {
 		String type = ddmFormField.getType();
 
 		return type.equals("numeric");
+	}
+
+	private boolean _isValidInteger(
+		DDMFormEvaluatorFieldContextKey ddmFormFieldContextKey) {
+
+		String stringValue = _getValue(ddmFormFieldContextKey);
+
+		Long value = _getLong(stringValue);
+
+		if (_isNegative(value) || _isGreaterThanMaxValue(value)) {
+			return true;
+		}
+
+		return false;
 	}
 
 	private void _localizeDDMFormFieldValue(
@@ -750,6 +819,66 @@ public class DDMFormEvaluatorHelper {
 					ddmFormFieldProperties.put("value", StringPool.BLANK);
 				}
 			});
+	}
+
+	private void _setRangeErrorMessage(
+		DDMFormEvaluatorFieldContextKey ddmFormFieldContextKey) {
+
+		StringBuilder errorMessage = new StringBuilder();
+
+		String stringValue = _getValue(ddmFormFieldContextKey);
+
+		Long longValue = _getLong(stringValue);
+
+		boolean greaterThanMaxValue = _isGreaterThanMaxValue(longValue);
+		boolean negative = _isNegative(longValue);
+
+		if (greaterThanMaxValue && !negative) {
+			List<String> rangeList = Arrays.asList(
+				String.valueOf(0), String.valueOf(Integer.MAX_VALUE));
+
+			errorMessage.append(
+				LanguageUtil.format(
+					_resourceBundle,
+					"please-enter-a-valid-integer-value-between-x-and-x",
+					rangeList.toArray()));
+		}
+		else if (negative) {
+			errorMessage.append(
+				LanguageUtil.get(_resourceBundle, "please-enter-only-digits"));
+		}
+
+		UpdateFieldPropertyRequest.Builder builder =
+			UpdateFieldPropertyRequest.Builder.newBuilder(
+				ddmFormFieldContextKey.getName(), "errorMessage",
+				errorMessage.toString());
+
+		builder.withInstanceId(
+			ddmFormFieldContextKey.getInstanceId()
+		).withParameter(
+			"valid", false
+		);
+
+		ddmFormEvaluatorExpressionObserver.updateFieldProperty(builder.build());
+	}
+
+	private void _verifyIntegerRange() {
+		Set<Map.Entry<String, DDMFormField>> entrySet =
+			_ddmFormFieldsMap.entrySet();
+
+		Stream<Map.Entry<String, DDMFormField>> stream = entrySet.stream();
+
+		stream.flatMap(
+			entry -> _getDDMFormEvaluatorFieldContextKey(entry.getKey())
+		).filter(
+			entry -> !isFieldEmpty(entry)
+		).filter(
+			this::_isInteger
+		).filter(
+			this::_isValidInteger
+		).forEach(
+			this::_setRangeErrorMessage
+		);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
