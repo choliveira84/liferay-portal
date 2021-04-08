@@ -75,13 +75,17 @@ export default function ({defaultLanguageId, namespace}) {
 
 			const name = getInputLocalizedValues('name');
 
-			if (!nameInput.value || !name[defaultLanguageId]) {
+			const selectedLanguageId = document.getElementById(
+				`${namespace}languageId`
+			).value;
+
+			if (!nameInput.value) {
 				Liferay.Util.openToast({
 					message: Liferay.Util.sub(
 						Liferay.Language.get(
 							'please-enter-a-valid-title-for-the-default-language-x'
 						),
-						defaultLanguageId.replace('_', '-')
+						selectedLanguageId.replace('_', '-')
 					),
 					title: Liferay.Language.get('error'),
 					type: 'danger',
