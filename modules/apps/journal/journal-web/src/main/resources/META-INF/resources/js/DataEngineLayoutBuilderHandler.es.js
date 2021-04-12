@@ -75,7 +75,7 @@ export default function ({defaultLanguageId, namespace}) {
 
 			const name = getInputLocalizedValues('name');
 
-			if (!nameInput.value || !name[defaultLanguageId]) {
+			if (!nameInput.value && !name[defaultLanguageId]) {
 				Liferay.Util.openToast({
 					message: Liferay.Util.sub(
 						Liferay.Language.get(
