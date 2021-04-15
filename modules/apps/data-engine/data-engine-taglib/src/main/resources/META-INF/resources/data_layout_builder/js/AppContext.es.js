@@ -434,10 +434,11 @@ const createReducer = (dataLayoutBuilder) => {
 						sidebarOpen,
 						sidebarPanelId,
 					};
-				} else {
+				}
+				else {
 					return {
-						...state
-					}
+						...state,
+					};
 				}
 			}
 			case UPDATE_APP_PROPS: {
