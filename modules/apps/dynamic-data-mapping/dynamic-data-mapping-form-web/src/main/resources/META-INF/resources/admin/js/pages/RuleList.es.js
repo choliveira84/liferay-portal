@@ -140,9 +140,15 @@ const ActionAutoFill = ({
 	fields,
 	outputs,
 }) => {
-	const dataProviderName = dataProvider?.find(
+	let dataProviderName = dataProvider?.find(
 		({uuid}) => uuid === ddmDataProviderInstanceUUID
 	)?.label;
+
+	if(!dataProviderName){
+		dataProviderName = fields?.find(
+			({fieldName}) => fieldName === ddmDataProviderInstanceUUID
+		)?.label;
+	}
 
 	const labels = Object.values(outputs).map((output, index, array) => {
 		const field = fields.find(({value}) => value === output);
