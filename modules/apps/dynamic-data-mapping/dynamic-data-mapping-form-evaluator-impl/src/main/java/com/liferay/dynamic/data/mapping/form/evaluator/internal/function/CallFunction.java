@@ -30,6 +30,8 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactory;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -72,6 +74,46 @@ public class CallFunction
 			return false;
 		}
 
+		String ddmFormFieldValue = getDDMFormFieldValue(
+			ddmDataProviderInstanceUUID);
+
+		if (Validator.isNotNull(ddmFormFieldValue)) {
+			try {
+				JSONObject addressJSONObject = JSONFactoryUtil.createJSONObject(
+					ddmFormFieldValue);
+
+				Map<String, String> resultMap = extractResults(
+					resultMapExpression);
+
+				for (Map.Entry<String, String> entry : resultMap.entrySet()) {
+					String value = "";
+
+					if (StringUtil.equals(entry.getValue(), "City")) {
+						value = (String)addressJSONObject.get(
+							"administrative_area_level_2");
+					}
+					else if (StringUtil.equals(entry.getValue(), "State")) {
+						value = (String)addressJSONObject.get(
+							"administrative_area_level_1");
+					}
+					else if (StringUtil.equals(
+								entry.getValue(), "PostalCode")) {
+
+						value = (String)addressJSONObject.get("postal_code");
+					}
+					else if (StringUtil.equals(entry.getValue(), "Country")) {
+						value = (String)addressJSONObject.get("country");
+					}
+
+					String ddmFormFieldName = entry.getKey();
+
+					setDDMFormFieldValue(ddmFormFieldName, value);
+				}
+			}
+			catch (JSONException jsonException) {
+			}
+		}
+
 		try {
 			DDMDataProviderRequest.Builder builder =
 				DDMDataProviderRequest.Builder.newBuilder();
@@ -90,8 +132,13 @@ public class CallFunction
 					continue;
 				}
 
-				builder = builder.withParameter(
-					entry.getKey(), entry.getValue());
+				String value = entry.getValue();
+
+				if ((value != null) && value.contains("#")) {
+					value = value.split("#")[1];
+				}
+
+				builder = builder.withParameter(entry.getKey(), value);
 			}
 
 			DDMDataProviderRequest ddmDataProviderRequest = builder.build();
