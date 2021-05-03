@@ -83,7 +83,7 @@ const ActionCalculate = ({children}) => (
 );
 
 const AUTOFILL_PARAMETER_TYPE = {
-	list: ['checkbox_multiple', 'radio', 'select'],
+	list: ['checkbox_multiple', 'radio', 'select', 'text'],
 	number: ['numeric'],
 	text: ['checkbox_multiple', 'date', 'numeric', 'radio', 'select', 'text'],
 };
@@ -178,16 +178,56 @@ const ActionContentAutoFill = ({
 	outputs,
 	target,
 }) => {
-	const {resource} = useResource({
-		fetch,
-		link: location.origin + dataProviderInstanceParameterSettingsURL,
-		variables: {
-			ddmDataProviderInstanceId: target,
-		},
-	});
 
-	const resourceInputs = resource?.inputs;
-	const resourceOutputs = resource?.outputs;
+	let resourceInputs = [];
+	let resourceOutputs = [];
+
+	const selectecField = fields.find(
+		({fieldName}) => fieldName === target
+	)
+
+	if(selectecField){
+		resourceOutputs.push(
+			{
+			id: 'City',
+			label: 'City',
+			name: 'City',
+			required: false,
+			type: 'text'
+		},
+			{
+				id: 'State',
+				label: 'State',
+				name: 'State',
+				required: false,
+				type: 'text'
+			},
+			{
+				id: 'PostalCode',
+				label: 'Postal Code',
+				name: 'PostalCode',
+				required: false,
+				type: 'text'
+			},
+			{
+				id: 'Country',
+				label: 'Country',
+				name: 'Country',
+				required: false,
+				type: 'text'
+			})
+	}else{
+		const {resource} = useResource({
+			fetch,
+			link: location.origin + dataProviderInstanceParameterSettingsURL,
+			variables: {
+				ddmDataProviderInstanceId: target,
+			},
+		});
+
+		resourceInputs = resource?.inputs;
+		resourceOutputs = resource?.outputs;
+	}
 
 	const hasRequiredInputs =
 		resourceInputs?.some(({required}) => required) ?? false;
@@ -276,6 +316,9 @@ function Target({
 	target,
 	...otherProps
 }) {
+
+	dataProvider = dataProvider.concat(fields);
+
 	const options = useMemo(() => {
 		switch (action) {
 			case 'auto-fill':
@@ -313,10 +356,16 @@ function Target({
 
 						switch (action) {
 							case 'auto-fill':
-								onChange({
-									ddmDataProviderInstanceUUID: dataProvider.find(
-										({id}) => id === value
-									).uuid,
+
+								const selectedDataProvider = dataProvider.find(
+									({id}) => id === value
+								)
+
+								selectedDataProvider ? onChange({
+									ddmDataProviderInstanceUUID: selectedDataProvider.uuid,
+									value,
+								}) : onChange({
+									ddmDataProviderInstanceUUID: value,
 									value,
 								});
 								break;

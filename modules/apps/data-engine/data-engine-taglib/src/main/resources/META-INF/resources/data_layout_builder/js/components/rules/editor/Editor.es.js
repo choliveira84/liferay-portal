@@ -383,6 +383,10 @@ const transformActions = ({target, ...otherProps}, dataProvider) => {
 		)?.id;
 	}
 
+	if(!target){
+		target = otherProps.ddmDataProviderInstanceUUID;
+	}
+
 	return {
 		target,
 		...otherProps,

@@ -25,11 +25,15 @@ import com.liferay.dynamic.data.mapping.expression.DDMExpressionObserverAware;
 import com.liferay.dynamic.data.mapping.expression.GetFieldPropertyRequest;
 import com.liferay.dynamic.data.mapping.expression.GetFieldPropertyResponse;
 import com.liferay.dynamic.data.mapping.expression.UpdateFieldPropertyRequest;
+import com.liferay.dynamic.data.mapping.model.LocalizedValue;
+import com.liferay.dynamic.data.mapping.util.LocalizedValueUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactory;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -72,6 +76,50 @@ public class CallFunction
 			return false;
 		}
 
+		String ddmFormFieldValue =
+			getDDMFormFieldLocalizedValue(ddmDataProviderInstanceUUID);
+
+		if(!Validator.isNull(ddmFormFieldValue)){
+			try {
+				LocalizedValue  localizedValue = LocalizedValueUtil.toLocalizedValue(
+					JSONFactoryUtil.createJSONObject(ddmFormFieldValue));
+
+				String address =
+					localizedValue.getString(LocaleUtil.fromLanguageId("en_US"));
+
+				JSONObject addressJSON =
+					JSONFactoryUtil.createJSONObject(address);
+
+				Map<String, String> resultMap = extractResults(resultMapExpression);
+
+				for (Map.Entry<String, String> entry : resultMap.entrySet()) {
+					String ddmFormFieldName = entry.getKey();
+					String value = "";
+
+					switch (entry.getValue()){
+						case "City":
+							value = (String) addressJSON.get("administrative_area_level_2");
+							break;
+						case "State":
+							value = (String) addressJSON.get("administrative_area_level_1");
+							break;
+						case "PostalCode":
+							value = (String) addressJSON.get("postal_code");
+							break;
+						case "Country":
+							value = (String) addressJSON.get("country");
+							break;
+					}
+
+					setDDMFormFieldValue(ddmFormFieldName, value);
+
+				}
+			}
+			catch (JSONException ignored) {
+
+			}
+		}
+
 		try {
 			DDMDataProviderRequest.Builder builder =
 				DDMDataProviderRequest.Builder.newBuilder();
@@ -90,8 +138,14 @@ public class CallFunction
 					continue;
 				}
 
+				String value = entry.getValue();
+
+				if (value != null && value.contains("#")) {
+					value = value.split("#")[1];
+				}
+
 				builder = builder.withParameter(
-					entry.getKey(), entry.getValue());
+					entry.getKey(), value);
 			}
 
 			DDMDataProviderRequest ddmDataProviderRequest = builder.build();
@@ -196,6 +250,45 @@ public class CallFunction
 		GetFieldPropertyRequest.Builder builder =
 			GetFieldPropertyRequest.Builder.newBuilder(
 				ddmFormFieldName, "value");
+
+		GetFieldPropertyResponse getFieldPropertyResponse =
+			_ddmExpressionFieldAccessor.getFieldProperty(builder.build());
+
+		Object value = getFieldPropertyResponse.getValue();
+
+		if (Validator.isNull(value)) {
+			return StringPool.BLANK;
+		}
+
+		Class<?> clazz = value.getClass();
+
+		if (clazz.isArray()) {
+			Object[] valueArray = (Object[])value;
+
+			if (ArrayUtil.isNotEmpty(valueArray)) {
+				value = ((Object[])value)[0];
+			}
+		}
+
+		try {
+			JSONArray jsonArray = jsonFactory.createJSONArray(
+				String.valueOf(value));
+
+			return (String)jsonArray.get(0);
+		}
+		catch (JSONException jsonException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(jsonException, jsonException);
+			}
+
+			return String.valueOf(value);
+		}
+	}
+
+	protected String getDDMFormFieldLocalizedValue(String ddmFormFieldName) {
+		GetFieldPropertyRequest.Builder builder =
+			GetFieldPropertyRequest.Builder.newBuilder(
+				ddmFormFieldName, "localizedValue");
 
 		GetFieldPropertyResponse getFieldPropertyResponse =
 			_ddmExpressionFieldAccessor.getFieldProperty(builder.build());
