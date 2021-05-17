@@ -51,6 +51,7 @@ import com.liferay.dynamic.data.mapping.exception.RequiredStructureException;
 import com.liferay.dynamic.data.mapping.form.builder.rule.DDMFormRuleDeserializer;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldType;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormRenderingContext;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormTemplateContextFactory;
 import com.liferay.dynamic.data.mapping.form.values.factory.DDMFormValuesFactory;
@@ -287,10 +288,8 @@ public class DataDefinitionResourceImpl
 
 		JSONArray jsonArray = _jsonFactory.createJSONArray();
 
-		Set<String> ddmFormFieldTypeNames =
-			_ddmFormFieldTypeServicesTracker.getDDMFormFieldTypeNames();
-
-		Stream<String> stream = ddmFormFieldTypeNames.stream();
+		Stream<String> stream = _removeDDMFormFieldTypeNamesOutOfScope(
+			_ddmFormFieldTypeServicesTracker.getDDMFormFieldTypeNames());
 
 		stream.map(
 			ddmFormFieldTypeName -> _getFieldTypeMetadataJSONObject(
@@ -1076,6 +1075,20 @@ public class DataDefinitionResourceImpl
 
 		return (ThemeDisplay)contextHttpServletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
+	}
+
+	private Stream<String> _removeDDMFormFieldTypeNamesOutOfScope(
+		Set<String> ddmFormFieldTypeNames) {
+
+		List<String> availableDDMFormFieldTypeNames = new ArrayList<>();
+
+		ListUtil.filter(
+			new ArrayList<>(ddmFormFieldTypeNames),
+			availableDDMFormFieldTypeNames,
+			ddmFormFieldTypeName -> !ddmFormFieldTypeName.equals(
+				DDMFormFieldTypeConstants.PARAGRAPH));
+
+		return availableDDMFormFieldTypeNames.stream();
 	}
 
 	private void _removeFieldsFromDataLayout(
