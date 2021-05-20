@@ -46,6 +46,13 @@ public class WikiPageLocalServiceUtil {
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.wiki.service.impl.WikiPageLocalServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
+
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
+	 #addPage(String, long, long, String, double, String, String, boolean,
+	 String, boolean, String, String, ServiceContext)}
+	 */
+	@Deprecated
 	public static WikiPage addPage(
 			long userId, long nodeId, String title, double version,
 			String content, String summary, boolean minorEdit, String format,
@@ -66,6 +73,20 @@ public class WikiPageLocalServiceUtil {
 
 		return getService().addPage(
 			userId, nodeId, title, content, summary, minorEdit, serviceContext);
+	}
+
+	public static WikiPage addPage(
+			String externalReferenceCode, long userId, long nodeId,
+			String title, double version, String content, String summary,
+			boolean minorEdit, String format, boolean head, String parentTitle,
+			String redirectTitle,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
+
+		return getService().addPage(
+			externalReferenceCode, userId, nodeId, title, version, content,
+			summary, minorEdit, format, head, parentTitle, redirectTitle,
+			serviceContext);
 	}
 
 	public static com.liferay.portal.kernel.repository.model.FileEntry
@@ -392,6 +413,31 @@ public class WikiPageLocalServiceUtil {
 
 	public static WikiPage fetchWikiPage(long pageId) {
 		return getService().fetchWikiPage(pageId);
+	}
+
+	/**
+	 * Returns the wiki page with the matching external reference code and group.
+	 *
+	 * @param groupId the primary key of the group
+	 * @param externalReferenceCode the wiki page's external reference code
+	 * @return the matching wiki page, or <code>null</code> if a matching wiki page could not be found
+	 */
+	public static WikiPage fetchWikiPageByExternalReferenceCode(
+		long groupId, String externalReferenceCode) {
+
+		return getService().fetchWikiPageByExternalReferenceCode(
+			groupId, externalReferenceCode);
+	}
+
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link #fetchWikiPageByExternalReferenceCode(long, String)}
+	 */
+	@Deprecated
+	public static WikiPage fetchWikiPageByReferenceCode(
+		long groupId, String externalReferenceCode) {
+
+		return getService().fetchWikiPageByReferenceCode(
+			groupId, externalReferenceCode);
 	}
 
 	/**
@@ -792,6 +838,22 @@ public class WikiPageLocalServiceUtil {
 	 */
 	public static WikiPage getWikiPage(long pageId) throws PortalException {
 		return getService().getWikiPage(pageId);
+	}
+
+	/**
+	 * Returns the wiki page with the matching external reference code and group.
+	 *
+	 * @param groupId the primary key of the group
+	 * @param externalReferenceCode the wiki page's external reference code
+	 * @return the matching wiki page
+	 * @throws PortalException if a matching wiki page could not be found
+	 */
+	public static WikiPage getWikiPageByExternalReferenceCode(
+			long groupId, String externalReferenceCode)
+		throws PortalException {
+
+		return getService().getWikiPageByExternalReferenceCode(
+			groupId, externalReferenceCode);
 	}
 
 	/**

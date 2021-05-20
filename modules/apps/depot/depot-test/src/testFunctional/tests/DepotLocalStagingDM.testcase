@@ -532,9 +532,13 @@ definition {
 
 		Staging.publishToLive();
 
-		Site.openSiteConfigurationAdmin(siteURLKey = "site-name-staging");
+		Site.openSiteSettingsAdmin(siteURLKey = "site-name-staging");
 
-		Panel.expandPanel(panel = "Open Graph");
+		Click(
+			key_url = "site-configuration-google-pagespeed",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
+		Navigator.gotoNavTab(navTab = "Open Graph");
 
 		OpenGraph.configureOpenGraph(
 			customImage = "true",
@@ -555,9 +559,13 @@ definition {
 
 		Staging.publishToLive();
 
-		Site.openSiteConfigurationAdmin(siteURLKey = "site-name");
+		Site.openSiteSettingsAdmin(siteURLKey = "site-name");
 
-		Panel.expandPanel(panel = "Open Graph");
+		Click(
+			key_url = "site-configuration-google-pagespeed",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
+		Navigator.gotoNavTab(navTab = "Open Graph");
 
 		AssertVisible(
 			key_imageName = "Document_2.jpg",
@@ -579,9 +587,13 @@ definition {
 
 		Staging.publishToLive();
 
-		Site.openSiteConfigurationAdmin(siteURLKey = "site-name-staging");
+		Site.openSiteSettingsAdmin(siteURLKey = "site-name-staging");
 
-		Panel.expandPanel(panel = "Open Graph");
+		Click(
+			key_url = "site-configuration-google-pagespeed",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
+		Navigator.gotoNavTab(navTab = "Open Graph");
 
 		AssertElementNotPresent(
 			key_imageName = "Document_2.jpg",
@@ -595,9 +607,13 @@ definition {
 
 		Staging.publishToLive();
 
-		Site.openSiteConfigurationAdmin(siteURLKey = "site-name");
+		Site.openSiteSettingsAdmin(siteURLKey = "site-name");
 
-		Panel.expandPanel(panel = "Open Graph");
+		Click(
+			key_url = "site-configuration-google-pagespeed",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
+		Navigator.gotoNavTab(navTab = "Open Graph");
 
 		AssertElementNotPresent(
 			key_imageName = "Document_2.jpg",
@@ -1365,19 +1381,13 @@ definition {
 			locator1 = "AP#ASSET_ABSTRACT_TITLE");
 	}
 
-	@description = "This ensures that an edited internal video in depot can be republished on a connected staging site with enabling Xuggler."
-	@ignore = "true"
+	@description = "This ensures that an edited internal video in depot can be republished on a connected staging site with enabling FFmpeg."
 	@priority = "4"
 	@refactorneeded
 	test EditInternalVideoInDepot {
 		property test.name.skip.portal.instance = "DepotLocalStagingDM#EditInternalVideoInDepot";
 
-		SystemSettings.openSystemSettingsAdmin();
-
-		SystemSettings.gotoConfiguration(
-			configurationCategory = "Documents and Media",
-			configurationName = "FFMPEG Video Converter",
-			configurationScope = "System Scope");
+		DMNavigator.openToConfigInSystemSettings(portlet = "FFMPEG Video Converter");
 
 		FormFields.enableCheckbox(fieldName = "enabled");
 
@@ -1503,9 +1513,13 @@ definition {
 
 		Staging.publishToLive();
 
-		Site.openSiteConfigurationAdmin(siteURLKey = "site-name-staging");
+		Site.openSiteSettingsAdmin(siteURLKey = "site-name-staging");
 
-		Panel.expandPanel(panel = "Open Graph");
+		Click(
+			key_url = "site-configuration-google-pagespeed",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
+		Navigator.gotoNavTab(navTab = "Open Graph");
 
 		OpenGraph.configureOpenGraph(
 			customImage = "true",
@@ -1526,17 +1540,25 @@ definition {
 
 		Staging.publishToLive();
 
-		Site.openSiteConfigurationAdmin(siteURLKey = "site-name");
+		Site.openSiteSettingsAdmin(siteURLKey = "site-name");
 
-		Panel.expandPanel(panel = "Open Graph");
+		Click(
+			key_url = "site-configuration-google-pagespeed",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
+		Navigator.gotoNavTab(navTab = "Open Graph");
 
 		AssertVisible(
 			key_imageName = "Document_1.jpg",
 			locator1 = "SitePagesEditPage#PREVIEW_IMAGE");
 
-		Site.openSiteConfigurationAdmin(siteURLKey = "site-name-staging");
+		Site.openSiteSettingsAdmin(siteURLKey = "site-name-staging");
 
-		Panel.expandPanel(panel = "Open Graph");
+		Click(
+			key_url = "site-configuration-google-pagespeed",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
+		Navigator.gotoNavTab(navTab = "Open Graph");
 
 		OpenGraph.configureOpenGraph(
 			customImage = "true",
@@ -1558,9 +1580,13 @@ definition {
 
 		Staging.publishToLive();
 
-		Site.openSiteConfigurationAdmin(siteURLKey = "site-name");
+		Site.openSiteSettingsAdmin(siteURLKey = "site-name");
 
-		Panel.expandPanel(panel = "Open Graph");
+		Click(
+			key_url = "site-configuration-google-pagespeed",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
+		Navigator.gotoNavTab(navTab = "Open Graph");
 
 		AssertVisible(
 			key_imageName = "Document_2.jpg",
@@ -1698,6 +1724,12 @@ definition {
 			siteName = "Site Name");
 
 		Portlet.addPG(portletName = "Documents and Media");
+
+		DMDocument.enableActionsMenuOnPortlet();
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Test Page",
+			siteName = "Site Name");
 
 		DMDocument.addDocumentTypePG(
 			dmDocumentDescription = "DM Document Description",

@@ -113,13 +113,14 @@ public class UpgradePortletId extends BasePortletIdUpgradeProcess {
 			"select plid, typeSettings from Layout where " +
 				getTypeSettingsCriteria(oldRootPortletId);
 
-		try (PreparedStatement ps = connection.prepareStatement(sql);
-			ResultSet rs = ps.executeQuery()) {
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				sql);
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			while (rs.next()) {
-				long plid = rs.getLong("plid");
+			while (resultSet.next()) {
+				long plid = resultSet.getLong("plid");
 
-				String typeSettings = rs.getString("typeSettings");
+				String typeSettings = resultSet.getString("typeSettings");
 
 				String newTypeSettings = getNewTypeSettings(
 					typeSettings, oldRootPortletId);

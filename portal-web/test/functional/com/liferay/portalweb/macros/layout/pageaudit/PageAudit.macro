@@ -1,0 +1,83 @@
+definition {
+
+	macro backToPageBackButton {
+		Click(locator1 = "Icon#BACK");
+	}
+
+	macro backToPageCancelButton {
+		AssertClick(
+			locator1 = "Button#CANCEL",
+			value1 = "Cancel");
+	}
+
+	macro connectToGooglePageAudit {
+		ClickNoError(locator1 = "PageAudit#CONNECT_TO_GOOGLE_PAGESPEED_BUTTON");
+	}
+
+	macro disableGooglePageSpeed {
+		ApplicationsMenu.gotoPortlet(
+			category = "Configuration",
+			panel = "Control Panel",
+			portlet = "System Settings");
+
+		SystemSettings.gotoConfiguration(
+			configurationCategory = "Pages",
+			configurationName = "Google PageSpeed",
+			configurationScope = "Virtual Instance Scope");
+
+		if (IsChecked(locator1 = "Checkbox#ANY_CHECKBOX", checkboxName = "Enabled")) {
+			Click.javaScriptClick(
+				checkboxName = "Enabled",
+				locator1 = "Checkbox#ANY_CHECKBOX");
+
+			AssertNotChecked.assertNotCheckedNotVisible(
+				checkboxName = "Enabled",
+				locator1 = "Checkbox#ANY_CHECKBOX");
+		}
+
+		if (IsElementPresent(locator1 = "Button#SAVE")) {
+			Click(locator1 = "Button#SAVE");
+		}
+
+		if (IsElementPresent(locator1 = "Button#UPDATE")) {
+			Click(locator1 = "Button#UPDATE");
+		}
+	}
+
+	macro enableGooglePageSpeed {
+		ApplicationsMenu.gotoPortlet(
+			category = "Configuration",
+			panel = "Control Panel",
+			portlet = "System Settings");
+
+		SystemSettings.gotoConfiguration(
+			configurationCategory = "Pages",
+			configurationName = "Google PageSpeed",
+			configurationScope = "Virtual Instance Scope");
+
+		if (IsNotChecked.isNotCheckedNotVisible(locator1 = "Checkbox#ANY_CHECKBOX", checkboxName = "Enabled")) {
+			Click.javaScriptClick(
+				checkboxName = "Enabled",
+				locator1 = "Checkbox#ANY_CHECKBOX");
+
+			AssertChecked.assertCheckedNotVisible(
+				checkboxName = "Enabled",
+				locator1 = "Checkbox#ANY_CHECKBOX");
+		}
+
+		if (IsElementPresent(locator1 = "Button#SAVE")) {
+			Click(locator1 = "Button#SAVE");
+		}
+
+		if (IsElementPresent(locator1 = "Button#UPDATE")) {
+			Click(locator1 = "Button#UPDATE");
+		}
+	}
+
+	macro openPageAuditPanel {
+		while (IsElementNotPresent(locator1 = "PageAudit#CONNECT_TO_GOOGLE_PAGESPEED_BUTTON")) {
+			Click(locator1 = "PageAudit#PAGE_AUDIT_BUTTON");
+		}
+	}
+
+}

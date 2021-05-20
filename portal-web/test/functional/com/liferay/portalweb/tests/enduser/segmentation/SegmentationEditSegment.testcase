@@ -58,59 +58,13 @@ definition {
 
 		Segmentation.deleteProperties();
 
-		Segmentation.selectOrganization();
+		Segmentation.gotoSidebar(fieldType = "Organization");
 
 		Segmentation.addProperties(propertyOption = "Country");
 
 		Segmentation.addProperties(propertyOption = "Region");
 
 		Button.clickSave();
-	}
-
-	@description = "Validate if the user can edit a segment with Organization Tag"
-	@priority = "5"
-	test EditSegmentUserByOrganizationTag {
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
-
-		User.addCP(
-			userEmailAddress = "OrganizationTag@liferay.com",
-			userFirstName = "OrganizationTag",
-			userLastName = "OrganizationTag",
-			userScreenName = "OrganizationTag",
-			userTag = "organizationtagtest");
-
-		Navigator.openURL();
-
-		ProductMenu.gotoPortlet(
-			category = "People",
-			portlet = "Segments",
-			site = "Guest");
-
-		Segmentation.editSegment(entry = "EditSegment Test");
-
-		Segmentation.fillTitle(titleField = "EditSegmentUserByOrganizationTag Test");
-
-		Segmentation.deleteProperties();
-
-		Segmentation.selectOrganization();
-
-		Segmentation.addProperties(propertyOption = "Tag");
-
-		Segmentation.selectTag(tagOption = "organizationtagtest");
-
-		Button.clickSave();
-
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
-
-		User.deactivateCP(userFirstName = "OrganizationTag");
-
-		User.deleteCP();
 	}
 
 	@description = "Validate if the user can edit a segment with Properties Session URL"
@@ -125,7 +79,7 @@ definition {
 
 		Segmentation.deleteProperties();
 
-		Segmentation.selectSession();
+		Segmentation.gotoSidebar(fieldType = "Session");
 
 		Segmentation.addProperties(propertyOption = "URL");
 

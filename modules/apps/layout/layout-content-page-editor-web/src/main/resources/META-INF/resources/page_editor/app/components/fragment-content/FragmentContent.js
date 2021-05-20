@@ -18,24 +18,29 @@ import PropTypes from 'prop-types';
 import React, {useCallback, useEffect, useState} from 'react';
 
 import setFragmentEditables from '../../actions/setFragmentEditables';
-import selectCanConfigureWidgets from '../../selectors/selectCanConfigureWidgets';
-import selectLanguageId from '../../selectors/selectLanguageId';
-import selectSegmentsExperienceId from '../../selectors/selectSegmentsExperienceId';
-import {useDispatch, useSelector, useSelectorCallback} from '../../store/index';
-import resolveEditableConfig from '../../utils/editable-value/resolveEditableConfig';
-import resolveEditableValue from '../../utils/editable-value/resolveEditableValue';
-import {getFrontendTokenValue} from '../../utils/getFrontendTokenValue';
-import {getResponsiveConfig} from '../../utils/getResponsiveConfig';
-import useBackgroundImageValue from '../../utils/useBackgroundImageValue';
-import {useId} from '../../utils/useId';
 import {
 	useGetContent,
 	useGetFieldValue,
 	useToControlsId,
-} from '../CollectionItemContext';
-import {useGlobalContext} from '../GlobalContext';
+} from '../../contexts/CollectionItemContext';
+import {useIsProcessorEnabled} from '../../contexts/EditableProcessorContext';
+import {useGlobalContext} from '../../contexts/GlobalContext';
+import {
+	useDispatch,
+	useSelector,
+	useSelectorCallback,
+} from '../../contexts/StoreContext';
+import selectCanConfigureWidgets from '../../selectors/selectCanConfigureWidgets';
+import selectLanguageId from '../../selectors/selectLanguageId';
+import selectSegmentsExperienceId from '../../selectors/selectSegmentsExperienceId';
+import resolveEditableConfig from '../../utils/editable-value/resolveEditableConfig';
+import resolveEditableValue from '../../utils/editable-value/resolveEditableValue';
+import {getFrontendTokenValue} from '../../utils/getFrontendTokenValue';
+import {getResponsiveConfig} from '../../utils/getResponsiveConfig';
+import {isValidSpacingOption} from '../../utils/isValidSpacingOption';
+import useBackgroundImageValue from '../../utils/useBackgroundImageValue';
+import {useId} from '../../utils/useId';
 import UnsafeHTML from '../UnsafeHTML';
-import {useIsProcessorEnabled} from './EditableProcessorContext';
 import getAllEditables from './getAllEditables';
 
 const FragmentContent = ({
@@ -278,17 +283,27 @@ const FragmentContent = ({
 			<UnsafeHTML
 				className={classNames(
 					className,
-					`pb-${paddingBottom || 0}`,
-					`pl-${paddingLeft || 0}`,
-					`pr-${paddingRight || 0}`,
-					`pt-${paddingTop || 0}`,
 					'page-editor__fragment-content',
 					{
 						'page-editor__fragment-content--portlet-topper-hidden': !canConfigureWidgets,
-						[`mb-${marginBottom || 0}`]: !withinTopper,
-						[`ml-${marginLeft || 0}`]: !withinTopper,
-						[`mr-${marginRight || 0}`]: !withinTopper,
-						[`mt-${marginTop || 0}`]: !withinTopper,
+						[`mb-${marginBottom}`]:
+							isValidSpacingOption(marginBottom) && !withinTopper,
+						[`ml-${marginLeft}`]:
+							isValidSpacingOption(marginLeft) && !withinTopper,
+						[`mr-${marginRight}`]:
+							isValidSpacingOption(marginRight) && !withinTopper,
+						[`mt-${marginTop}`]:
+							isValidSpacingOption(marginTop) && !withinTopper,
+						[`pb-${paddingBottom}`]: isValidSpacingOption(
+							paddingBottom
+						),
+						[`pl-${paddingLeft}`]: isValidSpacingOption(
+							paddingLeft
+						),
+						[`pr-${paddingRight}`]: isValidSpacingOption(
+							paddingRight
+						),
+						[`pt-${paddingTop}`]: isValidSpacingOption(paddingTop),
 						[textAlign
 							? textAlign.startsWith('text-')
 								? textAlign

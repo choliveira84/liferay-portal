@@ -171,10 +171,12 @@ public abstract class BaseUpgradePortletId extends UpgradeProcess {
 		String sql =
 			"update Group_ set typeSettings = ? where groupId = " + groupId;
 
-		try (PreparedStatement ps = connection.prepareStatement(sql)) {
-			ps.setString(1, typeSettings);
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				sql)) {
 
-			ps.executeUpdate();
+			preparedStatement.setString(1, typeSettings);
+
+			preparedStatement.executeUpdate();
 		}
 		catch (SQLException sqlException) {
 			if (_log.isWarnEnabled()) {
@@ -194,29 +196,30 @@ public abstract class BaseUpgradePortletId extends UpgradeProcess {
 
 		String sql2 = "update Group_ set typeSettings = ? where groupId = ?";
 
-		try (PreparedStatement ps1 = connection.prepareStatement(sql1);
-			PreparedStatement ps2 =
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
+				sql1);
+			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection, sql2);
-			ResultSet rs = ps1.executeQuery()) {
+			ResultSet resultSet = preparedStatement1.executeQuery()) {
 
-			while (rs.next()) {
-				String typeSettings = rs.getString("typeSettings");
+			while (resultSet.next()) {
+				String typeSettings = resultSet.getString("typeSettings");
 
 				String newTypeSettings = getNewTypeSettings(
 					typeSettings, oldStagedPortletId,
 					_getStagedPortletId(newRootPortletId));
 
 				if (!Objects.equals(typeSettings, newTypeSettings)) {
-					ps2.setString(1, newTypeSettings);
+					preparedStatement2.setString(1, newTypeSettings);
 
-					ps2.setLong(2, rs.getLong("groupId"));
+					preparedStatement2.setLong(2, resultSet.getLong("groupId"));
 
-					ps2.addBatch();
+					preparedStatement2.addBatch();
 				}
 			}
 
-			ps2.executeBatch();
+			preparedStatement2.executeBatch();
 		}
 	}
 
@@ -378,12 +381,12 @@ public abstract class BaseUpgradePortletId extends UpgradeProcess {
 	protected void updateLayout(long plid, String typeSettings)
 		throws Exception {
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"update Layout set typeSettings = ? where plid = " + plid)) {
 
-			ps.setString(1, typeSettings);
+			preparedStatement.setString(1, typeSettings);
 
-			ps.executeUpdate();
+			preparedStatement.executeUpdate();
 		}
 		catch (SQLException sqlException) {
 			if (_log.isWarnEnabled()) {
@@ -396,12 +399,12 @@ public abstract class BaseUpgradePortletId extends UpgradeProcess {
 			long plid, String oldPortletId, String newPortletId)
 		throws Exception {
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select typeSettings from Layout where plid = " + plid);
-			ResultSet rs = ps.executeQuery()) {
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			while (rs.next()) {
-				String typeSettings = rs.getString("typeSettings");
+			while (resultSet.next()) {
+				String typeSettings = resultSet.getString("typeSettings");
 
 				String newTypeSettings = StringUtil.replace(
 					typeSettings, oldPortletId, newPortletId);
@@ -426,10 +429,12 @@ public abstract class BaseUpgradePortletId extends UpgradeProcess {
 			"update LayoutRevision set typeSettings = ? where " +
 				"layoutRevisionId = " + layoutRevisionId;
 
-		try (PreparedStatement ps = connection.prepareStatement(sql)) {
-			ps.setString(1, typeSettings);
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				sql)) {
 
-			ps.executeUpdate();
+			preparedStatement.setString(1, typeSettings);
+
+			preparedStatement.executeUpdate();
 		}
 		catch (SQLException sqlException) {
 			if (_log.isWarnEnabled()) {
@@ -450,29 +455,31 @@ public abstract class BaseUpgradePortletId extends UpgradeProcess {
 			"update LayoutRevision set typeSettings = ? where " +
 				"layoutRevisionId = ?";
 
-		try (PreparedStatement ps1 = connection.prepareStatement(sql1);
-			PreparedStatement ps2 =
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
+				sql1);
+			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection, sql2);
-			ResultSet rs = ps1.executeQuery()) {
+			ResultSet resultSet = preparedStatement1.executeQuery()) {
 
-			while (rs.next()) {
-				String typeSettings = rs.getString("typeSettings");
+			while (resultSet.next()) {
+				String typeSettings = resultSet.getString("typeSettings");
 
 				String newTypeSettings = getNewTypeSettings(
 					typeSettings, oldRootPortletId, newRootPortletId,
 					exactMatch);
 
 				if (!Objects.equals(typeSettings, newTypeSettings)) {
-					ps2.setString(1, newTypeSettings);
+					preparedStatement2.setString(1, newTypeSettings);
 
-					ps2.setLong(2, rs.getLong("layoutRevisionId"));
+					preparedStatement2.setLong(
+						2, resultSet.getLong("layoutRevisionId"));
 
-					ps2.addBatch();
+					preparedStatement2.addBatch();
 				}
 			}
 
-			ps2.executeBatch();
+			preparedStatement2.executeBatch();
 		}
 	}
 
@@ -486,29 +493,30 @@ public abstract class BaseUpgradePortletId extends UpgradeProcess {
 				getTypeSettingsCriteria(oldRootPortletId);
 		String sql2 = "update Layout set typeSettings = ? where plid = ?";
 
-		try (PreparedStatement ps1 = connection.prepareStatement(sql1);
-			PreparedStatement ps2 =
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
+				sql1);
+			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection, sql2);
-			ResultSet rs = ps1.executeQuery()) {
+			ResultSet resultSet = preparedStatement1.executeQuery()) {
 
-			while (rs.next()) {
-				String typeSettings = rs.getString("typeSettings");
+			while (resultSet.next()) {
+				String typeSettings = resultSet.getString("typeSettings");
 
 				String newTypeSettings = getNewTypeSettings(
 					typeSettings, oldRootPortletId, newRootPortletId,
 					exactMatch);
 
 				if (!Objects.equals(typeSettings, newTypeSettings)) {
-					ps2.setString(1, newTypeSettings);
+					preparedStatement2.setString(1, newTypeSettings);
 
-					ps2.setLong(2, rs.getLong("plid"));
+					preparedStatement2.setLong(2, resultSet.getLong("plid"));
 
-					ps2.addBatch();
+					preparedStatement2.addBatch();
 				}
 			}
 
-			ps2.executeBatch();
+			preparedStatement2.executeBatch();
 		}
 	}
 
@@ -564,13 +572,13 @@ public abstract class BaseUpgradePortletId extends UpgradeProcess {
 
 		List<String> actionIds = new ArrayList<>();
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select actionId from ResourceAction where name = '" + newName +
 					"'");
-			ResultSet rs = ps.executeQuery()) {
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			while (rs.next()) {
-				actionIds.add(rs.getString("actionId"));
+			while (resultSet.next()) {
+				actionIds.add(resultSet.getString("actionId"));
 			}
 		}
 

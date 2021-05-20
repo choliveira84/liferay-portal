@@ -119,11 +119,15 @@ definition {
 			key_tab = "Open Graph",
 			locator1 = "NavTab#TAB_LINK");
 
-		Site.openSiteConfigurationAdmin(siteURLKey = "test-site-name");
+		Site.openSiteSettingsAdmin(siteURLKey = "test-site-name");
+
+		Click(
+			key_url = "site-configuration-google-pagespeed",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
 
 		AssertElementNotPresent(
-			key_panel = "open graph",
-			locator1 = "Panel#PANEL_COLLAPSED");
+			key_panel = "Open Graph",
+			locator1 = "NavTab#TAB_LINK");
 
 		User.logoutPG();
 
@@ -138,9 +142,7 @@ definition {
 	test DisableConfigurationAtSiteLevel {
 		property test.name.skip.portal.instance = "OpenGraph#DisableConfigurationAtSiteLevel";
 
-		Site.openSiteConfigurationAdmin(siteURLKey = "test-site-name");
-
-		OpenGraph.disableOpenGraphAtSiteLevel();
+		OpenGraph.disableOpenGraphAtSiteLevel(siteURLKey = "test-site-name");
 
 		SitePages.openPagesAdmin(siteURLKey = "test-site-name");
 
@@ -432,9 +434,13 @@ definition {
 
 		var portalURL = PropsUtil.get("portal.url");
 
-		Site.openSiteConfigurationAdmin(siteURLKey = "test-site-name");
+		Site.openSiteSettingsAdmin(siteURLKey = "test-site-name");
 
-		Panel.expandPanel(panel = "Open Graph");
+		Click(
+			key_url = "site-configuration-google-pagespeed",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
+		Navigator.gotoNavTab(navTab = "Open Graph");
 
 		OpenGraph.configureOpenGraph(
 			altDescription = "This is image alternative description",

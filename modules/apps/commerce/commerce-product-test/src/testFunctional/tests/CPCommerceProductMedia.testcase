@@ -11,13 +11,6 @@ definition {
 		User.firstLoginPG();
 
 		CommerceConfiguration.commerceStoreFrontSetUp();
-
-		ApplicationsMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Control Panel",
-			portlet = "Search");
-
-		SearchAdministration.executeSearchActions(actionsDescription = "Reindex all search indexes.");
 	}
 
 	tearDown {
@@ -41,6 +34,9 @@ definition {
 	@priority = "3"
 	test AddAnAttachment {
 		property portal.acceptance = "false";
+		property test.name.skip.portal.instance = "CPCommerceProductMedia#AddAnAttachment";
+
+		// TODO Fix Commerce tests that are skipping portal instances - COMMERCE-6586
 
 		CommerceNavigator.gotoPortlet(
 			category = "Product Management",
@@ -71,6 +67,9 @@ definition {
 
 	test AddAnImage {
 		property portal.acceptance = "false";
+		property test.name.skip.portal.instance = "CPCommerceProductMedia#AddAnImage";
+
+		// TODO Fix Commerce tests that are skipping portal instances - COMMERCE-6586
 
 		CommerceNavigator.gotoPortlet(
 			category = "Product Management",
@@ -147,6 +146,9 @@ definition {
 	@priority = "3"
 	test EditAnAttachment {
 		property portal.acceptance = "false";
+		property test.name.skip.portal.instance = "CPCommerceProductMedia#EditAnAttachment";
+
+		// TODO Fix Commerce tests that are skipping portal instances - COMMERCE-6586
 
 		ApplicationsMenu.gotoPortlet(
 			category = "Configuration",

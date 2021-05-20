@@ -12,8 +12,8 @@
  * details.
  */
 
+import {PagesVisitor} from 'data-engine-js-components-web';
 import {FieldSupport} from 'dynamic-data-mapping-form-builder';
-import {PagesVisitor} from 'dynamic-data-mapping-form-renderer';
 
 import {getDataDefinitionField as getDataDefinitionFieldUtils} from './dataDefinition.es';
 import {
@@ -359,24 +359,15 @@ export function getDDMSettingsContextWithVisualProperties({
  */
 export function getFieldSetDDMForm({
 	allowInvalidAvailableLocalesForProperty,
-	availableLanguageIds,
 	editingLanguageId,
 	fieldSet,
 	fieldTypes,
 }) {
 	const {defaultDataLayout, defaultLanguageId} = fieldSet;
 
-	let newDataDefinition = {
-		availableLanguageIds,
-		...fieldSet,
-	};
-
-	if (!allowInvalidAvailableLocalesForProperty) {
-		newDataDefinition = normalizeDataDefinition(
-			newDataDefinition,
-			defaultLanguageId
-		);
-	}
+	const newDataDefinition = allowInvalidAvailableLocalesForProperty
+		? fieldSet
+		: normalizeDataDefinition(fieldSet, defaultLanguageId);
 
 	const fieldSetDataLayout = normalizeDataLayout(
 		defaultDataLayout,
@@ -387,7 +378,7 @@ export function getFieldSetDDMForm({
 		dataDefinition: newDataDefinition,
 		dataLayout: fieldSetDataLayout,
 		defaultLanguageId,
-		editingLanguageId,
+		editingLanguageId: editingLanguageId ?? defaultLanguageId,
 		fieldTypes,
 	});
 }

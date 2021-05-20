@@ -72,7 +72,7 @@ import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -86,7 +86,6 @@ import com.liferay.portletmvc4spring.test.mock.web.portlet.MockPortletRequest;
 import java.io.Serializable;
 
 import java.util.ArrayList;
-import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -129,12 +128,11 @@ public class AssetPublisherExportImportTest
 				"AssetPublisherWebConfiguration",
 			StringPool.QUESTION);
 
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put("dynamicExportEnabled", true);
-
 		ConfigurationTestUtil.saveConfiguration(
-			_assetPublisherWebConfiguration, properties);
+			_assetPublisherWebConfiguration,
+			HashMapDictionaryBuilder.<String, Object>put(
+				"dynamicExportEnabled", true
+			).build());
 	}
 
 	@AfterClass

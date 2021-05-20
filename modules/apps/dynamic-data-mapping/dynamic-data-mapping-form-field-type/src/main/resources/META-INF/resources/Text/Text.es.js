@@ -16,7 +16,7 @@ import ClayAutocomplete from '@clayui/autocomplete';
 import ClayDropDown from '@clayui/drop-down';
 import {ClayInput} from '@clayui/form';
 import {usePrevious} from '@liferay/frontend-js-react-web';
-import {normalizeFieldName} from 'dynamic-data-mapping-form-renderer';
+import {normalizeFieldName} from 'data-engine-js-components-web';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 
 import {FieldBase} from '../FieldBase/ReactFieldBase.es';
@@ -103,8 +103,13 @@ const Text = ({
 				}
 			}}
 			onChange={(event) => {
+				const {value} = event.target;
+
 				if (fieldName === 'fieldReference' || fieldName === 'name') {
-					event.target.value = normalizeFieldName(event.target.value);
+					event.target.value = normalizeFieldName(value);
+				}
+				else if (fieldName === 'inputMaskFormat') {
+					event.target.value = value.replace(/[1-8]/g, '');
 				}
 
 				setValue(event.target.value);
@@ -168,6 +173,7 @@ const Autocomplete = ({
 	syncDelay,
 	value: initialValue,
 }) => {
+	const [selectedItem, setSelectedItem] = useState(false);
 	const [value, setValue] = useSyncValue(initialValue, syncDelay);
 	const [visible, setVisible] = useState(false);
 	const inputRef = useRef(null);
@@ -181,7 +187,10 @@ const Autocomplete = ({
 	);
 
 	useEffect(() => {
-		if (filteredItems.length === 1 && filteredItems.includes(value)) {
+		if (
+			selectedItem ||
+			(filteredItems.length === 1 && filteredItems.includes(value))
+		) {
 			setVisible(false);
 		}
 		else {
@@ -199,7 +208,7 @@ const Autocomplete = ({
 				setVisible(!!value);
 			}
 		}
-	}, [filteredItems, value]);
+	}, [filteredItems, value, selectedItem]);
 
 	const handleFocus = (event, direction) => {
 		const target = event.target;
@@ -242,6 +251,7 @@ const Autocomplete = ({
 				onBlur={onBlur}
 				onChange={(event) => {
 					setValue(event.target.value);
+					setSelectedItem(false);
 					onChange(event);
 				}}
 				onFocus={onFocus}
@@ -294,12 +304,13 @@ const Autocomplete = ({
 							{Liferay.Language.get('no-results-were-found')}
 						</ClayDropDown.Item>
 					)}
-					{filteredItems.map((label) => (
+					{filteredItems.map((label, index) => (
 						<ClayAutocomplete.Item
-							key={label}
+							key={index}
 							match={value}
 							onClick={() => {
 								setValue(label);
+								setSelectedItem(true);
 								onChange({target: {value: label}});
 							}}
 							value={label}
@@ -355,6 +366,7 @@ const Main = ({
 	return (
 		<FieldBase
 			{...otherProps}
+			fieldName={fieldName}
 			id={id}
 			localizedValue={localizedValue}
 			name={name}

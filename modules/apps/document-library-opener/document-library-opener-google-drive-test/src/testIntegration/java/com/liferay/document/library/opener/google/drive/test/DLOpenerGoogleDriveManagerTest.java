@@ -44,7 +44,7 @@ import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.FileUtil;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -248,11 +248,11 @@ public class DLOpenerGoogleDriveManagerTest {
 			serviceContext);
 
 		return _dlAppLocalService.addFileEntry(
-			serviceContext.getUserId(), folder.getGroupId(),
+			null, serviceContext.getUserId(), folder.getGroupId(),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), ContentTypes.TEXT_PLAIN,
 			RandomTestUtil.randomString(), StringPool.BLANK, StringPool.BLANK,
-			"liferay".getBytes(), serviceContext);
+			"liferay".getBytes(), null, null, serviceContext);
 	}
 
 	private String _getAuthorizationToken() throws Exception {
@@ -307,10 +307,12 @@ public class DLOpenerGoogleDriveManagerTest {
 	private <E extends Exception> void _test(UnsafeRunnable<E> unsafeRunnable)
 		throws Exception {
 
-		Dictionary<String, Object> dictionary = new HashMapDictionary<>();
-
-		dictionary.put("clientId", _getGoogleDriveClientId());
-		dictionary.put("clientSecret", _getGoogleDriveClientSecret());
+		Dictionary<String, Object> dictionary =
+			HashMapDictionaryBuilder.<String, Object>put(
+				"clientId", _getGoogleDriveClientId()
+			).put(
+				"clientSecret", _getGoogleDriveClientSecret()
+			).build();
 
 		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
 				new ConfigurationTemporarySwapper(

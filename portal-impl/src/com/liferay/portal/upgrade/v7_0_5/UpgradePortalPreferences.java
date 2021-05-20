@@ -40,14 +40,14 @@ public class UpgradePortalPreferences extends UpgradeProcess {
 	@Override
 	protected void doUpgrade() throws Exception {
 		try (LoggingTimer loggingTimer = new LoggingTimer();
-			PreparedStatement ps = connection.prepareStatement(
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				"select companyId from Company");
-			ResultSet rs = ps.executeQuery()) {
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			upgradePortalPreferences(PortletKeys.PREFS_OWNER_ID_DEFAULT);
 
-			while (rs.next()) {
-				upgradePortalPreferences(rs.getLong("companyId"));
+			while (resultSet.next()) {
+				upgradePortalPreferences(resultSet.getLong("companyId"));
 			}
 		}
 	}
@@ -58,11 +58,12 @@ public class UpgradePortalPreferences extends UpgradeProcess {
 			"where ownerId = ", companyId, " and ownerType = ",
 			PortletKeys.PREFS_OWNER_TYPE_COMPANY);
 
-		try (PreparedStatement ps1 = connection.prepareStatement(sql);
-			ResultSet rs = ps1.executeQuery()) {
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
+				sql);
+			ResultSet resultSet = preparedStatement1.executeQuery()) {
 
-			while (rs.next()) {
-				String preferences = rs.getString("preferences");
+			while (resultSet.next()) {
+				String preferences = resultSet.getString("preferences");
 
 				Document document = SAXReaderUtil.read(preferences);
 
@@ -110,14 +111,16 @@ public class UpgradePortalPreferences extends UpgradeProcess {
 				}
 
 				if (updatedDocument) {
-					try (PreparedStatement ps2 = connection.prepareStatement(
-							"update PortalPreferences set preferences = ? " +
-								"where portalPreferencesId = ?")) {
+					try (PreparedStatement preparedStatement2 =
+							connection.prepareStatement(
+								"update PortalPreferences set preferences = " +
+									"? where portalPreferencesId = ?")) {
 
-						ps2.setString(1, document.asXML());
-						ps2.setLong(2, rs.getLong("portalPreferencesId"));
+						preparedStatement2.setString(1, document.asXML());
+						preparedStatement2.setLong(
+							2, resultSet.getLong("portalPreferencesId"));
 
-						ps2.executeUpdate();
+						preparedStatement2.executeUpdate();
 					}
 				}
 			}

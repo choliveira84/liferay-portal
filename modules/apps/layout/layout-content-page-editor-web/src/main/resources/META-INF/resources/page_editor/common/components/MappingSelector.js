@@ -17,22 +17,23 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React, {useEffect, useState} from 'react';
 
-import {addMappedInfoItem} from '../../app/actions/index';
-import {useCollectionConfig} from '../../app/components/CollectionItemContext';
+import {addMappedInfoItem, addMappingFields} from '../../app/actions/index';
 import {EDITABLE_TYPES} from '../../app/config/constants/editableTypes';
 import {LAYOUT_TYPES} from '../../app/config/constants/layoutTypes';
 import {config} from '../../app/config/index';
+import {useCollectionConfig} from '../../app/contexts/CollectionItemContext';
+import {useDispatch, useSelector} from '../../app/contexts/StoreContext';
 import CollectionService from '../../app/services/CollectionService';
 import InfoItemService from '../../app/services/InfoItemService';
-import {useDispatch, useSelector} from '../../app/store/index';
 import isMapped from '../../app/utils/editable-value/isMapped';
 import isMappedToInfoItem from '../../app/utils/editable-value/isMappedToInfoItem';
 import isMappedToStructure from '../../app/utils/editable-value/isMappedToStructure';
+import getMappingFieldsKey from '../../app/utils/getMappingFieldsKey';
 import itemSelectorValueToInfoItem from '../../app/utils/item-selector-value/itemSelectorValueToInfoItem';
 import {useId} from '../../app/utils/useId';
 import ItemSelector from './ItemSelector';
 
-const MAPPING_SOURCE_TYPE_IDS = {
+const MAPPING_SOURCE_TYPES = {
 	content: 'content',
 	structure: 'structure',
 };
@@ -42,36 +43,51 @@ const UNMAPPED_OPTION = {
 	value: 'unmapped',
 };
 
-function loadFields({
-	dispatch,
-	fieldType,
-	selectedItem,
-	selectedMappingTypes,
-	selectedSourceTypeId,
-}) {
-	let promise;
+function filterFields(fields, fieldType) {
+	return fields.reduce((acc, fieldSet) => {
+		const newFields = fieldSet.fields.filter((field) =>
+			fieldType === EDITABLE_TYPES.image ||
+			fieldType === EDITABLE_TYPES.backgroundImage
+				? field.type === EDITABLE_TYPES.image
+				: field.type !== EDITABLE_TYPES.image
+		);
 
-	if (selectedSourceTypeId === MAPPING_SOURCE_TYPE_IDS.structure) {
-		promise = InfoItemService.getAvailableStructureMappingFields({
-			classNameId: selectedMappingTypes.type.id,
-			classTypeId: selectedMappingTypes.subtype.id,
-			fieldType,
-			onNetworkStatus: dispatch,
-		});
+		if (newFields.length) {
+			return [
+				...acc,
+				{
+					...fieldSet,
+					fields: newFields,
+				},
+			];
+		}
+
+		return acc;
+	}, []);
+}
+
+function loadMappingFields({dispatch, item, sourceType}) {
+	let classNameId, classTypeId;
+
+	if (sourceType === MAPPING_SOURCE_TYPES.structure) {
+		const {selectedMappingTypes} = config;
+
+		classNameId = selectedMappingTypes.type.id;
+		classTypeId = selectedMappingTypes.subtype.id;
 	}
 	else if (
-		selectedSourceTypeId === MAPPING_SOURCE_TYPE_IDS.content &&
-		selectedItem.classNameId &&
-		selectedItem.classPK &&
-		selectedItem.title
+		sourceType === MAPPING_SOURCE_TYPES.content &&
+		item.classNameId
 	) {
-		promise = InfoItemService.getAvailableInfoItemMappingFields({
-			classNameId: selectedItem.classNameId,
-			classPK: selectedItem.classPK,
-			fieldType,
-			onNetworkStatus: dispatch,
-		});
+		classNameId = item.classNameId;
+		classTypeId = item.classTypeId;
 	}
+
+	const promise = InfoItemService.getAvailableStructureMappingFields({
+		classNameId,
+		classTypeId,
+		onNetworkStatus: dispatch,
+	});
 
 	if (promise) {
 		return promise.then((response) => {
@@ -92,28 +108,44 @@ export default function MappingSelectorWrapper({
 	onMappingSelect,
 }) {
 	const collectionConfig = useCollectionConfig();
-	const [collectionFieldSets, setCollectionFieldSets] = useState([]);
+	const [collectionFields, setCollectionFields] = useState([]);
 	const [
 		collectionItemSubtypeLabel,
 		setCollectionItemSubtypeLabel,
 	] = useState('');
 	const [collectionItemTypeLabel, setCollectionItemTypeLabel] = useState('');
+	const mappingFields = useSelector((state) => state.mappingFields);
 
 	useEffect(() => {
 		if (!collectionConfig) {
-			setCollectionFieldSets([]);
+			setCollectionFields([]);
 
 			return;
 		}
 
+		const key = getMappingFieldsKey(
+			collectionConfig.collection.classNameId,
+			collectionConfig.collection.itemSubtype
+		);
+
+		const fields = mappingFields[key];
+
+		if (fields) {
+			setCollectionFields(filterFields(fields, fieldType));
+		}
+	}, [collectionConfig, mappingFields, fieldType]);
+
+	useEffect(() => {
+		if (!collectionConfig) {
+			return;
+		}
+
 		CollectionService.getCollectionMappingFields({
-			fieldType,
 			itemSubtype: collectionConfig.collection.itemSubtype || '',
 			itemType: collectionConfig.collection.itemType,
 			onNetworkStatus: () => {},
 		})
 			.then((response) => {
-				setCollectionFieldSets(response.mappingFields);
 				setCollectionItemSubtypeLabel(response.itemSubtypeLabel);
 				setCollectionItemTypeLabel(response.itemTypeLabel);
 			})
@@ -122,14 +154,14 @@ export default function MappingSelectorWrapper({
 					console.error(error);
 				}
 			});
-	}, [collectionConfig, fieldType]);
+	});
 
 	return collectionConfig ? (
 		<>
 			{collectionItemTypeLabel && (
 				<p className="mb-2 page-editor__mapping-panel__type-label">
 					<span className="mr-1">
-						{Liferay.Language.get('item-type')}:
+						{Liferay.Language.get('type')}:
 					</span>
 					{collectionItemTypeLabel}
 				</p>
@@ -138,15 +170,15 @@ export default function MappingSelectorWrapper({
 			{collectionItemSubtypeLabel && (
 				<p className="mb-2 page-editor__mapping-panel__type-label">
 					<span className="mr-1">
-						{Liferay.Language.get('item-subtype')}:
+						{Liferay.Language.get('subtype')}:
 					</span>
 					{collectionItemSubtypeLabel}
 				</p>
 			)}
 
 			<MappingFieldSelect
-				fieldSets={collectionFieldSets}
 				fieldType={fieldType}
+				fields={collectionFields}
 				onValueSelect={(event) => {
 					if (event.target.value === UNMAPPED_OPTION.value) {
 						onMappingSelect({collectionFieldId: ''});
@@ -172,19 +204,38 @@ export default function MappingSelectorWrapper({
 function MappingSelector({fieldType, mappedItem, onMappingSelect}) {
 	const dispatch = useDispatch();
 	const mappedInfoItems = useSelector((state) => state.mappedInfoItems);
+	const mappingFields = useSelector((state) => state.mappingFields);
+	const pageContents = useSelector((state) => state.pageContents);
 	const mappingSelectorSourceSelectId = useId();
 
 	const {selectedMappingTypes} = config;
 
-	const [fieldSets, setFieldSets] = useState(null);
+	const [itemFields, setItemFields] = useState(null);
 	const [selectedItem, setSelectedItem] = useState(mappedItem);
 
-	const [selectedSourceTypeId, setSelectedSourceTypeId] = useState(
+	const [typeLabel, setTypeLabel] = useState(null);
+	const [subtypeLabel, setSubtypeLabel] = useState(null);
+
+	useEffect(() => {
+		const mappedContent = pageContents.find(
+			(infoItem) =>
+				infoItem.classNameId === selectedItem.classNameId &&
+				infoItem.classPK === selectedItem.classPK
+		);
+
+		const type = selectedItem?.itemType || mappedContent?.name;
+		const subtype = selectedItem?.itemSubtype || mappedContent?.subtype;
+
+		setTypeLabel(type);
+		setSubtypeLabel(subtype);
+	}, [selectedItem, pageContents]);
+
+	const [selectedSourceType, setSelectedSourceType] = useState(
 		!isMappedToInfoItem(mappedItem) &&
 			(isMappedToStructure(mappedItem) ||
 				config.layoutType === LAYOUT_TYPES.display)
-			? MAPPING_SOURCE_TYPE_IDS.structure
-			: MAPPING_SOURCE_TYPE_IDS.content
+			? MAPPING_SOURCE_TYPES.structure
+			: MAPPING_SOURCE_TYPES.content
 	);
 
 	const onInfoItemSelect = (selectedInfoItem) => {
@@ -201,11 +252,11 @@ function MappingSelector({fieldType, mappedItem, onMappingSelect}) {
 		const data =
 			fieldValue === UNMAPPED_OPTION.value
 				? {}
-				: selectedSourceTypeId === MAPPING_SOURCE_TYPE_IDS.content
+				: selectedSourceType === MAPPING_SOURCE_TYPES.content
 				? {...selectedItem, fieldId: fieldValue}
 				: {mappedField: fieldValue};
 
-		if (selectedSourceTypeId === MAPPING_SOURCE_TYPE_IDS.content) {
+		if (selectedSourceType === MAPPING_SOURCE_TYPES.content) {
 			const mappedInfoItem = mappedInfoItems.find(
 				(item) =>
 					item.classNameId === selectedItem.classNameId &&
@@ -249,30 +300,55 @@ function MappingSelector({fieldType, mappedItem, onMappingSelect}) {
 	}, [mappedItem, mappedInfoItems, setSelectedItem]);
 
 	useEffect(() => {
-		const data =
-			selectedSourceTypeId === MAPPING_SOURCE_TYPE_IDS.structure
-				? {
-						dispatch,
-						fieldType,
-						selectedMappingTypes,
-						selectedSourceTypeId,
-				  }
-				: {
-						dispatch,
-						fieldType,
-						selectedItem,
-						selectedSourceTypeId,
-				  };
+		if (
+			selectedSourceType === MAPPING_SOURCE_TYPES.content &&
+			!selectedItem.classNameId
+		) {
+			setItemFields(null);
 
-		loadFields(data).then((newFieldSets) => {
-			setFieldSets(newFieldSets);
-		});
+			return;
+		}
+
+		const infoItem =
+			mappedInfoItems.find(
+				({classNameId, classPK}) =>
+					selectedItem.classNameId === classNameId &&
+					selectedItem.classPK === classPK
+			) || selectedItem;
+
+		const key =
+			selectedSourceType === MAPPING_SOURCE_TYPES.content
+				? getMappingFieldsKey(
+						infoItem.classNameId,
+						infoItem.classTypeId
+				  )
+				: getMappingFieldsKey(
+						selectedMappingTypes.type.id,
+						selectedMappingTypes.subtype.id || 0
+				  );
+
+		const fields = mappingFields[key];
+
+		if (fields) {
+			setItemFields(filterFields(fields, fieldType));
+		}
+		else {
+			loadMappingFields({
+				dispatch,
+				item: selectedItem,
+				sourceType: selectedSourceType,
+			}).then((newFields) => {
+				dispatch(addMappingFields({fields: newFields, key}));
+			});
+		}
 	}, [
 		dispatch,
 		fieldType,
+		mappedInfoItems,
+		mappingFields,
 		selectedItem,
 		selectedMappingTypes,
-		selectedSourceTypeId,
+		selectedSourceType,
 	]);
 
 	return (
@@ -288,7 +364,7 @@ function MappingSelector({fieldType, mappedItem, onMappingSelect}) {
 						className="pr-4 text-truncate"
 						id={mappingSelectorSourceSelectId}
 						onChange={(event) => {
-							setSelectedSourceTypeId(event.target.value);
+							setSelectedSourceType(event.target.value);
 
 							setSelectedItem({});
 
@@ -304,19 +380,19 @@ function MappingSelector({fieldType, mappedItem, onMappingSelect}) {
 										? selectedMappingTypes.subtype.label
 										: selectedMappingTypes.type.label
 								),
-								value: MAPPING_SOURCE_TYPE_IDS.structure,
+								value: MAPPING_SOURCE_TYPES.structure,
 							},
 							{
 								label: Liferay.Language.get('specific-content'),
-								value: MAPPING_SOURCE_TYPE_IDS.content,
+								value: MAPPING_SOURCE_TYPES.content,
 							},
 						]}
-						value={selectedSourceTypeId}
+						value={selectedSourceType}
 					/>
 				</ClayForm.Group>
 			)}
 
-			{selectedSourceTypeId === MAPPING_SOURCE_TYPE_IDS.content && (
+			{selectedSourceType === MAPPING_SOURCE_TYPES.content && (
 				<ItemSelector
 					label={Liferay.Language.get('content')}
 					onItemSelect={onInfoItemSelect}
@@ -325,10 +401,28 @@ function MappingSelector({fieldType, mappedItem, onMappingSelect}) {
 				/>
 			)}
 
+			{typeLabel && (
+				<p className="mb-2 mt-3 page-editor__mapping-panel__type-label">
+					<span className="mr-1">
+						{Liferay.Language.get('type')}:
+					</span>
+					{typeLabel}
+				</p>
+			)}
+
+			{subtypeLabel && (
+				<p className="mb-2 page-editor__mapping-panel__type-label">
+					<span className="mr-1">
+						{Liferay.Language.get('subtype')}:
+					</span>
+					{subtypeLabel}
+				</p>
+			)}
+
 			<ClayForm.Group small>
 				<MappingFieldSelect
-					fieldSets={fieldSets}
 					fieldType={fieldType}
+					fields={itemFields}
 					onValueSelect={onFieldSelect}
 					value={selectedItem.mappedField || selectedItem.fieldId}
 				/>
@@ -337,14 +431,14 @@ function MappingSelector({fieldType, mappedItem, onMappingSelect}) {
 	);
 }
 
-function MappingFieldSelect({fieldSets, fieldType, onValueSelect, value}) {
+function MappingFieldSelect({fieldType, fields, onValueSelect, value}) {
 	const mappingSelectorFieldSelectId = useId();
 
-	const hasWarnings = fieldSets && fieldSets.length === 0;
+	const hasWarnings = fields && fields.length === 0;
 
 	return (
 		<ClayForm.Group
-			className={classNames({'has-warning': hasWarnings})}
+			className={classNames('mt-3', {'has-warning': hasWarnings})}
 			small
 		>
 			<label htmlFor="mappingSelectorFieldSelect">
@@ -353,19 +447,19 @@ function MappingFieldSelect({fieldSets, fieldType, onValueSelect, value}) {
 
 			<ClaySelect
 				aria-label={Liferay.Language.get('field')}
-				disabled={!(fieldSets && fieldSets.length)}
+				disabled={!(fields && fields.length)}
 				id={mappingSelectorFieldSelectId}
 				onChange={onValueSelect}
 				value={value}
 			>
-				{fieldSets && fieldSets.length && (
+				{fields && fields.length && (
 					<>
 						<ClaySelect.Option
 							label={UNMAPPED_OPTION.label}
 							value={UNMAPPED_OPTION.value}
 						/>
 
-						{fieldSets.map((fieldSet, index) => {
+						{fields.map((fieldSet, index) => {
 							const key = `${fieldSet.label || ''}${index}`;
 
 							const Wrapper = ({children, ...props}) =>

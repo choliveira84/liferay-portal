@@ -14,7 +14,7 @@
 
 package com.liferay.portal.tools.rest.builder.internal.freemarker.tool.java.parser;
 
-import com.liferay.portal.kernel.util.StringBundler;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.tools.rest.builder.internal.freemarker.tool.java.JavaMethodParameter;
 import com.liferay.portal.tools.rest.builder.internal.freemarker.tool.java.JavaMethodSignature;
@@ -112,7 +112,7 @@ public class ResourceTestCaseOpenAPIParser {
 				}
 			}
 
-			StringBuilder sb = new StringBuilder();
+			StringBundler sb = new StringBundler(3);
 
 			sb.append(operationId.substring(0, index));
 			sb.append("FormData");
@@ -146,8 +146,10 @@ public class ResourceTestCaseOpenAPIParser {
 			String itemType = returnType.substring(
 				returnType.indexOf("<") + 1, returnType.indexOf(">"));
 
-			if (itemType.contains(".") && !itemType.startsWith("java.lang") &&
+			if (itemType.contains(".") &&
 				!itemType.startsWith("com.liferay.portal.vulcan") &&
+				!itemType.startsWith("java.lang") &&
+				!itemType.startsWith("java.util") &&
 				!itemType.startsWith(apiPackage)) {
 
 				return StringBundler.concat(
@@ -160,6 +162,7 @@ public class ResourceTestCaseOpenAPIParser {
 				 !returnType.equals("com.liferay.portal.vulcan") &&
 				 !returnType.equals("javax.ws.rs.core.Response") &&
 				 !returnType.startsWith("java.lang") &&
+				 !returnType.startsWith("java.util") &&
 				 !returnType.startsWith(apiPackage)) {
 
 			return StringBundler.concat(

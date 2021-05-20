@@ -49,15 +49,16 @@ public class LayoutPermissionsUpgradeProcess extends UpgradeProcess {
 		String sql = SQLTransformer.transform(sb.toString());
 
 		try (LoggingTimer loggingTimer = new LoggingTimer();
-			PreparedStatement ps = connection.prepareStatement(sql);
-			ResultSet rs = ps.executeQuery()) {
+			PreparedStatement preparedStatement = connection.prepareStatement(
+				sql);
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			while (rs.next()) {
-				long companyId = rs.getLong("companyId");
-				long groupId = rs.getLong("groupId");
-				long plid = rs.getLong("plid");
-				boolean privateLayout = rs.getBoolean("privateLayout");
-				long userId = rs.getLong("userId");
+			while (resultSet.next()) {
+				long companyId = resultSet.getLong("companyId");
+				long groupId = resultSet.getLong("groupId");
+				long plid = resultSet.getLong("plid");
+				boolean privateLayout = resultSet.getBoolean("privateLayout");
+				long userId = resultSet.getLong("userId");
 
 				boolean addGroupPermission = true;
 				boolean addGuestPermission = true;

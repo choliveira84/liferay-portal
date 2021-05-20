@@ -69,7 +69,6 @@ public class GetCollectionMappingFieldsMVCResourceCommand
 		ThemeDisplay themeDisplay = (ThemeDisplay)resourceRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
-		String fieldType = ParamUtil.getString(resourceRequest, "fieldType");
 		String itemSubtype = ParamUtil.getString(
 			resourceRequest, "itemSubtype");
 
@@ -126,8 +125,9 @@ public class GetCollectionMappingFieldsMVCResourceCommand
 				).put(
 					"mappingFields",
 					MappingContentUtil.getMappingFieldsJSONArray(
-						fieldType, itemSubtype, _infoItemServiceTracker,
-						itemType, resourceRequest)
+						itemSubtype, themeDisplay.getScopeGroupId(),
+						_infoItemServiceTracker, itemType,
+						themeDisplay.getLocale())
 				));
 		}
 		catch (Exception exception) {

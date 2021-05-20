@@ -79,18 +79,20 @@ public class KaleoTaskInstanceTokenUpgradeProcess extends UpgradeProcess {
 
 		String sql = sb.toString();
 
-		try (PreparedStatement ps = connection.prepareStatement(sql)) {
-			ps.setLong(1, kaleoInstanceTokenId);
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				sql)) {
 
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
-					String type = rs.getString("type_");
+			preparedStatement.setLong(1, kaleoInstanceTokenId);
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				if (resultSet.next()) {
+					String type = resultSet.getString("type_");
 
 					if (!type.equals(NodeType.TASK.toString())) {
 						return kaleoInstanceTokenId;
 					}
 
-					long parentKaleoInstanceTokenId = rs.getLong(
+					long parentKaleoInstanceTokenId = resultSet.getLong(
 						"kaleoInstanceTokenId");
 
 					_kaleoInstanceTokenIds.add(kaleoInstanceTokenId);
@@ -105,13 +107,13 @@ public class KaleoTaskInstanceTokenUpgradeProcess extends UpgradeProcess {
 
 	protected void updateKaleoTaskInstanceTokens() throws Exception {
 		try (LoggingTimer loggingTimer = new LoggingTimer();
-			PreparedStatement ps = connection.prepareStatement(
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				"select kaleoTaskInstanceTokenId, kaleoInstanceTokenId from " +
 					"KaleoTaskInstanceToken");
-			ResultSet rs = ps.executeQuery()) {
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			while (rs.next()) {
-				long oldKaleoInstanceTokenId = rs.getLong(
+			while (resultSet.next()) {
+				long oldKaleoInstanceTokenId = resultSet.getLong(
 					"kaleoInstanceTokenId");
 
 				long newKaleoInstanceTokenId = getKaleoInstanceTokenId(
@@ -128,7 +130,7 @@ public class KaleoTaskInstanceTokenUpgradeProcess extends UpgradeProcess {
 				sb.append(newKaleoInstanceTokenId);
 				sb.append(" where kaleoTaskInstanceTokenId = ");
 
-				long kaleoTaskInstanceTokenId = rs.getLong(
+				long kaleoTaskInstanceTokenId = resultSet.getLong(
 					"kaleoTaskInstanceTokenId");
 
 				sb.append(kaleoTaskInstanceTokenId);

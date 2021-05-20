@@ -56,14 +56,14 @@ public class DDMStructureUpgradeProcess extends UpgradeProcess {
 		sb1.append("= DDMStructureVersion.version where ");
 		sb1.append("DDMStructure.structureId = ?");
 
-		try (PreparedStatement ps1 = connection.prepareStatement(
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
 				sb1.toString())) {
 
-			ps1.setLong(1, parentStructureId);
+			preparedStatement1.setLong(1, parentStructureId);
 
-			try (ResultSet rs = ps1.executeQuery()) {
-				if (rs.next()) {
-					return rs.getLong("structureLayoutId");
+			try (ResultSet resultSet = preparedStatement1.executeQuery()) {
+				if (resultSet.next()) {
+					return resultSet.getLong("structureLayoutId");
 				}
 			}
 		}
@@ -72,24 +72,25 @@ public class DDMStructureUpgradeProcess extends UpgradeProcess {
 	}
 
 	private void _upgradeStructureDefinition() throws Exception {
-		try (PreparedStatement ps1 = connection.prepareStatement(
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
 				"select * from DDMStructure where classNameId = ? or " +
 					"classNameId = ? order by createDate");
-			PreparedStatement ps2 =
+			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection,
 					"update DDMStructure set parentStructureId = 0, " +
 						"definition = ? where structureId = ?")) {
 
-			ps1.setLong(
+			preparedStatement1.setLong(
 				1,
 				PortalUtil.getClassNameId(_CLASS_NAME_DL_FILE_ENTRY_METADATA));
-			ps1.setLong(
+			preparedStatement1.setLong(
 				2, PortalUtil.getClassNameId(_CLASS_NAME_JOURNAL_ARTICLE));
 
-			try (ResultSet rs = ps1.executeQuery()) {
-				while (rs.next()) {
-					long parentStructureId = rs.getLong("parentStructureId");
+			try (ResultSet resultSet = preparedStatement1.executeQuery()) {
+				while (resultSet.next()) {
+					long parentStructureId = resultSet.getLong(
+						"parentStructureId");
 
 					long parentStructureLayoutId = 0;
 
@@ -98,20 +99,21 @@ public class DDMStructureUpgradeProcess extends UpgradeProcess {
 							parentStructureId);
 					}
 
-					ps2.setString(
+					preparedStatement2.setString(
 						1,
 						_ddmDataDefinitionConverter.
 							convertDDMFormDataDefinition(
-								rs.getString("definition"),
-								rs.getLong("groupId"), parentStructureId,
+								resultSet.getString("definition"),
+								resultSet.getLong("groupId"), parentStructureId,
 								parentStructureLayoutId,
-								rs.getLong("structureId")));
-					ps2.setLong(2, rs.getLong("structureId"));
+								resultSet.getLong("structureId")));
+					preparedStatement2.setLong(
+						2, resultSet.getLong("structureId"));
 
-					ps2.addBatch();
+					preparedStatement2.addBatch();
 				}
 
-				ps2.executeBatch();
+				preparedStatement2.executeBatch();
 			}
 		}
 	}
@@ -136,46 +138,49 @@ public class DDMStructureUpgradeProcess extends UpgradeProcess {
 		sb1.append("DDMStructure.classNameId = ? or DDMStructure.classNameId ");
 		sb1.append("= ?");
 
-		try (PreparedStatement ps1 = connection.prepareStatement(
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
 				sb1.toString());
-			PreparedStatement ps2 =
+			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection,
 					"update DDMStructureLayout set definition = ?, " +
 						"classNameId = ?, structureLayoutKey = ? where " +
 							"structureLayoutId = ?")) {
 
-			ps1.setLong(
+			preparedStatement1.setLong(
 				1,
 				PortalUtil.getClassNameId(_CLASS_NAME_DL_FILE_ENTRY_METADATA));
-			ps1.setLong(
+			preparedStatement1.setLong(
 				2, PortalUtil.getClassNameId(_CLASS_NAME_JOURNAL_ARTICLE));
 
-			try (ResultSet rs = ps1.executeQuery()) {
-				while (rs.next()) {
-					String structureLayoutDefinition = rs.getString(
+			try (ResultSet resultSet = preparedStatement1.executeQuery()) {
+				while (resultSet.next()) {
+					String structureLayoutDefinition = resultSet.getString(
 						"structureLayoutDefinition");
-					String structureVersionDefinition = rs.getString(
+					String structureVersionDefinition = resultSet.getString(
 						"structureVersionDefinition");
 
-					ps2.setString(
+					preparedStatement2.setString(
 						1,
 						_ddmDataDefinitionConverter.
 							convertDDMFormLayoutDataDefinition(
-								rs.getLong("groupId"),
-								rs.getLong("structureId"),
+								resultSet.getLong("groupId"),
+								resultSet.getLong("structureId"),
 								structureLayoutDefinition,
-								rs.getLong("structureLayoutId"),
+								resultSet.getLong("structureLayoutId"),
 								structureVersionDefinition));
 
-					ps2.setLong(2, rs.getLong("classNameId"));
-					ps2.setString(3, rs.getString("structureKey"));
-					ps2.setLong(4, rs.getLong("structureLayoutId"));
+					preparedStatement2.setLong(
+						2, resultSet.getLong("classNameId"));
+					preparedStatement2.setString(
+						3, resultSet.getString("structureKey"));
+					preparedStatement2.setLong(
+						4, resultSet.getLong("structureLayoutId"));
 
-					ps2.addBatch();
+					preparedStatement2.addBatch();
 				}
 
-				ps2.executeBatch();
+				preparedStatement2.executeBatch();
 			}
 		}
 	}
@@ -190,23 +195,24 @@ public class DDMStructureUpgradeProcess extends UpgradeProcess {
 		sb1.append("DDMStructure.classNameId = ? or DDMStructure.classNameId ");
 		sb1.append("= ?");
 
-		try (PreparedStatement ps1 = connection.prepareStatement(
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
 				sb1.toString());
-			PreparedStatement ps2 =
+			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection,
 					"update DDMStructureVersion set parentStructureId = 0, " +
 						"definition = ? where structureVersionId = ?")) {
 
-			ps1.setLong(
+			preparedStatement1.setLong(
 				1,
 				PortalUtil.getClassNameId(_CLASS_NAME_DL_FILE_ENTRY_METADATA));
-			ps1.setLong(
+			preparedStatement1.setLong(
 				2, PortalUtil.getClassNameId(_CLASS_NAME_JOURNAL_ARTICLE));
 
-			try (ResultSet rs = ps1.executeQuery()) {
-				while (rs.next()) {
-					long parentStructureId = rs.getLong("parentStructureId");
+			try (ResultSet resultSet = preparedStatement1.executeQuery()) {
+				while (resultSet.next()) {
+					long parentStructureId = resultSet.getLong(
+						"parentStructureId");
 
 					long parentStructureLayoutId = 0;
 
@@ -215,18 +221,19 @@ public class DDMStructureUpgradeProcess extends UpgradeProcess {
 							parentStructureId);
 					}
 
-					ps2.setString(
+					preparedStatement2.setString(
 						1,
 						_ddmDataDefinitionConverter.
 							convertDDMFormDataDefinition(
-								rs.getString("definition"), parentStructureId,
-								parentStructureLayoutId));
+								resultSet.getString("definition"),
+								parentStructureId, parentStructureLayoutId));
 
-					ps2.setLong(2, rs.getLong("structureVersionId"));
-					ps2.addBatch();
+					preparedStatement2.setLong(
+						2, resultSet.getLong("structureVersionId"));
+					preparedStatement2.addBatch();
 				}
 
-				ps2.executeBatch();
+				preparedStatement2.executeBatch();
 			}
 		}
 	}

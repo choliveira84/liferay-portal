@@ -21,6 +21,7 @@ import com.liferay.adaptive.media.image.counter.AMImageCounter;
 import com.liferay.adaptive.media.image.mime.type.AMImageMimeTypeProvider;
 import com.liferay.adaptive.media.image.optimizer.AMImageOptimizer;
 import com.liferay.adaptive.media.image.processor.AMImageProcessor;
+import com.liferay.adaptive.media.image.size.AMImageSizeProvider;
 import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
 import com.liferay.document.library.kernel.service.DLFileVersionLocalService;
@@ -117,6 +118,11 @@ public class DLAMImageOptimizer implements AMImageOptimizer {
 					mimeTypeProperty.in(
 						_amImageMimeTypeProvider.getSupportedMimeTypes()));
 
+				Property sizeProperty = PropertyFactoryUtil.forName("size");
+
+				dynamicQuery.add(
+					sizeProperty.le(_amImageSizeProvider.getImageMaxSize()));
+
 				DynamicQuery dlFileVersionDynamicQuery =
 					_dlFileVersionLocalService.dynamicQuery();
 
@@ -160,8 +166,11 @@ public class DLAMImageOptimizer implements AMImageOptimizer {
 					if (_log.isWarnEnabled()) {
 						_log.warn(
 							"Unable to process file entry " +
-								fileEntry.getFileEntryId(),
-							exception);
+								fileEntry.getFileEntryId());
+					}
+
+					if (_log.isDebugEnabled()) {
+						_log.debug(exception, exception);
 					}
 
 					_sendStatusMessage(
@@ -215,6 +224,9 @@ public class DLAMImageOptimizer implements AMImageOptimizer {
 
 	@Reference
 	private AMImageProcessor _amImageProcessor;
+
+	@Reference
+	private AMImageSizeProvider _amImageSizeProvider;
 
 	@Reference
 	private BackgroundTaskStatusMessageSender

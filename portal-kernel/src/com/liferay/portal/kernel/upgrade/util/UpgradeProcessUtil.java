@@ -48,17 +48,17 @@ public class UpgradeProcessUtil {
 			return languageId;
 		}
 
-		try (Connection con = DataAccess.getConnection();
-			PreparedStatement ps = con.prepareStatement(
+		try (Connection connection = DataAccess.getConnection();
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				"select languageId from User_ where companyId = ? and " +
 					"defaultUser = ?")) {
 
-			ps.setLong(1, companyId);
-			ps.setBoolean(2, true);
+			preparedStatement.setLong(1, companyId);
+			preparedStatement.setBoolean(2, true);
 
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
-					languageId = rs.getString("languageId");
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				if (resultSet.next()) {
+					languageId = resultSet.getString("languageId");
 
 					_languageIds.put(companyId, languageId);
 

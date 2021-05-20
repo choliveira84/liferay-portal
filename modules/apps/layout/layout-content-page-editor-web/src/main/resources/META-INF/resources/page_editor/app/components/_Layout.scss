@@ -178,7 +178,14 @@ $dashedBorderWidth: 2px;
 		}
 
 		&--mapped {
-			&.page-editor__editable &.page-editor__editable--active {
+			box-shadow: inset 0 0 0 $editablesBorderWidth fade_out($purple, 0.7);
+
+			&.page-editor__editable--hovered {
+				box-shadow: inset 0 0 0 $editablesBorderWidth
+					fade_out($purple, 0.3);
+			}
+
+			&.page-editor__editable--active {
 				box-shadow: inset 0 0 0 $editablesBorderWidth $purple;
 			}
 		}
@@ -219,6 +226,11 @@ $dashedBorderWidth: 2px;
 				&.page-editor__editable--active {
 					outline: solid $editablesBorderWidth $purple;
 				}
+			}
+
+			&--content-hovered {
+				outline: $dashedBorderWidth dashed fade_out($purple, 0.5);
+				outline-offset: -$dashedBorderWidth;
 			}
 
 			&--translated {

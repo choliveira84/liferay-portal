@@ -641,8 +641,8 @@ public class ContentTargetingUpgradeProcessTest {
 	}
 
 	protected void dropContentTargetingTables() throws Exception {
-		try (Connection con = DataAccess.getConnection()) {
-			DBInspector dbInspector = new DBInspector(con);
+		try (Connection connection = DataAccess.getConnection()) {
+			DBInspector dbInspector = new DBInspector(connection);
 
 			if (dbInspector.hasTable("CT_RuleInstance")) {
 				_db.runSQL("drop table CT_RuleInstance");
@@ -668,25 +668,28 @@ public class ContentTargetingUpgradeProcessTest {
 
 		String sql = sb.toString();
 
-		try (Connection con = DataAccess.getConnection();
-			PreparedStatement ps = con.prepareStatement(sql)) {
+		try (Connection connection = DataAccess.getConnection();
+			PreparedStatement preparedStatement = connection.prepareStatement(
+				sql)) {
 
-			ps.setLong(1, _counterLocalService.increment());
-			ps.setLong(2, _group.getGroupId());
-			ps.setLong(3, _group.getCompanyId());
-			ps.setLong(4, TestPropsValues.getUserId());
+			preparedStatement.setLong(1, _counterLocalService.increment());
+			preparedStatement.setLong(2, _group.getGroupId());
+			preparedStatement.setLong(3, _group.getCompanyId());
+			preparedStatement.setLong(4, TestPropsValues.getUserId());
 
 			User user = TestPropsValues.getUser();
 
-			ps.setString(5, user.getFullName());
+			preparedStatement.setString(5, user.getFullName());
 
-			ps.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
-			ps.setTimestamp(7, new Timestamp(System.currentTimeMillis()));
-			ps.setLong(8, contentTargetingUserSegmentId);
-			ps.setString(9, ruleKey);
-			ps.setString(10, typeSettings);
+			preparedStatement.setTimestamp(
+				6, new Timestamp(System.currentTimeMillis()));
+			preparedStatement.setTimestamp(
+				7, new Timestamp(System.currentTimeMillis()));
+			preparedStatement.setLong(8, contentTargetingUserSegmentId);
+			preparedStatement.setString(9, ruleKey);
+			preparedStatement.setString(10, typeSettings);
 
-			ps.executeUpdate();
+			preparedStatement.executeUpdate();
 		}
 	}
 
@@ -703,36 +706,39 @@ public class ContentTargetingUpgradeProcessTest {
 
 		String sql = sb.toString();
 
-		try (Connection con = DataAccess.getConnection();
-			PreparedStatement ps = con.prepareStatement(sql)) {
+		try (Connection connection = DataAccess.getConnection();
+			PreparedStatement preparedStatement = connection.prepareStatement(
+				sql)) {
 
-			ps.setLong(1, contentTargetingUserSegmentId);
-			ps.setLong(2, _group.getGroupId());
-			ps.setLong(3, _group.getCompanyId());
-			ps.setLong(4, TestPropsValues.getUserId());
+			preparedStatement.setLong(1, contentTargetingUserSegmentId);
+			preparedStatement.setLong(2, _group.getGroupId());
+			preparedStatement.setLong(3, _group.getCompanyId());
+			preparedStatement.setLong(4, TestPropsValues.getUserId());
 
 			User user = TestPropsValues.getUser();
 
-			ps.setString(5, user.getFullName());
+			preparedStatement.setString(5, user.getFullName());
 
-			ps.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
-			ps.setTimestamp(7, new Timestamp(System.currentTimeMillis()));
+			preparedStatement.setTimestamp(
+				6, new Timestamp(System.currentTimeMillis()));
+			preparedStatement.setTimestamp(
+				7, new Timestamp(System.currentTimeMillis()));
 
 			Locale defaultLocale = PortalUtil.getSiteDefaultLocale(_group);
 
 			String defaultLanguageId = LocaleUtil.toLanguageId(defaultLocale);
 
-			ps.setString(
+			preparedStatement.setString(
 				8,
 				LocalizationUtil.updateLocalization(
 					nameMap, StringPool.BLANK, "Name", defaultLanguageId));
-			ps.setString(
+			preparedStatement.setString(
 				9,
 				LocalizationUtil.updateLocalization(
 					descriptionMap, StringPool.BLANK, "Description",
 					defaultLanguageId));
 
-			ps.executeUpdate();
+			preparedStatement.executeUpdate();
 		}
 	}
 

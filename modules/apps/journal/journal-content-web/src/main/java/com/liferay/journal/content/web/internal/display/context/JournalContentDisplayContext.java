@@ -116,8 +116,7 @@ public class JournalContentDisplayContext {
 
 		JournalContentDisplayContext journalContentDisplayContext =
 			(JournalContentDisplayContext)portletRequest.getAttribute(
-				JournalContentWebKeys.JOURNAL_CONTENT_DISPLAY_CONTEXT +
-					StringPool.POUND + portletDisplay.getId());
+				getRequestAttributeName(portletDisplay.getId()));
 
 		if (journalContentDisplayContext == null) {
 			JournalContentPortletInstanceConfiguration
@@ -131,12 +130,16 @@ public class JournalContentDisplayContext {
 				ddmStructureClassNameId, ddmTemplateModelResourcePermission);
 
 			portletRequest.setAttribute(
-				JournalContentWebKeys.JOURNAL_CONTENT_DISPLAY_CONTEXT +
-					StringPool.POUND + portletDisplay.getId(),
+				getRequestAttributeName(portletDisplay.getId()),
 				journalContentDisplayContext);
 		}
 
 		return journalContentDisplayContext;
+	}
+
+	public static String getRequestAttributeName(String portletName) {
+		return JournalContentWebKeys.JOURNAL_CONTENT_DISPLAY_CONTEXT +
+			StringPool.POUND + portletName;
 	}
 
 	public JournalArticle getArticle() throws PortalException {

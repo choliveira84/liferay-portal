@@ -57,7 +57,7 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserGroupService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.UserService;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -69,7 +69,6 @@ import java.io.InputStream;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Dictionary;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -113,13 +112,6 @@ public class AnalyticsCloudPortalInstanceLifecycleListener
 					sapEntryObjectArray[0], "OAUTH2_", StringPool.BLANK));
 		}
 
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put(
-			"osgi.jaxrs.name",
-			OAuth2ProviderShortcutConstants.APPLICATION_NAME);
-		properties.put("sap.scope.finder", true);
-
 		_serviceRegistration = bundleContext.registerService(
 			new String[] {
 				ApplicationDescriptor.class.getName(),
@@ -127,7 +119,12 @@ public class AnalyticsCloudPortalInstanceLifecycleListener
 				ScopeFinder.class.getName(), ScopeMapper.class.getName()
 			},
 			new OAuth2ProviderShortcutScopeFinder(_sapEntryLocalService),
-			properties);
+			HashMapDictionaryBuilder.<String, Object>put(
+				"osgi.jaxrs.name",
+				OAuth2ProviderShortcutConstants.APPLICATION_NAME
+			).put(
+				"sap.scope.finder", true
+			).build());
 	}
 
 	@Deactivate

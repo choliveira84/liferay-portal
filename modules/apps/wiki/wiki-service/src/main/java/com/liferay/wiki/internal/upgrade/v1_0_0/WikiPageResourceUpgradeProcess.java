@@ -34,14 +34,14 @@ public class WikiPageResourceUpgradeProcess extends UpgradeProcess {
 	protected long getGroupId(long resourcePrimKey) throws Exception {
 		long groupId = 0;
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select groupId from WikiPage where resourcePrimKey = ?")) {
 
-			ps.setLong(1, resourcePrimKey);
+			preparedStatement.setLong(1, resourcePrimKey);
 
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
-					groupId = rs.getLong("groupId");
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				if (resultSet.next()) {
+					groupId = resultSet.getLong("groupId");
 				}
 			}
 		}
@@ -51,12 +51,12 @@ public class WikiPageResourceUpgradeProcess extends UpgradeProcess {
 
 	protected void updateWikiPageResources() throws Exception {
 		try (LoggingTimer loggingTimer = new LoggingTimer();
-			PreparedStatement ps = connection.prepareStatement(
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				"select resourcePrimKey from WikiPageResource");
-			ResultSet rs = ps.executeQuery()) {
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			while (rs.next()) {
-				long resourcePrimKey = rs.getLong("resourcePrimKey");
+			while (resultSet.next()) {
+				long resourcePrimKey = resultSet.getLong("resourcePrimKey");
 
 				runSQL(
 					StringBundler.concat(

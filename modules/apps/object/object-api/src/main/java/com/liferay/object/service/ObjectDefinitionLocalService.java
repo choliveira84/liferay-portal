@@ -136,6 +136,9 @@ public interface ObjectDefinitionLocalService
 	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
 		throws PortalException;
 
+	@Clusterable
+	public void deployObjectDefinition(ObjectDefinition objectDefinition);
+
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public <T> T dslQuery(DSLQuery dslQuery);
 
@@ -294,12 +297,7 @@ public interface ObjectDefinitionLocalService
 		throws PortalException;
 
 	@Clusterable
-	public void registerObjectDefinition(ObjectDefinition objectDefinition);
-
-	@Clusterable
-	public void unregisterObjectDefinition(long objectDefinitionId);
-
-	public void unregisterObjectDefinitions();
+	public void undeployObjectDefinition(long objectDefinitionId);
 
 	/**
 	 * Updates the object definition in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.

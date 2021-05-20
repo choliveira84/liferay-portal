@@ -140,6 +140,13 @@ public class ObjectDefinitionLocalServiceWrapper
 	}
 
 	@Override
+	public void deployObjectDefinition(
+		com.liferay.object.model.ObjectDefinition objectDefinition) {
+
+		_objectDefinitionLocalService.deployObjectDefinition(objectDefinition);
+	}
+
+	@Override
 	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
 		return _objectDefinitionLocalService.dslQuery(dslQuery);
 	}
@@ -374,22 +381,9 @@ public class ObjectDefinitionLocalServiceWrapper
 	}
 
 	@Override
-	public void registerObjectDefinition(
-		com.liferay.object.model.ObjectDefinition objectDefinition) {
-
-		_objectDefinitionLocalService.registerObjectDefinition(
-			objectDefinition);
-	}
-
-	@Override
-	public void unregisterObjectDefinition(long objectDefinitionId) {
-		_objectDefinitionLocalService.unregisterObjectDefinition(
+	public void undeployObjectDefinition(long objectDefinitionId) {
+		_objectDefinitionLocalService.undeployObjectDefinition(
 			objectDefinitionId);
-	}
-
-	@Override
-	public void unregisterObjectDefinitions() {
-		_objectDefinitionLocalService.unregisterObjectDefinitions();
 	}
 
 	/**

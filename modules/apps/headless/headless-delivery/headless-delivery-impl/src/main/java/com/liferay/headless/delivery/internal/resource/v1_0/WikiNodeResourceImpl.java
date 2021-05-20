@@ -16,7 +16,7 @@ package com.liferay.headless.delivery.internal.resource.v1_0;
 
 import com.liferay.headless.common.spi.service.context.ServiceContextRequestUtil;
 import com.liferay.headless.delivery.dto.v1_0.WikiNode;
-import com.liferay.headless.delivery.internal.dto.v1_0.util.CreatorUtil;
+import com.liferay.headless.delivery.internal.dto.v1_0.converter.WikiNodeDTOConverter;
 import com.liferay.headless.delivery.internal.odata.entity.v1_0.WikiNodeEntityModel;
 import com.liferay.headless.delivery.resource.v1_0.WikiNodeResource;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
@@ -25,21 +25,21 @@ import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.BooleanFilter;
 import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.search.filter.TermFilter;
-import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.vulcan.aggregation.Aggregation;
+import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
+import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.portal.vulcan.resource.EntityModelResource;
 import com.liferay.portal.vulcan.util.SearchUtil;
-import com.liferay.subscription.service.SubscriptionLocalService;
+import com.liferay.wiki.constants.WikiConstants;
+import com.liferay.wiki.exception.NoSuchNodeException;
+import com.liferay.wiki.service.WikiNodeLocalService;
 import com.liferay.wiki.service.WikiNodeService;
-import com.liferay.wiki.service.WikiPageService;
-
-import java.util.Optional;
 
 import javax.ws.rs.core.MultivaluedMap;
 
@@ -58,6 +58,17 @@ public class WikiNodeResourceImpl
 	extends BaseWikiNodeResourceImpl implements EntityModelResource {
 
 	@Override
+	public void deleteSiteWikiNodeByExternalReferenceCode(
+			String externalReferenceCode, Long siteId)
+		throws Exception {
+
+		com.liferay.wiki.model.WikiNode wikiNode =
+			_getWikiNodeByExternalReferenceCode(externalReferenceCode, siteId);
+
+		_wikiNodeService.deleteNode(wikiNode.getNodeId());
+	}
+
+	@Override
 	public void deleteWikiNode(Long wikiNodeId) throws Exception {
 		_wikiNodeService.deleteNode(wikiNodeId);
 	}
@@ -65,6 +76,17 @@ public class WikiNodeResourceImpl
 	@Override
 	public EntityModel getEntityModel(MultivaluedMap multivaluedMap) {
 		return _entityModel;
+	}
+
+	@Override
+	public WikiNode getSiteWikiNodeByExternalReferenceCode(
+			String externalReferenceCode, Long siteId)
+		throws Exception {
+
+		com.liferay.wiki.model.WikiNode wikiNode =
+			_getWikiNodeByExternalReferenceCode(externalReferenceCode, siteId);
+
+		return _toWikiNode(wikiNode);
 	}
 
 	@Override
@@ -77,7 +99,8 @@ public class WikiNodeResourceImpl
 			HashMapBuilder.put(
 				"create",
 				addAction(
-					"ADD_NODE", "postSiteWikiNode", "com.liferay.wiki", siteId)
+					ActionKeys.ADD_NODE, "postSiteWikiNode",
+					WikiConstants.RESOURCE_NAME, siteId)
 			).build(),
 			booleanQuery -> {
 				BooleanFilter booleanFilter =
@@ -117,19 +140,35 @@ public class WikiNodeResourceImpl
 	}
 
 	@Override
+	public WikiNode putSiteWikiNodeByExternalReferenceCode(
+			String externalReferenceCode, Long siteId, WikiNode wikiNode)
+		throws Exception {
+
+		com.liferay.wiki.model.WikiNode serviceBuilderWikiNode =
+			_wikiNodeLocalService.fetchWikiNodeByExternalReferenceCode(
+				siteId, externalReferenceCode);
+
+		if (serviceBuilderWikiNode == null) {
+			return _toWikiNode(
+				_wikiNodeService.addNode(
+					externalReferenceCode, wikiNode.getName(),
+					wikiNode.getDescription(),
+					ServiceContextRequestUtil.createServiceContext(
+						siteId, contextHttpServletRequest,
+						wikiNode.getViewableByAsString())));
+		}
+
+		return _updateWikiNode(serviceBuilderWikiNode, wikiNode);
+	}
+
+	@Override
 	public WikiNode putWikiNode(Long wikiNodeId, WikiNode wikiNode)
 		throws Exception {
 
 		com.liferay.wiki.model.WikiNode serviceBuilderWikiNode =
 			_wikiNodeService.getNode(wikiNodeId);
 
-		return _toWikiNode(
-			_wikiNodeService.updateNode(
-				wikiNodeId, wikiNode.getName(), wikiNode.getDescription(),
-				ServiceContextRequestUtil.createServiceContext(
-					serviceBuilderWikiNode.getGroupId(),
-					contextHttpServletRequest,
-					wikiNode.getViewableByAsString())));
+		return _updateWikiNode(serviceBuilderWikiNode, wikiNode);
 	}
 
 	@Override
@@ -152,7 +191,7 @@ public class WikiNodeResourceImpl
 
 	@Override
 	protected String getPermissionCheckerPortletName(Object id) {
-		return "com.liferay.wiki";
+		return WikiConstants.RESOURCE_NAME;
 	}
 
 	@Override
@@ -160,58 +199,80 @@ public class WikiNodeResourceImpl
 		return com.liferay.wiki.model.WikiNode.class.getName();
 	}
 
+	private com.liferay.wiki.model.WikiNode _getWikiNodeByExternalReferenceCode(
+			String externalReferenceCode, long siteId)
+		throws Exception {
+
+		com.liferay.wiki.model.WikiNode wikiNode =
+			_wikiNodeLocalService.fetchWikiNodeByExternalReferenceCode(
+				siteId, externalReferenceCode);
+
+		if (wikiNode == null) {
+			throw new NoSuchNodeException(
+				"No wiki node exists with external reference code" +
+					externalReferenceCode);
+		}
+
+		return wikiNode;
+	}
+
 	private WikiNode _toWikiNode(com.liferay.wiki.model.WikiNode wikiNode)
 		throws Exception {
 
-		return new WikiNode() {
-			{
-				actions = HashMapBuilder.put(
-					"delete", addAction("DELETE", wikiNode, "deleteWikiNode")
+		return _wikiNodeDTOConverter.toDTO(
+			new DefaultDTOConverterContext(
+				contextAcceptLanguage.isAcceptAllLanguages(),
+				HashMapBuilder.put(
+					"delete",
+					addAction(ActionKeys.DELETE, wikiNode, "deleteWikiNode")
 				).put(
-					"get", addAction("VIEW", wikiNode, "getWikiNode")
+					"get", addAction(ActionKeys.VIEW, wikiNode, "getWikiNode")
 				).put(
-					"replace", addAction("UPDATE", wikiNode, "putWikiNode")
+					"replace",
+					addAction(ActionKeys.UPDATE, wikiNode, "putWikiNode")
 				).put(
 					"subscribe",
-					addAction("SUBSCRIBE", wikiNode, "putWikiNodeSubscribe")
+					addAction(
+						ActionKeys.SUBSCRIBE, wikiNode, "putWikiNodeSubscribe")
 				).put(
 					"unsubscribe",
-					addAction("SUBSCRIBE", wikiNode, "putWikiNodeUnsubscribe")
-				).build();
-				creator = CreatorUtil.toCreator(
-					_portal, Optional.of(contextUriInfo),
-					_userLocalService.fetchUser(wikiNode.getUserId()));
-				dateCreated = wikiNode.getCreateDate();
-				dateModified = wikiNode.getModifiedDate();
-				description = wikiNode.getDescription();
-				id = wikiNode.getNodeId();
-				name = wikiNode.getName();
-				numberOfWikiPages = _wikiPageService.getPagesCount(
-					wikiNode.getGroupId(), wikiNode.getNodeId(), true);
-				siteId = wikiNode.getGroupId();
-				subscribed = _subscriptionLocalService.isSubscribed(
-					wikiNode.getCompanyId(), contextUser.getUserId(),
-					com.liferay.wiki.model.WikiNode.class.getName(),
-					wikiNode.getNodeId());
-			}
-		};
+					addAction(
+						ActionKeys.SUBSCRIBE, wikiNode,
+						"putWikiNodeUnsubscribe")
+				).build(),
+				_dtoConverterRegistry, wikiNode.getNodeId(),
+				contextAcceptLanguage.getPreferredLocale(), contextUriInfo,
+				contextUser),
+			wikiNode);
+	}
+
+	private WikiNode _updateWikiNode(
+			com.liferay.wiki.model.WikiNode serviceBuilderWikiNode,
+			WikiNode wikiNode)
+		throws Exception {
+
+		return _toWikiNode(
+			_wikiNodeService.updateNode(
+				serviceBuilderWikiNode.getNodeId(), wikiNode.getName(),
+				wikiNode.getDescription(),
+				ServiceContextRequestUtil.createServiceContext(
+					serviceBuilderWikiNode.getGroupId(),
+					contextHttpServletRequest,
+					wikiNode.getViewableByAsString())));
 	}
 
 	private static final EntityModel _entityModel = new WikiNodeEntityModel();
 
 	@Reference
-	private Portal _portal;
+	private DTOConverterRegistry _dtoConverterRegistry;
 
 	@Reference
-	private SubscriptionLocalService _subscriptionLocalService;
+	private WikiNodeDTOConverter _wikiNodeDTOConverter;
 
 	@Reference
-	private UserLocalService _userLocalService;
+	private WikiNodeLocalService _wikiNodeLocalService;
 
 	@Reference
 	private WikiNodeService _wikiNodeService;
-
-	@Reference
-	private WikiPageService _wikiPageService;
 
 }

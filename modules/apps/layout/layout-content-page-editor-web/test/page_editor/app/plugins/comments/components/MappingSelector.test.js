@@ -24,26 +24,54 @@ import {
 } from '@testing-library/react';
 import React from 'react';
 
-import {useCollectionConfig} from '../../../../../../src/main/resources/META-INF/resources/page_editor/app/components/CollectionItemContext';
 import {EDITABLE_FRAGMENT_ENTRY_PROCESSOR} from '../../../../../../src/main/resources/META-INF/resources/page_editor/app/config/constants/editableFragmentEntryProcessor';
 import {LAYOUT_TYPES} from '../../../../../../src/main/resources/META-INF/resources/page_editor/app/config/constants/layoutTypes';
 import {config} from '../../../../../../src/main/resources/META-INF/resources/page_editor/app/config/index';
+import {useCollectionConfig} from '../../../../../../src/main/resources/META-INF/resources/page_editor/app/contexts/CollectionItemContext';
+import {StoreAPIContextProvider} from '../../../../../../src/main/resources/META-INF/resources/page_editor/app/contexts/StoreContext';
 import CollectionService from '../../../../../../src/main/resources/META-INF/resources/page_editor/app/services/CollectionService';
 import InfoItemService from '../../../../../../src/main/resources/META-INF/resources/page_editor/app/services/InfoItemService';
-import {StoreAPIContextProvider} from '../../../../../../src/main/resources/META-INF/resources/page_editor/app/store/index';
 import MappingSelector from '../../../../../../src/main/resources/META-INF/resources/page_editor/common/components/MappingSelector';
+
+const defaultMappingFields = {
+	'InfoItemClassNameId-infoItemClassTypeId': [
+		{
+			fields: [
+				{key: 'unmapped', label: 'unmapped'},
+				{
+					key: 'text-field-1',
+					label: 'Text Field 1',
+					type: 'text',
+				},
+			],
+		},
+	],
+	'mappingType-mappingSubtype': [
+		{
+			fields: [
+				{
+					key: 'structure-field-1',
+					label: 'Structure Field 1',
+					type: 'text',
+				},
+			],
+		},
+	],
+};
 
 const infoItem = {
 	className: 'InfoItemClassName',
 	classNameId: 'InfoItemClassNameId',
 	classPK: 'infoItemClassPK',
+	classTypeId: 'infoItemClassTypeId',
 	title: 'Info Item',
 };
 
 const emptyCollectionConfig = {
 	collection: {
-		itemSubtype: '',
-		itemType: '',
+		classNameId: 'collectionClassNameId',
+		itemSubtype: 'collectionItemSubtype',
+		itemType: 'collectionItemType',
 	},
 };
 
@@ -54,11 +82,11 @@ jest.mock(
 			layoutType: '0',
 			selectedMappingTypes: {
 				subtype: {
-					id: '0',
+					id: 'mappingSubtype',
 					label: 'mappingSubtype',
 				},
 				type: {
-					id: '1',
+					id: 'mappingType',
 					label: 'mappingType',
 				},
 			},
@@ -112,13 +140,17 @@ jest.mock(
 );
 
 jest.mock(
-	'../../../../../../src/main/resources/META-INF/resources/page_editor/app/components/CollectionItemContext',
+	'../../../../../../src/main/resources/META-INF/resources/page_editor/app/contexts/CollectionItemContext',
 	() => ({
 		useCollectionConfig: jest.fn(),
 	})
 );
 
-function renderMappingSelector({mappedItem = {}, onMappingSelect = () => {}}) {
+function renderMappingSelector({
+	mappedItem = {},
+	mappingFields = defaultMappingFields,
+	onMappingSelect = () => {},
+}) {
 	const state = {
 		fragmentEntryLinks: {
 			0: {
@@ -131,7 +163,18 @@ function renderMappingSelector({mappedItem = {}, onMappingSelect = () => {}}) {
 				},
 			},
 		},
-		mappedInfoItems: [],
+		mappedInfoItems: [
+			{
+				classNameId: 'mappedItemClassNameId',
+				classPK: 'mappedItemClassPK',
+				classTypeId: 'mappedItemClassTypeId',
+				itemSubtype: 'Mapped Item Subtype',
+				itemType: 'Mapped Item Type',
+				title: 'mappedItemTitle',
+			},
+		],
+		mappingFields,
+		pageContents: [],
 		segmentsExperienceId: 0,
 	};
 
@@ -225,6 +268,7 @@ describe('MappingSelector', () => {
 			className: 'InfoItemClassName',
 			classNameId: 'InfoItemClassNameId',
 			classPK: 'infoItemClassPK',
+			classTypeId: 'infoItemClassTypeId',
 			fieldId: 'text-field-1',
 			title: 'Info Item',
 		});
@@ -302,7 +346,15 @@ describe('MappingSelector', () => {
 		);
 
 		await act(async () => {
-			renderMappingSelector({});
+			renderMappingSelector({
+				mappingFields: {
+					'collectionClassNameId-collectionItemSubtype': [
+						{
+							fields: collectionFields,
+						},
+					],
+				},
+			});
 		});
 
 		expect(queryByText(document.body, 'source')).not.toBeInTheDocument();
@@ -329,6 +381,9 @@ describe('MappingSelector', () => {
 		await act(async () => {
 			renderMappingSelector({
 				mappedItem: infoItem,
+				mappingFields: {
+					'InfoItemClassNameId-infoItemClassTypeId': [],
+				},
 			});
 		});
 
@@ -340,6 +395,27 @@ describe('MappingSelector', () => {
 				document.body,
 				'no-fields-are-available-for-x-editable-text'
 			)
+		).toBeInTheDocument();
+	});
+
+	it('shows type and subtype label when some item is mapped', async () => {
+		config.layoutType = LAYOUT_TYPES.content;
+
+		await act(async () => {
+			renderMappingSelector({
+				mappedItem: {
+					classNameId: 'mappedItemClassNameId',
+					classPK: 'mappedItemClassPK',
+				},
+			});
+		});
+
+		expect(
+			getByText(document.body, 'Mapped Item Type')
+		).toBeInTheDocument();
+
+		expect(
+			getByText(document.body, 'Mapped Item Subtype')
 		).toBeInTheDocument();
 	});
 });

@@ -52,7 +52,6 @@ import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.LocalizationUtil;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
@@ -63,7 +62,6 @@ import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.kernel.xml.UnsecureSAXReaderUtil;
-import com.liferay.portal.util.HtmlImpl;
 import com.liferay.portal.util.LocalizationImpl;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.xml.SAXReaderImpl;
@@ -207,6 +205,18 @@ public abstract class BaseDDMTestCase extends PowerMockito {
 		addTextDDMFormFields(ddmForm, fieldNames);
 
 		return ddmForm;
+	}
+
+	protected DDMFormFieldValue createDDMFormFieldValue(
+		DDMFormValues ddmFormValues, String instanceId, String name,
+		Value value) {
+
+		DDMFormFieldValue ddmFormFieldValue = createDDMFormFieldValue(
+			instanceId, name, value);
+
+		ddmFormFieldValue.setDDMFormValues(ddmFormValues);
+
+		return ddmFormFieldValue;
 	}
 
 	protected DDMFormFieldValue createDDMFormFieldValue(
@@ -692,12 +702,6 @@ public abstract class BaseDDMTestCase extends PowerMockito {
 
 			}
 		);
-	}
-
-	protected void setUpHtmlUtil() {
-		HtmlUtil htmlUtil = new HtmlUtil();
-
-		htmlUtil.setHtml(new HtmlImpl());
 	}
 
 	protected void setUpJSONFactoryUtil() {

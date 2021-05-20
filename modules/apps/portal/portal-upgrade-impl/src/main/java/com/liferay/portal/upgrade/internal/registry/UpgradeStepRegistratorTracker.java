@@ -15,7 +15,7 @@
 package com.liferay.portal.upgrade.internal.registry;
 
 import com.liferay.osgi.util.ServiceTrackerFactory;
-import com.liferay.petra.lang.SafeClosable;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.configuration.Configuration;
 import com.liferay.portal.kernel.configuration.ConfigurationFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -23,7 +23,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.service.ReleaseLocalService;
 import com.liferay.portal.kernel.upgrade.UpgradeStep;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.output.stream.container.constants.OutputStreamContainerConstants;
 import com.liferay.portal.upgrade.internal.executor.SwappedLogExecutor;
 import com.liferay.portal.upgrade.internal.executor.UpgradeExecutor;
@@ -32,7 +32,6 @@ import com.liferay.portal.util.PropsValues;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Dictionary;
 import java.util.List;
 import java.util.Properties;
 
@@ -152,29 +151,27 @@ public class UpgradeStepRegistratorTracker {
 			List<ServiceRegistration<UpgradeStep>> serviceRegistrations =
 				new ArrayList<>(upgradeInfos.size());
 
-			try (SafeClosable safeClosable =
+			try (SafeCloseable safeCloseable =
 					UpgradeStepRegistratorThreadLocal.setEnabled(false)) {
 
 				for (UpgradeInfo upgradeInfo : upgradeInfos) {
-					Dictionary<String, Object> properties =
-						new HashMapDictionary<>();
-
-					properties.put(
-						"build.number", upgradeInfo.getBuildNumber());
-					properties.put(
-						"upgrade.bundle.symbolic.name", bundleSymbolicName);
-					properties.put("upgrade.db.type", "any");
-					properties.put(
-						"upgrade.from.schema.version",
-						upgradeInfo.getFromSchemaVersionString());
-					properties.put(
-						"upgrade.to.schema.version",
-						upgradeInfo.getToSchemaVersionString());
-
 					ServiceRegistration<UpgradeStep> serviceRegistration =
 						_bundleContext.registerService(
 							UpgradeStep.class, upgradeInfo.getUpgradeStep(),
-							properties);
+							HashMapDictionaryBuilder.<String, Object>put(
+								"build.number", upgradeInfo.getBuildNumber()
+							).put(
+								"upgrade.bundle.symbolic.name",
+								bundleSymbolicName
+							).put(
+								"upgrade.db.type", "any"
+							).put(
+								"upgrade.from.schema.version",
+								upgradeInfo.getFromSchemaVersionString()
+							).put(
+								"upgrade.to.schema.version",
+								upgradeInfo.getToSchemaVersionString()
+							).build());
 
 					serviceRegistrations.add(serviceRegistration);
 				}

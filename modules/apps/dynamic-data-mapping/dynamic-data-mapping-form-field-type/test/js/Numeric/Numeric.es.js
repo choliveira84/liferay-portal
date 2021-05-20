@@ -13,7 +13,7 @@
  */
 
 import {act, cleanup, fireEvent, render} from '@testing-library/react';
-import {PageProvider} from 'dynamic-data-mapping-form-renderer';
+import {PageProvider} from 'data-engine-js-components-web';
 import React from 'react';
 
 import Numeric from '../../../src/main/resources/META-INF/resources/Numeric/Numeric.es';
@@ -287,6 +287,7 @@ describe('Field Numeric', () => {
 				{...defaultNumericConfig}
 				dataType="integer"
 				onChange={jest.fn()}
+				symbols={{decimalSymbol: ','}}
 				value="22,82"
 			/>
 		);

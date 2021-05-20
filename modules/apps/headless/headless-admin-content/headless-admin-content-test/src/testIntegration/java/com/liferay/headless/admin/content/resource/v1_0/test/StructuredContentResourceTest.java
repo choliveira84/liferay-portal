@@ -82,9 +82,8 @@ public class StructuredContentResourceTest
 			testGroup.getGroupId(), randomStructuredContent());
 
 		Page<StructuredContent> structuredContentsVersionsPage =
-			structuredContentResource.
-				getStructuredContentsStructuredContentPage(
-					structuredContent.getId());
+			structuredContentResource.getStructuredContentsVersionsPage(
+				structuredContent.getId());
 
 		Assert.assertEquals(1L, structuredContentsVersionsPage.getTotalCount());
 
@@ -112,17 +111,14 @@ public class StructuredContentResourceTest
 
 	@Override
 	@Test
-	public void testGetStructuredContentsStructuredContentPage()
-		throws Exception {
-
+	public void testGetStructuredContentsVersionsPage() throws Exception {
 		StructuredContent structuredContent = _postSiteStructuredContent(
 			testGroup.getGroupId(), randomStructuredContent());
 
 		Long id = structuredContent.getId();
 
 		Page<StructuredContent> structuredContentsVersionsPage =
-			structuredContentResource.
-				getStructuredContentsStructuredContentPage(id);
+			structuredContentResource.getStructuredContentsVersionsPage(id);
 
 		Assert.assertEquals(1L, structuredContentsVersionsPage.getTotalCount());
 
@@ -130,8 +126,7 @@ public class StructuredContentResourceTest
 			id, _toStructuredContent(structuredContent));
 
 		structuredContentsVersionsPage =
-			structuredContentResource.
-				getStructuredContentsStructuredContentPage(id);
+			structuredContentResource.getStructuredContentsVersionsPage(id);
 
 		Assert.assertEquals(2L, structuredContentsVersionsPage.getTotalCount());
 	}
@@ -240,6 +235,16 @@ public class StructuredContentResourceTest
 			testGroup.getGroupId(), randomStructuredContent());
 	}
 
+	@Override
+	protected StructuredContent
+			testPostSiteStructuredContentDraft_addStructuredContent(
+				StructuredContent structuredContent)
+		throws Exception {
+
+		return _postSiteStructuredContent(
+			testGroup.getGroupId(), structuredContent);
+	}
+
 	private DDMStructure _addDDMStructure(Group group, String fileName)
 		throws Exception {
 
@@ -311,7 +316,10 @@ public class StructuredContentResourceTest
 			{
 				setContentStructureId(
 					structuredContent.getContentStructureId());
+				setDateCreated(structuredContent.getDateCreated());
+				setDateModified(structuredContent.getDateModified());
 				setId(structuredContent.getId());
+				setSiteId(structuredContent.getSiteId());
 				setTitle(structuredContent.getTitle());
 			}
 		};

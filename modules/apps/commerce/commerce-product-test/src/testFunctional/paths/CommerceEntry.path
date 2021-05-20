@@ -44,6 +44,11 @@
 	<td></td>
 </tr>
 <tr>
+	<td>CHANGE_TAX_CATEGORY</td>
+	<td>//label[text()='Shipping Tax Category']/..//input[@type='text']</td>
+	<td></td>
+</tr>
+<tr>
 	<td>CODE_FIELD</td>
 	<td>//div/input[contains(@id,'regionCode')]</td>
 	<td></td>
@@ -229,6 +234,11 @@
 	<td></td>
 </tr>
 <tr>
+  <td>PRODUCT_SKU_CONFIGURATION_AVAILABLE_QUANTITY</td>
+  <td>//div[contains(@class,'dnd-table fixed table-style-stacked')]//descendant::div[16][contains(text(),'${key_productQuantity}')]</td>
+  <td></td>
+</tr>
+<tr>
 	<td>RADIO_BUTTON</td>
 	<td>//label[contains(.,'${key_radioOption}')]/input[@type='radio']</td>
 	<td></td>
@@ -390,12 +400,17 @@
 </tr>
 <tr>
 	<td>BODY_VERTICAL_ELLIPSIS</td>
-	<td>//div[@class='table-list-title']/a[contains(.,'${key_value}')]/../../../div//*[name()='svg'][contains(@class,'icon-ellipsis')]</td>
+	<td>//div[@class='table-list-title']/../../../*[contains(.,'${key_value}')]//*[name()='svg'][contains(@class,'icon-ellipsis')]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>CHANNEL_TYPE_VALUE</td>
 	<td>//header[contains(., 'Type')]/../div[@class='description']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>CHANNELS_GENERAL_ACTIVE_STATUS</td>
+	<td>//div[contains(text(),'${key_entryName}')]/following-sibling::div/span[contains(@class,'label-success')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -525,6 +540,27 @@
 	<td>//h4[contains(.,'Attachments')]//..//button[contains(@class,'btn-primary')]</td>
 	<td></td>
 </tr>
+<!--ORDER-->
+<tr>
+	<td>ACTIVE_ORDER_ID</td>
+	<td>//span[@class='order-id']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>SEARCH_ORDER_ID</td>
+	<td>//input[@type='text'][contains(@class,'form-control')][contains(@placeholder,'Search Order')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>SEARCH_ORDER_ID_RESULT</td>
+	<td>//p[@class='table-list-title' and contains(.,'${key_entryName}')]/a</td>
+	<td></td>    
+</tr>
+<tr>
+	<td>ORDER_ID_FIRST_RESULT</td>
+	<td>(//*[contains(@class, 'table-list-title')])[1]/a</td>
+	<td></td>    
+</tr>
 <!--PRODUCT-->
 <tr>
 	<td>ANY_AUTOCOMPLETE_TEXT_FIELD</td>
@@ -595,7 +631,7 @@
 <tr>
 	<td>HEALTH_CHECK_ICON_CHECK_N</td>
 	<td>//div[contains(@class,'commerce-health-status-check-row-icon-check${key_value}')][not(contains(@class,'hide'))]</td>
-	<td></td>
+	<td></td> 
 </tr>
 <tr>
 	<td>MODAL_BUTTON_CLOSE</td>
@@ -614,7 +650,27 @@
 </tr>
 <tr>
 	<td>ENTRY_SUBSCRIPTIONS</td>
-	<td>//h4[contains(text(), '${key_entryName}')]</td>
+	<td>//h4[contains(text(),'${key_entryName}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>WAREHOUSE_GEOLOCATION</td>
+	<td>//div[contains(@id,'geolocationTitle')]</td>
+	<td></td>
+</tr>  
+<tr>
+	<td>INVENTORY_INPUT</td>
+	<td>//table//tr[contains(.,'${key_inventoryName}')]//input</td>
+	<td></td>
+</tr>
+<tr>
+	<td>WAREHOUSE_INVENTORY_ITEM_QUANTITY</td>
+	<td>//input[contains(@id,'_com_liferay_commerce_product_definitions_web_internal_portlet_CPDefinitionsPortlet_commerceInventoryWarehouseItemQuantity${key_value1}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>INVENTORY_BY_WAREHOUSE_AVAILABLE_LABEL</td>
+	<td>//div[contains(@class,'dnd-tbody')]//div[contains(@class,'dnd-td')][3]</td>
 	<td></td>
 </tr>
 </tbody>

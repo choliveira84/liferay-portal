@@ -14,13 +14,14 @@
 
 package com.liferay.headless.commerce.admin.catalog.internal.resource.v1_0;
 
+import com.liferay.asset.kernel.model.AssetTag;
 import com.liferay.asset.kernel.service.AssetCategoryLocalService;
+import com.liferay.asset.kernel.service.AssetTagService;
 import com.liferay.commerce.product.constants.CPAttachmentFileEntryConstants;
 import com.liferay.commerce.product.exception.NoSuchCPDefinitionException;
 import com.liferay.commerce.product.exception.NoSuchCatalogException;
 import com.liferay.commerce.product.model.CPDefinition;
 import com.liferay.commerce.product.model.CPDefinitionOptionRel;
-import com.liferay.commerce.product.model.CPDefinitionSpecificationOptionValue;
 import com.liferay.commerce.product.model.CommerceCatalog;
 import com.liferay.commerce.product.service.CPAttachmentFileEntryService;
 import com.liferay.commerce.product.service.CPDefinitionLinkService;
@@ -327,6 +328,16 @@ public class ProductResourceImpl
 		return _toProduct(cpDefinition.getCPDefinitionId());
 	}
 
+	@Override
+	public void update(
+			Collection<Product> products, Map<String, Serializable> parameters)
+		throws Exception {
+
+		for (Product product : products) {
+			patchProduct(product.getProductId(), product);
+		}
+	}
+
 	private CPDefinition _addOrUpdateProduct(Product product) throws Exception {
 		CommerceCatalog commerceCatalog =
 			_commerceCatalogLocalService.getCommerceCatalog(
@@ -334,6 +345,14 @@ public class ProductResourceImpl
 
 		ServiceContext serviceContext = _serviceContextHelper.getServiceContext(
 			commerceCatalog.getGroupId());
+
+		String[] assetTagNames = new String[0];
+
+		if (product.getTags() != null) {
+			assetTagNames = product.getTags();
+		}
+
+		serviceContext.setAssetTagNames(assetTagNames);
 
 		Calendar displayCalendar = CalendarFactoryUtil.getCalendar(
 			serviceContext.getTimeZone());
@@ -479,6 +498,19 @@ public class ProductResourceImpl
 		).build();
 	}
 
+	private String[] _getAssetTags(CPDefinition cpDefinition) {
+		List<AssetTag> assetEntryAssetTags = _assetTagService.getTags(
+			cpDefinition.getModelClassName(), cpDefinition.getCPDefinitionId());
+
+		Stream<AssetTag> stream = assetEntryAssetTags.stream();
+
+		return stream.map(
+			AssetTag::getName
+		).toArray(
+			String[]::new
+		);
+	}
+
 	private ProductShippingConfiguration _getProductShippingConfiguration(
 		Product product) {
 
@@ -620,34 +652,19 @@ public class ProductResourceImpl
 			product.getProductSpecifications();
 
 		if (productSpecifications != null) {
+			_cpDefinitionSpecificationOptionValueService.
+				deleteCPDefinitionSpecificationOptionValues(
+					cpDefinition.getCPDefinitionId());
+
 			for (ProductSpecification productSpecification :
 					productSpecifications) {
 
-				CPDefinitionSpecificationOptionValue
-					cpDefinitionSpecificationOptionValue = null;
-
-				if (productSpecification.getId() != null) {
-					cpDefinitionSpecificationOptionValue =
-						_cpDefinitionSpecificationOptionValueService.
-							fetchCPDefinitionSpecificationOptionValue(
-								productSpecification.getId());
-				}
-
-				if (cpDefinitionSpecificationOptionValue == null) {
-					ProductSpecificationUtil.
-						addCPDefinitionSpecificationOptionValue(
-							_cpDefinitionSpecificationOptionValueService,
-							_cpSpecificationOptionService,
-							cpDefinition.getCPDefinitionId(),
-							productSpecification, serviceContext);
-				}
-				else {
-					ProductSpecificationUtil.
-						updateCPDefinitionSpecificationOptionValue(
-							_cpDefinitionSpecificationOptionValueService,
-							cpDefinitionSpecificationOptionValue,
-							productSpecification, serviceContext);
-				}
+				ProductSpecificationUtil.
+					addCPDefinitionSpecificationOptionValue(
+						_cpDefinitionSpecificationOptionValueService,
+						_cpSpecificationOptionService,
+						cpDefinition.getCPDefinitionId(), productSpecification,
+						serviceContext);
 			}
 		}
 
@@ -758,6 +775,14 @@ public class ProductResourceImpl
 		ServiceContext serviceContext = _serviceContextHelper.getServiceContext(
 			cpDefinition.getGroupId());
 
+		String[] assetTags = product.getTags();
+
+		if (product.getTags() == null) {
+			assetTags = _getAssetTags(cpDefinition);
+		}
+
+		serviceContext.setAssetTagNames(assetTags);
+
 		Calendar displayCalendar = CalendarFactoryUtil.getCalendar(
 			serviceContext.getTimeZone());
 
@@ -844,6 +869,9 @@ public class ProductResourceImpl
 
 	@Reference
 	private AssetCategoryLocalService _assetCategoryLocalService;
+
+	@Reference
+	private AssetTagService _assetTagService;
 
 	@Reference
 	private ClassNameLocalService _classNameLocalService;

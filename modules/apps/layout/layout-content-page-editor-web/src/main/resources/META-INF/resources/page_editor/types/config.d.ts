@@ -99,6 +99,7 @@ export interface Config {
 	discardDraftRedirectURL: string;
 	discardDraftURL: string;
 	draft: boolean;
+	dropdownWidgetTopperEnabled: boolean;
 	duplicateItemURL: string;
 	duplicateSegmentsExperienceURL: string;
 	editFragmentEntryLinkCommentURL: string;
@@ -193,5 +194,6 @@ export interface Config {
 	updateRowColumnsURL: string;
 	updateSegmentsExperiencePriorityURL: string;
 	updateSegmentsExperienceURL: string;
+	videoItemSelectorURL: string;
 	workflowEnabled: boolean;
 }

@@ -18,21 +18,26 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React, {useEffect, useRef} from 'react';
 
-import {useToControlsId} from '../../../../../app/components/CollectionItemContext';
+import {addMappingFields} from '../../../../../app/actions/index';
+import {fromControlsId} from '../../../../../app/components/layout-data-items/Collection';
+import {ITEM_ACTIVATION_ORIGINS} from '../../../../../app/config/constants/itemActivationOrigins';
+import {ITEM_TYPES} from '../../../../../app/config/constants/itemTypes';
+import {LAYOUT_DATA_ITEM_TYPES} from '../../../../../app/config/constants/layoutDataItemTypes';
+import {useToControlsId} from '../../../../../app/contexts/CollectionItemContext';
 import {
 	useActivationOrigin,
 	useActiveItemId,
 	useHoverItem,
 	useHoveredItemId,
 	useSelectItem,
-} from '../../../../../app/components/Controls';
-import {fromControlsId} from '../../../../../app/components/layout-data-items/Collection';
-import {ITEM_ACTIVATION_ORIGINS} from '../../../../../app/config/constants/itemActivationOrigins';
-import {ITEM_TYPES} from '../../../../../app/config/constants/itemTypes';
-import {LAYOUT_DATA_ITEM_TYPES} from '../../../../../app/config/constants/layoutDataItemTypes';
+} from '../../../../../app/contexts/ControlsContext';
+import {
+	useDispatch,
+	useSelector,
+} from '../../../../../app/contexts/StoreContext';
 import selectCanUpdatePageStructure from '../../../../../app/selectors/selectCanUpdatePageStructure';
 import selectSegmentsExperienceId from '../../../../../app/selectors/selectSegmentsExperienceId';
-import {useDispatch, useSelector} from '../../../../../app/store/index';
+import CollectionService from '../../../../../app/services/CollectionService';
 import deleteItem from '../../../../../app/thunks/deleteItem';
 import moveItem from '../../../../../app/thunks/moveItem';
 import {deepEqual} from '../../../../../app/utils/checkDeepEqual';
@@ -50,20 +55,82 @@ import {
 	useDragItem,
 	useDropTarget,
 } from '../../../../../app/utils/drag-and-drop/useDragAndDrop';
+import getMappingFieldsKey from '../../../../../app/utils/getMappingFieldsKey';
 
 const HOVER_EXPAND_DELAY = 1000;
+
+const loadCollectionFields = (
+	dispatch,
+	itemType,
+	itemSubtype,
+	mappingFieldsKey
+) => {
+	CollectionService.getCollectionMappingFields({
+		itemSubtype: itemSubtype || '',
+		itemType,
+		onNetworkStatus: () => {},
+	})
+		.then((response) => {
+			dispatch(
+				addMappingFields({
+					fields: response.mappingFields,
+					key: mappingFieldsKey,
+				})
+			);
+		})
+		.catch((error) => {
+			if (process.env.NODE_ENV === 'development') {
+				console.error(error);
+			}
+		});
+};
 
 export default function StructureTreeNode({node}) {
 	const activationOrigin = useActivationOrigin();
 	const activeItemId = useActiveItemId();
+	const dispatch = useDispatch();
 	const hoveredItemId = useHoveredItemId();
 	const isSelected = node.id === fromControlsId(activeItemId);
+
+	const fragmentEntryLinks = useSelector((state) => state.fragmentEntryLinks);
+	const layoutData = useSelector((state) => state.layoutData);
+	const masterLayoutData = useSelector(
+		(state) => state.masterLayout?.masterLayoutData
+	);
+	const mappingFields = useSelector((state) => state.mappingFields);
+
+	useEffect(() => {
+		if (node.type === LAYOUT_DATA_ITEM_TYPES.collection) {
+			const item =
+				layoutData.items[node.id] || masterLayoutData.items[node.id];
+
+			if (!item?.config?.collection) {
+				return;
+			}
+
+			const {classNameId, itemSubtype, itemType} = item.config.collection;
+
+			const key = getMappingFieldsKey(classNameId, itemSubtype);
+
+			if (!mappingFields[key]) {
+				loadCollectionFields(dispatch, itemType, itemSubtype, key);
+			}
+		}
+	}, [
+		layoutData,
+		masterLayoutData,
+		node,
+		dispatch,
+		mappingFields,
+		fragmentEntryLinks,
+	]);
 
 	return (
 		<MemoizedStructureTreeNodeContent
 			activationOrigin={isSelected ? activationOrigin : null}
 			isActive={node.activable && isSelected}
 			isHovered={node.id === fromControlsId(hoveredItemId)}
+			isMapped={node.mapped}
 			isSelected={isSelected}
 			node={node}
 		/>
@@ -91,6 +158,7 @@ function StructureTreeNodeContent({
 	activationOrigin,
 	isActive,
 	isHovered,
+	isMapped,
 	isSelected,
 	node,
 }) {
@@ -175,6 +243,7 @@ function StructureTreeNodeContent({
 					node.activable && node.itemType !== ITEM_TYPES.editable,
 				'page-editor__page-structure__tree-node--active': isActive,
 				'page-editor__page-structure__tree-node--hovered': isHovered,
+				'page-editor__page-structure__tree-node--mapped': isMapped,
 			})}
 			onMouseLeave={(event) => {
 				if (!isDraggingSource && isHovered) {
@@ -215,6 +284,7 @@ function StructureTreeNodeContent({
 				disabled={node.disabled}
 				icon={node.icon}
 				isActive={isActive}
+				isMapped={isMapped}
 				name={node.name}
 				ref={nodeRef}
 			/>
@@ -226,19 +296,25 @@ function StructureTreeNodeContent({
 	);
 }
 
-const NameLabel = React.forwardRef(({disabled, icon, isActive, name}, ref) => (
-	<div
-		className={classNames('page-editor__page-structure__tree-node__name', {
-			'page-editor__page-structure__tree-node__name--active': isActive,
-			'page-editor__page-structure__tree-node__name--disabled': disabled,
-		})}
-		ref={ref}
-	>
-		{icon && <ClayIcon symbol={icon || ''} />}
+const NameLabel = React.forwardRef(
+	({disabled, icon, isActive, isMapped, name}, ref) => (
+		<div
+			className={classNames(
+				'page-editor__page-structure__tree-node__name',
+				{
+					'page-editor__page-structure__tree-node__name--active': isActive,
+					'page-editor__page-structure__tree-node__name--disabled': disabled,
+					'page-editor__page-structure__tree-node__name--mapped': isMapped,
+				}
+			)}
+			ref={ref}
+		>
+			{icon && <ClayIcon symbol={icon || ''} />}
 
-		{name || Liferay.Language.get('element')}
-	</div>
-));
+			{name || Liferay.Language.get('element')}
+		</div>
+	)
+);
 
 const RemoveButton = ({node, visible}) => {
 	const dispatch = useDispatch();

@@ -54,13 +54,16 @@ public class ProjectTemplatesSpringPortletMVCTest
 				{"springportletmvc", "embedded", "jsp", "7.0.6"},
 				{"springportletmvc", "embedded", "jsp", "7.1.3"},
 				{"springportletmvc", "embedded", "jsp", "7.2.1"},
-				{"springportletmvc", "embedded", "jsp", "7.3.5"},
+				{"springportletmvc", "embedded", "jsp", "7.3.6"},
+				{"springportletmvc", "embedded", "jsp", "7.4.0"},
 				{"portletmvc4spring", "embedded", "jsp", "7.1.3"},
 				{"portletmvc4spring", "embedded", "jsp", "7.2.1"},
-				{"portletmvc4spring", "embedded", "jsp", "7.3.5"},
+				{"portletmvc4spring", "embedded", "jsp", "7.3.6"},
+				{"portletmvc4spring", "embedded", "jsp", "7.4.0"},
 				{"portletmvc4spring", "embedded", "thymeleaf", "7.1.3"},
 				{"portletmvc4spring", "embedded", "thymeleaf", "7.2.1"},
-				{"portletmvc4spring", "embedded", "thymeleaf", "7.3.5"}
+				{"portletmvc4spring", "embedded", "thymeleaf", "7.3.6"},
+				{"portletmvc4spring", "embedded", "thymeleaf", "7.4.0"}
 			});
 	}
 
@@ -121,10 +124,6 @@ public class ProjectTemplatesSpringPortletMVCTest
 			testContains(
 				gradleProjectDir, "src/main/webapp/WEB-INF/liferay-portlet.xml",
 				"liferay-portlet-app_7_0_0.dtd");
-
-			testContains(
-				gradleProjectDir, "src/main/webapp/WEB-INF/web.xml",
-				"version=\"3.0\" xmlns=\"http://java.sun.com/xml/ns/javaee");
 		}
 		else if (_liferayVersion.equals("7.1.3")) {
 			testContains(
@@ -134,10 +133,6 @@ public class ProjectTemplatesSpringPortletMVCTest
 			testContains(
 				gradleProjectDir, "src/main/webapp/WEB-INF/liferay-portlet.xml",
 				"liferay-portlet-app_7_1_0.dtd");
-
-			testContains(
-				gradleProjectDir, "src/main/webapp/WEB-INF/web.xml",
-				"version=\"3.1\" xmlns=\"http://xmlns.jcp.org/xml/ns/javaee\"");
 		}
 		else if (_liferayVersion.equals("7.2.1")) {
 			testContains(
@@ -147,9 +142,6 @@ public class ProjectTemplatesSpringPortletMVCTest
 			testContains(
 				gradleProjectDir, "src/main/webapp/WEB-INF/liferay-portlet.xml",
 				"liferay-portlet-app_7_2_0.dtd");
-			testContains(
-				gradleProjectDir, "src/main/webapp/WEB-INF/web.xml",
-				"version=\"3.1\" xmlns=\"http://xmlns.jcp.org/xml/ns/javaee\"");
 		}
 		else if (_liferayVersion.startsWith("7.3")) {
 			testContains(
@@ -159,6 +151,23 @@ public class ProjectTemplatesSpringPortletMVCTest
 			testContains(
 				gradleProjectDir, "src/main/webapp/WEB-INF/liferay-portlet.xml",
 				"liferay-portlet-app_7_3_0.dtd");
+		}
+		else if (_liferayVersion.startsWith("7.4")) {
+			testContains(
+				gradleProjectDir, "src/main/webapp/WEB-INF/liferay-display.xml",
+				"liferay-display_7_4_0.dtd");
+
+			testContains(
+				gradleProjectDir, "src/main/webapp/WEB-INF/liferay-portlet.xml",
+				"liferay-portlet-app_7_4_0.dtd");
+		}
+
+		if (_liferayVersion.startsWith("7.0")) {
+			testContains(
+				gradleProjectDir, "src/main/webapp/WEB-INF/web.xml",
+				"version=\"3.0\" xmlns=\"http://java.sun.com/xml/ns/javaee");
+		}
+		else {
 			testContains(
 				gradleProjectDir, "src/main/webapp/WEB-INF/web.xml",
 				"version=\"3.1\" xmlns=\"http://xmlns.jcp.org/xml/ns/javaee\"");

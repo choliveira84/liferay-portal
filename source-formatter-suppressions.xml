@@ -34,6 +34,7 @@
 		<suppress checks="MapBuilderCheck" files="portal-kernel/src/com/liferay/ratings/kernel/display/context/GroupPortletRatingsDefinitionDisplayContext\.java" />
 		<suppress checks="MapBuilderCheck" files="portal-kernel/test/unit/com/liferay/portal/kernel/util/ConcurrentHashMapBuilderTest\.java" />
 		<suppress checks="MapBuilderCheck" files="portal-kernel/test/unit/com/liferay/portal/kernel/util/HashMapBuilderTest\.java" />
+		<suppress checks="MapBuilderCheck" files="portal-kernel/test/unit/com/liferay/portal/kernel/util/HashMapDictionaryBuilderTest\.java" />
 		<suppress checks="MapBuilderCheck" files="portal-kernel/test/unit/com/liferay/portal/kernel/util/LinkedHashMapBuilderTest\.java" />
 		<suppress checks="MapBuilderCheck" files="portal-kernel/test/unit/com/liferay/portal/kernel/util/TreeMapBuilderTest\.java" />
 		<suppress checks="MapBuilderCheck" files="portal-web/docroot/html/taglib/ui/input_move_boxes/page\.jsp" />
@@ -54,7 +55,6 @@
 		<suppress checks="MissingModifierCheck" files="portal-impl/test/unit/com/liferay/portal/nio/intraband/proxy/IntrabandProxyUtilTest\.java" />
 		<suppress checks="MissingModifierCheck" files="portal-kernel/src/com/liferay/portal/kernel/process/local/LocalProcessLog\.java" />
 		<suppress checks="MissingModifierCheck" files="portal-kernel/src/com/liferay/portal/kernel/process/local/ResultProcessCallable\.java" />
-		<suppress checks="ParsePrimitiveTypeCheck" files="support-tomcat/src/com/liferay/support/tomcat/jasper/runtime/TagHandlerPool\.java" />
 		<suppress checks="StaticVariableNameCheck" files="portal-impl/src/com/liferay/portal/language/LanguageResources\.java" />
 		<suppress checks="StaticVariableNameCheck" files="portal-impl/src/com/liferay/portal/security/auth/AuthVerifierPipeline\.java" />
 		<suppress checks="StaticVariableNameCheck" files="portal-impl/src/com/liferay/portal/util/PropsValues\.java" />

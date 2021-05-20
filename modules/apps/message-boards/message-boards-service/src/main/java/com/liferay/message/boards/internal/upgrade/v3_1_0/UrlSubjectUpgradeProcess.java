@@ -22,10 +22,8 @@ import com.liferay.portal.kernel.util.FriendlyURLNormalizerUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 
 /**
  * @author Javier Gamarra
@@ -40,34 +38,16 @@ public class UrlSubjectUpgradeProcess extends UpgradeProcess {
 				new AlterTableAddColumn("urlSubject", "VARCHAR(255) null"));
 		}
 
+		runSQL(
+			"create index IX_TEMP on MBMessage (subject[$COLUMN_LENGTH:75$]," +
+				"messageId)");
+
 		_populateUrlSubject();
+
+		runSQL("drop index IX_TEMP on MBMessage");
 	}
 
-	private String _findUniqueUrlSubject(Connection con, String urlSubject)
-		throws SQLException {
-
-		try (PreparedStatement ps = con.prepareStatement(
-				"select count(*) from MBMessage where urlSubject like ?")) {
-
-			ps.setString(1, urlSubject + "%");
-
-			try (ResultSet rs = ps.executeQuery()) {
-				if (!rs.next()) {
-					return urlSubject;
-				}
-
-				int mbMessageCount = rs.getInt(1);
-
-				if (mbMessageCount == 0) {
-					return urlSubject;
-				}
-
-				return urlSubject + StringPool.DASH + mbMessageCount;
-			}
-		}
-	}
-
-	private String _getUrlSubject(long id, String subject) {
+	private String _getURLSubject(long id, String subject) {
 		if (subject == null) {
 			return String.valueOf(id);
 		}
@@ -88,30 +68,45 @@ public class UrlSubjectUpgradeProcess extends UpgradeProcess {
 	}
 
 	private void _populateUrlSubject() throws Exception {
-		try (PreparedStatement ps1 = connection.prepareStatement(
-				"select messageId, subject from MBMessage where (urlSubject " +
-					"is null) or (urlSubject = '')");
-			ResultSet rs = ps1.executeQuery();
-			PreparedStatement ps2 = AutoBatchPreparedStatementUtil.autoBatch(
-				connection.prepareStatement(
-					"update MBMessage set urlSubject = ? where messageId = " +
-						"?"))) {
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
+				"select messageId, subject from MBMessage order by subject, " +
+					"messageId asc");
+			ResultSet resultSet = preparedStatement1.executeQuery();
+			PreparedStatement preparedStatement2 =
+				AutoBatchPreparedStatementUtil.autoBatch(
+					connection.prepareStatement(
+						"update MBMessage set urlSubject = ? where messageId " +
+							"= ?"))) {
 
-			while (rs.next()) {
-				long messageId = rs.getLong(1);
-				String subject = rs.getString(2);
+			int count = 0;
+			String curURLSubject = null;
+			String previousURLSubject = null;
 
-				String uniqueUrlSubject = _findUniqueUrlSubject(
-					connection, _getUrlSubject(messageId, subject));
+			while (resultSet.next()) {
+				long messageId = resultSet.getLong(1);
+				String subject = resultSet.getString(2);
 
-				ps2.setString(1, uniqueUrlSubject);
+				curURLSubject = _getURLSubject(messageId, subject);
 
-				ps2.setLong(2, messageId);
+				String suffix = null;
 
-				ps2.addBatch();
+				if (StringUtil.equals(previousURLSubject, curURLSubject)) {
+					count++;
+					suffix = StringPool.DASH + count;
+				}
+				else {
+					count = 0;
+					previousURLSubject = curURLSubject;
+					suffix = StringPool.BLANK;
+				}
+
+				preparedStatement2.setString(1, curURLSubject + suffix);
+				preparedStatement2.setLong(2, messageId);
+
+				preparedStatement2.addBatch();
 			}
 
-			ps2.executeBatch();
+			preparedStatement2.executeBatch();
 		}
 	}
 

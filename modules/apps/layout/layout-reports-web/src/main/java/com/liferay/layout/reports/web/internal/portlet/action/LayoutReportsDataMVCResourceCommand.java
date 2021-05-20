@@ -26,8 +26,8 @@ import com.liferay.layout.reports.web.internal.constants.LayoutReportsPortletKey
 import com.liferay.layout.reports.web.internal.data.provider.LayoutReportsDataProvider;
 import com.liferay.layout.seo.kernel.LayoutSEOLink;
 import com.liferay.layout.seo.kernel.LayoutSEOLinkManager;
+import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -36,8 +36,8 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
-import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
+import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCResourceCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCResourceCommand;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
@@ -59,20 +59,18 @@ import java.util.Objects;
 import java.util.Optional;
 
 import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
+import javax.portlet.PortletResponse;
 import javax.portlet.ResourceRequest;
 import javax.portlet.ResourceResponse;
+import javax.portlet.ResourceURL;
 
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Alejandro Tardín
  */
 @Component(
-	configurationPid = "com.liferay.layout.reports.web.internal.configuration.LayoutReportsGooglePageSpeedConfiguration",
 	immediate = true,
 	property = {
 		"javax.portlet.name=" + LayoutReportsPortletKeys.LAYOUT_REPORTS,
@@ -82,17 +80,6 @@ import org.osgi.service.component.annotations.Reference;
 )
 public class LayoutReportsDataMVCResourceCommand
 	extends BaseMVCResourceCommand {
-
-	@Activate
-	@Modified
-	protected void activate(Map<String, Object> properties) {
-		_layoutReportsGooglePageSpeedConfigurationProvider =
-			new LayoutReportsGooglePageSpeedConfigurationProvider(
-				_configurationProvider,
-				ConfigurableUtil.createConfigurable(
-					LayoutReportsGooglePageSpeedConfiguration.class,
-					properties));
-	}
 
 	@Override
 	protected void doServeResource(
@@ -113,17 +100,18 @@ public class LayoutReportsDataMVCResourceCommand
 		JSONPortletResponseUtil.writeJSON(
 			resourceRequest, resourceResponse,
 			JSONUtil.put(
-				"assetsPath",
-				_portal.getPathContext(resourceRequest) + "/assets/"
-			).put(
 				"canonicalURLs",
-				_getCanonicalURLsJSONArray(resourceRequest, layout)
+				_getCanonicalURLsJSONArray(
+					resourceRequest, resourceResponse, layout)
 			).put(
 				"configureGooglePageSpeedURL",
 				_getConfigureGooglePageSpeedURL(resourceRequest)
 			).put(
 				"defaultLanguageId",
 				LocaleUtil.toW3cLanguageId(_getDefaultLocale(layout))
+			).put(
+				"imagesPath",
+				_portal.getPathContext(resourceRequest) + "/images/"
 			).put(
 				"validConnection", layoutReportsDataProvider.isValidConnection()
 			));
@@ -158,7 +146,8 @@ public class LayoutReportsDataMVCResourceCommand
 	}
 
 	private JSONArray _getCanonicalURLsJSONArray(
-		PortletRequest portletRequest, Layout layout) {
+		PortletRequest portletRequest, PortletResponse portletResponse,
+		Layout layout) {
 
 		Locale defaultLocale = _getDefaultLocale(layout);
 
@@ -209,6 +198,10 @@ public class LayoutReportsDataMVCResourceCommand
 				).put(
 					"languageId", LocaleUtil.toW3cLanguageId(locale)
 				).put(
+					"layoutReportsIssuesURL",
+					_getResourceURL(
+						layout.getGroupId(), canonicalURL, portletResponse)
+				).put(
 					"title", _getTitle(portletRequest, layout, locale)
 				).build()
 			).toArray());
@@ -237,54 +230,51 @@ public class LayoutReportsDataMVCResourceCommand
 			WebKeys.THEME_DISPLAY);
 
 		if (_isOmniAdmin()) {
-			PortletURL portletURL = _portal.getControlPanelPortletURL(
-				portletRequest, ConfigurationAdminPortletKeys.SYSTEM_SETTINGS,
-				PortletRequest.RENDER_PHASE);
-
-			portletURL.setParameter(
-				"mvcRenderCommandName",
-				"/configuration_admin/edit_configuration");
-			portletURL.setParameter(
-				"redirect", _getCompleteURL(portletRequest));
-			portletURL.setParameter(
+			return PortletURLBuilder.create(
+				_portal.getControlPanelPortletURL(
+					portletRequest,
+					ConfigurationAdminPortletKeys.SYSTEM_SETTINGS,
+					PortletRequest.RENDER_PHASE)
+			).setMVCRenderCommandName(
+				"/configuration_admin/edit_configuration"
+			).setRedirect(
+				_getCompleteURL(portletRequest)
+			).setParameter(
 				"factoryPid",
-				LayoutReportsGooglePageSpeedConfiguration.class.getName());
-			portletURL.setParameter(
-				"pid",
-				LayoutReportsGooglePageSpeedConfiguration.class.getName());
-
-			return portletURL.toString();
+				LayoutReportsGooglePageSpeedConfiguration.class.getName()
+			).setParameter(
+				"pid", LayoutReportsGooglePageSpeedConfiguration.class.getName()
+			).buildString();
 		}
 		else if (_isCompanyAdmin()) {
-			PortletURL portletURL = _portal.getControlPanelPortletURL(
-				portletRequest, ConfigurationAdminPortletKeys.INSTANCE_SETTINGS,
-				PortletRequest.RENDER_PHASE);
-
-			portletURL.setParameter(
-				"mvcRenderCommandName",
-				"/configuration_admin/edit_configuration");
-			portletURL.setParameter(
-				"redirect", _getCompleteURL(portletRequest));
-			portletURL.setParameter(
+			return PortletURLBuilder.create(
+				_portal.getControlPanelPortletURL(
+					portletRequest,
+					ConfigurationAdminPortletKeys.INSTANCE_SETTINGS,
+					PortletRequest.RENDER_PHASE)
+			).setMVCRenderCommandName(
+				"/configuration_admin/edit_configuration"
+			).setRedirect(
+				_getCompleteURL(portletRequest)
+			).setParameter(
 				"factoryPid",
-				LayoutReportsGooglePageSpeedCompanyConfiguration.class.
-					getName());
-			portletURL.setParameter(
+				LayoutReportsGooglePageSpeedCompanyConfiguration.class.getName()
+			).setParameter(
 				"pid",
-				LayoutReportsGooglePageSpeedCompanyConfiguration.class.
-					getName());
-
-			return portletURL.toString();
+				LayoutReportsGooglePageSpeedCompanyConfiguration.class.getName()
+			).buildString();
 		}
 		else if (_isSiteAdmin(themeDisplay.getScopeGroupId())) {
 			try {
-				PortletURL portletURL = _portal.getControlPanelPortletURL(
-					portletRequest,
-					_groupLocalService.getGroup(themeDisplay.getScopeGroupId()),
-					"com_liferay_site_admin_web_portlet_SiteSettingsPortlet", 0,
-					0, PortletRequest.RENDER_PHASE);
-
-				return portletURL.toString();
+				return PortletURLBuilder.create(
+					_portal.getControlPanelPortletURL(
+						portletRequest,
+						_groupLocalService.getGroup(
+							themeDisplay.getScopeGroupId()),
+						"com_liferay_site_admin_web_portlet_" +
+							"SiteSettingsPortlet",
+						0, 0, PortletRequest.RENDER_PHASE)
+				).buildString();
 			}
 			catch (PortalException portalException) {
 				_log.error(portalException, portalException);
@@ -305,6 +295,21 @@ public class LayoutReportsDataMVCResourceCommand
 
 			return LocaleUtil.getSiteDefault();
 		}
+	}
+
+	private String _getResourceURL(
+		long groupId, String canonicalURL, PortletResponse portletResponse) {
+
+		LiferayPortletResponse liferayPortletResponse =
+			_portal.getLiferayPortletResponse(portletResponse);
+
+		ResourceURL resourceURL = liferayPortletResponse.createResourceURL();
+
+		resourceURL.setParameter("groupId", String.valueOf(groupId));
+		resourceURL.setParameter("canonicalURL", canonicalURL);
+		resourceURL.setResourceID("/layout_reports/get_layout_reports_issues");
+
+		return resourceURL.toString();
 	}
 
 	private String _getTitle(
@@ -369,9 +374,6 @@ public class LayoutReportsDataMVCResourceCommand
 		LayoutReportsDataMVCResourceCommand.class);
 
 	@Reference
-	private ConfigurationProvider _configurationProvider;
-
-	@Reference
 	private GroupLocalService _groupLocalService;
 
 	@Reference
@@ -383,6 +385,7 @@ public class LayoutReportsDataMVCResourceCommand
 	@Reference
 	private LayoutLocalService _layoutLocalService;
 
+	@Reference
 	private LayoutReportsGooglePageSpeedConfigurationProvider
 		_layoutReportsGooglePageSpeedConfigurationProvider;
 

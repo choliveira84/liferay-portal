@@ -32,6 +32,12 @@ public class WikiPageLocalServiceWrapper
 		_wikiPageLocalService = wikiPageLocalService;
 	}
 
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
+	 #addPage(String, long, long, String, double, String, String, boolean,
+	 String, boolean, String, String, ServiceContext)}
+	 */
+	@Deprecated
 	@Override
 	public com.liferay.wiki.model.WikiPage addPage(
 			long userId, long nodeId, String title, double version,
@@ -54,6 +60,21 @@ public class WikiPageLocalServiceWrapper
 
 		return _wikiPageLocalService.addPage(
 			userId, nodeId, title, content, summary, minorEdit, serviceContext);
+	}
+
+	@Override
+	public com.liferay.wiki.model.WikiPage addPage(
+			String externalReferenceCode, long userId, long nodeId,
+			String title, double version, String content, String summary,
+			boolean minorEdit, String format, boolean head, String parentTitle,
+			String redirectTitle,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _wikiPageLocalService.addPage(
+			externalReferenceCode, userId, nodeId, title, version, content,
+			summary, minorEdit, format, head, parentTitle, redirectTitle,
+			serviceContext);
 	}
 
 	@Override
@@ -436,6 +457,33 @@ public class WikiPageLocalServiceWrapper
 	@Override
 	public com.liferay.wiki.model.WikiPage fetchWikiPage(long pageId) {
 		return _wikiPageLocalService.fetchWikiPage(pageId);
+	}
+
+	/**
+	 * Returns the wiki page with the matching external reference code and group.
+	 *
+	 * @param groupId the primary key of the group
+	 * @param externalReferenceCode the wiki page's external reference code
+	 * @return the matching wiki page, or <code>null</code> if a matching wiki page could not be found
+	 */
+	@Override
+	public com.liferay.wiki.model.WikiPage fetchWikiPageByExternalReferenceCode(
+		long groupId, String externalReferenceCode) {
+
+		return _wikiPageLocalService.fetchWikiPageByExternalReferenceCode(
+			groupId, externalReferenceCode);
+	}
+
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link #fetchWikiPageByExternalReferenceCode(long, String)}
+	 */
+	@Deprecated
+	@Override
+	public com.liferay.wiki.model.WikiPage fetchWikiPageByReferenceCode(
+		long groupId, String externalReferenceCode) {
+
+		return _wikiPageLocalService.fetchWikiPageByReferenceCode(
+			groupId, externalReferenceCode);
 	}
 
 	/**
@@ -932,6 +980,23 @@ public class WikiPageLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _wikiPageLocalService.getWikiPage(pageId);
+	}
+
+	/**
+	 * Returns the wiki page with the matching external reference code and group.
+	 *
+	 * @param groupId the primary key of the group
+	 * @param externalReferenceCode the wiki page's external reference code
+	 * @return the matching wiki page
+	 * @throws PortalException if a matching wiki page could not be found
+	 */
+	@Override
+	public com.liferay.wiki.model.WikiPage getWikiPageByExternalReferenceCode(
+			long groupId, String externalReferenceCode)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _wikiPageLocalService.getWikiPageByExternalReferenceCode(
+			groupId, externalReferenceCode);
 	}
 
 	/**

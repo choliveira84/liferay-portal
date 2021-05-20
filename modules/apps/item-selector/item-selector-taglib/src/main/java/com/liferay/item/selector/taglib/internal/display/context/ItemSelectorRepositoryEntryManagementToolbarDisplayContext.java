@@ -117,6 +117,7 @@ public class ItemSelectorRepositoryEntryManagementToolbarDisplayContext {
 			for (URLMenuItem urlMenuItem : urlMenuItems) {
 				if (Objects.equals(
 						urlMenuItem.getKey(), DLUIItemKeys.ADD_FOLDER) ||
+					Objects.equals(urlMenuItem.getKey(), DLUIItemKeys.UPLOAD) ||
 					allowedCreationMenuUIItemKeys.contains(
 						urlMenuItem.getKey())) {
 

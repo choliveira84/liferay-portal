@@ -116,11 +116,18 @@ public class ContentUtil {
 			HttpServletRequest httpServletRequest, long plid)
 		throws PortalException {
 
-		return JSONUtil.concat(
-			_getLayoutClassedModelPageContentsJSONArray(
-				httpServletRequest, plid),
-			AssetListEntryUsagesUtil.getPageContentsJSONArray(
-				httpServletRequest, plid));
+		if (FFLayoutContentPageEditorConfigurationUtil.
+				contentBrowsingEnabled()) {
+
+			return JSONUtil.concat(
+				_getLayoutClassedModelPageContentsJSONArray(
+					httpServletRequest, plid),
+				AssetListEntryUsagesUtil.getPageContentsJSONArray(
+					httpServletRequest, plid));
+		}
+
+		return _getLayoutClassedModelPageContentsJSONArray(
+			httpServletRequest, plid);
 	}
 
 	private static String _generateUniqueLayoutClassedModelUsageKey(
@@ -260,6 +267,10 @@ public class ContentUtil {
 				if (editableJSONObject == null) {
 					continue;
 				}
+
+				layoutDisplayPageObjectProviders.addAll(
+					_getLocalizedLayoutDisplayPageObjectProviders(
+						editableJSONObject, mappedClassPKs));
 
 				JSONObject configJSONObject = editableJSONObject.getJSONObject(
 					"config");
@@ -461,8 +472,6 @@ public class ContentUtil {
 			return null;
 		}
 
-		mappedClassPKs.add(classPK);
-
 		long classNameId = jsonObject.getLong("classNameId");
 
 		if (classNameId <= 0) {
@@ -478,6 +487,8 @@ public class ContentUtil {
 		if (layoutDisplayPageProvider == null) {
 			return null;
 		}
+
+		mappedClassPKs.add(classPK);
 
 		return layoutDisplayPageProvider.getLayoutDisplayPageObjectProvider(
 			new InfoItemReference(className, classPK));

@@ -40,29 +40,31 @@ public class LayoutPageTemplateCollectionUpgradeProcess extends UpgradeProcess {
 		throws SQLException {
 
 		try (Statement s = connection.createStatement();
-			ResultSet rs = s.executeQuery(
+			ResultSet resultSet = s.executeQuery(
 				"select layoutPageTemplateCollectionId, name from " +
 					"LayoutPageTemplateCollection");
-			PreparedStatement ps = AutoBatchPreparedStatementUtil.autoBatch(
-				connection.prepareStatement(
-					"update LayoutPageTemplateCollection set " +
-						"lptCollectionKey = ? where " +
-							"layoutPageTemplateCollectionId = ?"))) {
+			PreparedStatement preparedStatement =
+				AutoBatchPreparedStatementUtil.autoBatch(
+					connection.prepareStatement(
+						"update LayoutPageTemplateCollection set " +
+							"lptCollectionKey = ? where " +
+								"layoutPageTemplateCollectionId = ?"))) {
 
-			while (rs.next()) {
-				long layoutPageTemplateCollectionId = rs.getLong(
+			while (resultSet.next()) {
+				long layoutPageTemplateCollectionId = resultSet.getLong(
 					"layoutPageTemplateCollectionId");
 
-				String name = rs.getString("name");
+				String name = resultSet.getString("name");
 
-				ps.setString(1, _generateLayoutPageTemplateCollectionKey(name));
+				preparedStatement.setString(
+					1, _generateLayoutPageTemplateCollectionKey(name));
 
-				ps.setLong(2, layoutPageTemplateCollectionId);
+				preparedStatement.setLong(2, layoutPageTemplateCollectionId);
 
-				ps.addBatch();
+				preparedStatement.addBatch();
 			}
 
-			ps.executeBatch();
+			preparedStatement.executeBatch();
 		}
 	}
 

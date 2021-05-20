@@ -166,17 +166,17 @@ public class UpgradeSyncDLObject extends UpgradeProcess {
 		sb2.append("size_, event, type_, typePK, typeUuid) values (?, ?, ?, ");
 		sb2.append("?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-		try (PreparedStatement ps1 = connection.prepareStatement(
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
 				sb1.toString());
-			PreparedStatement ps2 =
+			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection, sb2.toString());
-			ResultSet rs = ps1.executeQuery()) {
+			ResultSet resultSet = preparedStatement1.executeQuery()) {
 
-			while (rs.next()) {
-				Timestamp createDate = rs.getTimestamp("createDate");
-				Timestamp modifiedDate = rs.getTimestamp("modifiedDate");
-				int status = rs.getInt("status");
+			while (resultSet.next()) {
+				Timestamp createDate = resultSet.getTimestamp("createDate");
+				Timestamp modifiedDate = resultSet.getTimestamp("modifiedDate");
+				int status = resultSet.getInt("status");
 
 				String event = StringPool.BLANK;
 
@@ -187,32 +187,41 @@ public class UpgradeSyncDLObject extends UpgradeProcess {
 					event = SyncDLObjectConstants.EVENT_ADD;
 				}
 
-				ps2.setLong(1, _counterLocalService.increment());
-				ps2.setLong(2, rs.getLong("companyId"));
-				ps2.setLong(3, rs.getLong("userId"));
-				ps2.setString(4, rs.getString("userName"));
-				ps2.setLong(5, createDate.getTime());
-				ps2.setLong(6, modifiedDate.getTime());
-				ps2.setLong(7, groupId);
-				ps2.setLong(8, rs.getLong("parentFolderId"));
-				ps2.setString(9, rs.getString("treePath"));
-				ps2.setString(10, rs.getString("name"));
-				ps2.setString(11, rs.getString("extension"));
-				ps2.setString(12, rs.getString("mimeType"));
-				ps2.setString(13, rs.getString("description"));
-				ps2.setString(14, rs.getString("changeLog"));
-				ps2.setString(15, rs.getString("version"));
-				ps2.setLong(16, rs.getLong("versionId"));
-				ps2.setLong(17, rs.getLong("size_"));
-				ps2.setString(18, event);
-				ps2.setString(19, rs.getString("type"));
-				ps2.setLong(20, rs.getLong("typePK"));
-				ps2.setString(21, rs.getString("typeUuid"));
+				preparedStatement2.setLong(1, _counterLocalService.increment());
+				preparedStatement2.setLong(2, resultSet.getLong("companyId"));
+				preparedStatement2.setLong(3, resultSet.getLong("userId"));
+				preparedStatement2.setString(
+					4, resultSet.getString("userName"));
+				preparedStatement2.setLong(5, createDate.getTime());
+				preparedStatement2.setLong(6, modifiedDate.getTime());
+				preparedStatement2.setLong(7, groupId);
+				preparedStatement2.setLong(
+					8, resultSet.getLong("parentFolderId"));
+				preparedStatement2.setString(
+					9, resultSet.getString("treePath"));
+				preparedStatement2.setString(10, resultSet.getString("name"));
+				preparedStatement2.setString(
+					11, resultSet.getString("extension"));
+				preparedStatement2.setString(
+					12, resultSet.getString("mimeType"));
+				preparedStatement2.setString(
+					13, resultSet.getString("description"));
+				preparedStatement2.setString(
+					14, resultSet.getString("changeLog"));
+				preparedStatement2.setString(
+					15, resultSet.getString("version"));
+				preparedStatement2.setLong(16, resultSet.getLong("versionId"));
+				preparedStatement2.setLong(17, resultSet.getLong("size_"));
+				preparedStatement2.setString(18, event);
+				preparedStatement2.setString(19, resultSet.getString("type"));
+				preparedStatement2.setLong(20, resultSet.getLong("typePK"));
+				preparedStatement2.setString(
+					21, resultSet.getString("typeUuid"));
 
-				ps2.addBatch();
+				preparedStatement2.addBatch();
 			}
 
-			ps2.executeBatch();
+			preparedStatement2.executeBatch();
 		}
 	}
 
@@ -227,26 +236,29 @@ public class UpgradeSyncDLObject extends UpgradeProcess {
 
 		String sql = SQLTransformer.transform(sb.toString());
 
-		try (PreparedStatement ps1 = connection.prepareStatement(sql);
-			PreparedStatement ps2 =
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
+				sql);
+			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection,
 					StringBundler.concat(
 						"update SyncDLObject set lockExpirationDate = ?, ",
 						"lockUserId = ?, lockUserName = ? where typePK = ? ",
 						"and repositoryId = ", groupId));
-			ResultSet rs = ps1.executeQuery()) {
+			ResultSet resultSet = preparedStatement1.executeQuery()) {
 
-			while (rs.next()) {
-				ps2.setTimestamp(1, rs.getTimestamp("expirationDate"));
-				ps2.setLong(2, rs.getLong("userId"));
-				ps2.setString(3, rs.getString("userName"));
-				ps2.setLong(4, rs.getLong("fileEntryId"));
+			while (resultSet.next()) {
+				preparedStatement2.setTimestamp(
+					1, resultSet.getTimestamp("expirationDate"));
+				preparedStatement2.setLong(2, resultSet.getLong("userId"));
+				preparedStatement2.setString(
+					3, resultSet.getString("userName"));
+				preparedStatement2.setLong(4, resultSet.getLong("fileEntryId"));
 
-				ps2.addBatch();
+				preparedStatement2.addBatch();
 			}
 
-			ps2.executeBatch();
+			preparedStatement2.executeBatch();
 		}
 	}
 
@@ -274,16 +286,17 @@ public class UpgradeSyncDLObject extends UpgradeProcess {
 
 		sb.append(")");
 
-		try (PreparedStatement ps1 = connection.prepareStatement(sb.toString());
-			PreparedStatement ps2 =
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
+				sb.toString());
+			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection,
 					"update SyncDLObject set extraSettings = ? where typePK " +
 						"= ?");
-			ResultSet rs = ps1.executeQuery()) {
+			ResultSet resultSet = preparedStatement1.executeQuery()) {
 
-			while (rs.next()) {
-				String name = rs.getString("name");
+			while (resultSet.next()) {
+				String name = resultSet.getString("name");
 
 				if (!ArrayUtil.contains(
 						SyncServiceConfigurationValues.
@@ -296,14 +309,15 @@ public class UpgradeSyncDLObject extends UpgradeProcess {
 				JSONObject extraSettingsJSONObject = JSONUtil.put(
 					"macPackage", true);
 
-				ps2.setString(1, extraSettingsJSONObject.toString());
+				preparedStatement2.setString(
+					1, extraSettingsJSONObject.toString());
 
-				ps2.setLong(2, rs.getLong("folderId"));
+				preparedStatement2.setLong(2, resultSet.getLong("folderId"));
 
-				ps2.addBatch();
+				preparedStatement2.addBatch();
 			}
 
-			ps2.executeBatch();
+			preparedStatement2.executeBatch();
 		}
 	}
 

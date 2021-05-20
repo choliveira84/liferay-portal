@@ -16,6 +16,7 @@ package com.liferay.portal.workflow.metrics.rest.resource.v1_0.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.petra.function.UnsafeTriConsumer;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.test.rule.DataGuard;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -23,21 +24,29 @@ import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.odata.entity.EntityField;
 import com.liferay.portal.search.test.util.SearchTestRule;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.workflow.metrics.rest.client.dto.v1_0.Assignee;
 import com.liferay.portal.workflow.metrics.rest.client.dto.v1_0.Creator;
 import com.liferay.portal.workflow.metrics.rest.client.dto.v1_0.Instance;
 import com.liferay.portal.workflow.metrics.rest.client.dto.v1_0.Process;
+import com.liferay.portal.workflow.metrics.rest.client.dto.v1_0.SLAResult;
 import com.liferay.portal.workflow.metrics.rest.client.pagination.Page;
 import com.liferay.portal.workflow.metrics.rest.client.pagination.Pagination;
 import com.liferay.portal.workflow.metrics.rest.resource.v1_0.test.helper.WorkflowMetricsRESTTestHelper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
+
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang.time.DateUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -82,30 +91,70 @@ public class InstanceResourceTest extends BaseInstanceResourceTestCase {
 		super.testGetProcessInstancesPage();
 
 		_testGetProcessInstancesPage(
-			new Long[] {_user.getUserId()}, null, null,
-			(instance1, instance2, page) -> assertEquals(
-				Collections.singletonList(instance2),
-				(List<Instance>)page.getItems()));
+			null, null, DateUtils.truncate(new Date(), Calendar.SECOND),
+			DateUtils.truncate(new Date(), Calendar.SECOND),
+			new String[] {"Completed", "Pending"},
+			(instance1, instance2, instances) -> assertEqualsIgnoringOrder(
+				Arrays.asList(instance1, instance2), instances));
 		_testGetProcessInstancesPage(
-			null, new Long[] {_classPK}, null,
-			(instance1, instance2, page) -> assertEquals(
-				Collections.singletonList(instance1),
-				(List<Instance>)page.getItems()));
+			null, null, DateUtils.truncate(new Date(), Calendar.SECOND),
+			DateUtils.truncate(new Date(), Calendar.SECOND),
+			new String[] {"Completed"},
+			(instance1, instance2, instances) -> assertEqualsIgnoringOrder(
+				Collections.singletonList(instance1), instances));
 		_testGetProcessInstancesPage(
-			null, null, true,
-			(instance1, instance2, page) -> assertEquals(
-				Collections.singletonList(instance1),
-				(List<Instance>)page.getItems()));
+			new Long[] {_user.getUserId()}, null, null, null, null,
+			(instance1, instance2, instances) -> assertEqualsIgnoringOrder(
+				Collections.singletonList(instance2), instances));
 		_testGetProcessInstancesPage(
-			null, null, null,
-			(instance1, instance2, page) -> assertEqualsIgnoringOrder(
-				Arrays.asList(instance1, instance2),
-				(List<Instance>)page.getItems()));
+			null, new Long[] {_classPK}, null, null, null,
+			(instance1, instance2, instances) -> assertEqualsIgnoringOrder(
+				Collections.singletonList(instance1), instances));
 		_testGetProcessInstancesPage(
-			null, null, false,
-			(instance1, instance2, page) -> assertEquals(
-				Collections.singletonList(instance2),
-				(List<Instance>)page.getItems()));
+			null, null, null, null, new String[] {"Completed"},
+			(instance1, instance2, instances) -> assertEqualsIgnoringOrder(
+				Collections.singletonList(instance1), instances));
+		_testGetProcessInstancesPage(
+			null, null, null, null, null,
+			(instance1, instance2, instances) -> assertEqualsIgnoringOrder(
+				Arrays.asList(instance1, instance2), instances));
+		_testGetProcessInstancesPage(
+			null, null, null, null, new String[] {"Pending"},
+			(instance1, instance2, instances) -> assertEqualsIgnoringOrder(
+				Collections.singletonList(instance2), instances));
+		_testGetProcessInstancesPage(
+			null, null, null, null, new String[] {"Completed", "Pending"},
+			(instance1, instance2, instances) -> assertEqualsIgnoringOrder(
+				Arrays.asList(instance1, instance2), instances));
+	}
+
+	@Override
+	@Test
+	public void testGetProcessInstancesPageWithSortDateTime() throws Exception {
+		testGetProcessInstancesPageWithSort(
+			EntityField.Type.DATE_TIME,
+			(entityField, instance1, instance2) -> {
+				if (Objects.equals(entityField.getName(), "dateOverdue")) {
+					Stream.of(
+						instance1.getSlaResults()
+					).forEach(
+						slaResult -> slaResult.setDateOverdue(
+							DateUtils.addDays(slaResult.getDateOverdue(), -2))
+					);
+
+					Stream.of(
+						instance2.getSlaResults()
+					).forEach(
+						slaResult -> slaResult.setDateOverdue(
+							DateUtils.addDays(slaResult.getDateOverdue(), -1))
+					);
+				}
+				else {
+					BeanUtils.setProperty(
+						instance1, entityField.getName(),
+						DateUtils.addMinutes(new Date(), -2));
+				}
+			});
 	}
 
 	@Rule
@@ -113,7 +162,9 @@ public class InstanceResourceTest extends BaseInstanceResourceTestCase {
 
 	@Override
 	protected String[] getAdditionalAssertFieldNames() {
-		return new String[] {"assetTitle", "assetType", "classPK", "processId"};
+		return new String[] {
+			"assetTitle", "assetType", "classPK", "processId", "slaResults"
+		};
 	}
 
 	@Override
@@ -145,6 +196,11 @@ public class InstanceResourceTest extends BaseInstanceResourceTestCase {
 		instance.setDateCompletion((Date)null);
 		instance.setProcessId(_process.getId());
 		instance.setProcessVersion(_process.getVersion());
+		instance.setSlaResults(
+			new SLAResult[] {
+				_toSLAResult(true, SLAResult.Status.RUNNING),
+				_toSLAResult(false, SLAResult.Status.RUNNING)
+			});
 
 		return instance;
 	}
@@ -183,6 +239,9 @@ public class InstanceResourceTest extends BaseInstanceResourceTestCase {
 				testGroup.getCompanyId(), instance);
 		}
 
+		_workflowMetricsRESTTestHelper.addSLAInstanceResults(
+			testGroup.getCompanyId(), instance, instance.getSlaResults());
+
 		_instances.add(instance);
 
 		return instance;
@@ -215,6 +274,13 @@ public class InstanceResourceTest extends BaseInstanceResourceTestCase {
 		return instance;
 	}
 
+	protected Instance testPostProcessInstance_addInstance(Instance instance)
+		throws Exception {
+
+		return testGetProcessInstancesPage_addInstance(
+			_process.getId(), instance);
+	}
+
 	private void _deleteInstances() throws Exception {
 		for (Instance instance : _instances) {
 			_workflowMetricsRESTTestHelper.deleteInstance(
@@ -225,8 +291,9 @@ public class InstanceResourceTest extends BaseInstanceResourceTestCase {
 	}
 
 	private void _testGetProcessInstancesPage(
-			Long[] assigneeIds, Long[] classPKs, Boolean completed,
-			UnsafeTriConsumer<Instance, Instance, Page<Instance>, Exception>
+			Long[] assigneeIds, Long[] classPKs, Date dateEnd, Date dateStart,
+			String[] processStatuses,
+			UnsafeTriConsumer<Instance, Instance, List<Instance>, Exception>
 				unsafeTriConsumer)
 		throws Exception {
 
@@ -236,9 +303,15 @@ public class InstanceResourceTest extends BaseInstanceResourceTestCase {
 
 		instance1.setClassPK(_classPK);
 		instance1.setCompleted(true);
-		instance1.setDateCompletion(RandomTestUtil.nextDate());
+		instance1.setDateCompletion(
+			DateUtils.truncate(new Date(), Calendar.SECOND));
 
 		testGetProcessInstancesPage_addInstance(_process.getId(), instance1);
+
+		_workflowMetricsRESTTestHelper.addSLAInstanceResults(
+			testGroup.getCompanyId(), instance1,
+			_toSLAResult(true, SLAResult.Status.STOPPED),
+			_toSLAResult(true, SLAResult.Status.PAUSED));
 
 		Instance instance2 = randomInstance();
 
@@ -254,10 +327,28 @@ public class InstanceResourceTest extends BaseInstanceResourceTestCase {
 		testGetProcessInstancesPage_addInstance(_process.getId(), instance2);
 
 		Page<Instance> page = instanceResource.getProcessInstancesPage(
-			_process.getId(), assigneeIds, classPKs, completed, null, null,
-			null, null, Pagination.of(1, 2));
+			_process.getId(), assigneeIds, classPKs, dateEnd, dateStart,
+			processStatuses, null, null, Pagination.of(1, 2), null);
 
-		unsafeTriConsumer.accept(instance1, instance2, page);
+		unsafeTriConsumer.accept(
+			instance1, instance2, (List<Instance>)page.getItems());
+	}
+
+	private SLAResult _toSLAResult(
+		boolean overdue, SLAResult.Status slaResultStatus) {
+
+		return new SLAResult() {
+			{
+				dateModified = DateUtils.truncate(
+					RandomTestUtil.nextDate(), Calendar.SECOND);
+				dateOverdue = DateUtils.truncate(new Date(), Calendar.SECOND);
+				id = RandomTestUtil.randomLong();
+				name = StringPool.BLANK;
+				onTime = !overdue;
+				remainingTime = overdue ? -1L : 1L;
+				status = slaResultStatus;
+			}
+		};
 	}
 
 	private Long _classPK;

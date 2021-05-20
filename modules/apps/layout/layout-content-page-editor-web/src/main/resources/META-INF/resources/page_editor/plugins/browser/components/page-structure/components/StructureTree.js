@@ -16,21 +16,25 @@ import ClayAlert from '@clayui/alert';
 import {Treeview} from 'frontend-js-components-web';
 import React, {useCallback, useMemo, useState} from 'react';
 
-import {useActiveItemId} from '../../../../../app/components/Controls';
 import getAllEditables from '../../../../../app/components/fragment-content/getAllEditables';
 import getAllPortals from '../../../../../app/components/layout-data-items/getAllPortals';
 import hasDropZoneChild from '../../../../../app/components/layout-data-items/hasDropZoneChild';
+import {EDITABLE_FRAGMENT_ENTRY_PROCESSOR} from '../../../../../app/config/constants/editableFragmentEntryProcessor';
 import {EDITABLE_TYPES} from '../../../../../app/config/constants/editableTypes';
 import {ITEM_TYPES} from '../../../../../app/config/constants/itemTypes';
 import {LAYOUT_DATA_ITEM_TYPES} from '../../../../../app/config/constants/layoutDataItemTypes';
 import {LAYOUT_TYPES} from '../../../../../app/config/constants/layoutTypes';
 import {config} from '../../../../../app/config/index';
+import {useActiveItemId} from '../../../../../app/contexts/ControlsContext';
+import {useSelector} from '../../../../../app/contexts/StoreContext';
 import selectCanUpdateEditables from '../../../../../app/selectors/selectCanUpdateEditables';
 import selectCanUpdateItemConfiguration from '../../../../../app/selectors/selectCanUpdateItemConfiguration';
-import {useSelector} from '../../../../../app/store/index';
 import canActivateEditable from '../../../../../app/utils/canActivateEditable';
 import {DragAndDropContextProvider} from '../../../../../app/utils/drag-and-drop/useDragAndDrop';
+import isMapped from '../../../../../app/utils/editable-value/isMapped';
+import isMappedToCollection from '../../../../../app/utils/editable-value/isMappedToCollection';
 import getLayoutDataItemLabel from '../../../../../app/utils/getLayoutDataItemLabel';
+import getMappingFieldsKey from '../../../../../app/utils/getMappingFieldsKey';
 import PageStructureSidebarSection from './PageStructureSidebarSection';
 import StructureTreeNode from './StructureTreeNode';
 
@@ -54,6 +58,20 @@ const LAYOUT_DATA_ITEM_TYPE_ICONS = {
 	[LAYOUT_DATA_ITEM_TYPES.row]: 'table',
 };
 
+function getCollectionAncestor(layoutData, itemId) {
+	const item = layoutData.items[itemId];
+
+	const parent = layoutData.items[item.parentId];
+
+	if (!parent) {
+		return null;
+	}
+
+	return parent.type === LAYOUT_DATA_ITEM_TYPES.collection
+		? parent
+		: getCollectionAncestor(layoutData, item.parentId);
+}
+
 export default function PageStructureSidebar() {
 	const activeItemId = useActiveItemId();
 	const canUpdateEditables = useSelector(selectCanUpdateEditables);
@@ -62,6 +80,8 @@ export default function PageStructureSidebar() {
 	);
 	const fragmentEntryLinks = useSelector((state) => state.fragmentEntryLinks);
 	const layoutData = useSelector((state) => state.layoutData);
+	const mappedInfoItems = useSelector((state) => state.mappedInfoItems);
+	const mappingFields = useSelector((state) => state.mappingFields);
 	const masterLayoutData = useSelector(
 		(state) => state.masterLayout?.masterLayoutData
 	);
@@ -92,6 +112,8 @@ export default function PageStructureSidebar() {
 				fragmentEntryLinks,
 				isMasterPage,
 				layoutData,
+				mappedInfoItems,
+				mappingFields,
 				masterLayoutData,
 				onHoverNode,
 				selectedViewportSize,
@@ -106,6 +128,8 @@ export default function PageStructureSidebar() {
 			fragmentEntryLinks,
 			isMasterPage,
 			layoutData,
+			mappedInfoItems,
+			mappingFields,
 			masterLayoutData,
 			onHoverNode,
 			selectedViewportSize,
@@ -160,6 +184,8 @@ function visit(
 		fragmentEntryLinks,
 		isMasterPage,
 		layoutData,
+		mappedInfoItems,
+		mappingFields,
 		masterLayoutData,
 		onHoverNode,
 		selectedViewportSize,
@@ -188,13 +214,42 @@ function visit(
 
 		const editableTypes = fragmentEntryLink.editableTypes;
 
+		let collectionAncestor = null;
+
 		sortedElements.forEach((element) => {
 			if (element.editableId) {
 				const {editableId} = element;
 
+				const editable =
+					fragmentEntryLink.editableValues[
+						EDITABLE_FRAGMENT_ENTRY_PROCESSOR
+					][editableId];
+
 				const childId = `${item.config.fragmentEntryLinkId}-${editableId}`;
 				const type =
 					editableTypes[editableId] || EDITABLE_TYPES.backgroundImage;
+
+				if (!collectionAncestor) {
+					collectionAncestor = isMappedToCollection(editable)
+						? getCollectionAncestor(
+								fragmentEntryLink.masterLayout
+									? masterLayoutData
+									: layoutData,
+								item.itemId
+						  )
+						: null;
+				}
+
+				const collectionConfig = collectionAncestor?.config?.collection;
+
+				const mappedFieldLabel = isMapped(editable)
+					? getMappedFieldLabel(
+							editable,
+							collectionConfig,
+							mappedInfoItems,
+							mappingFields
+					  )
+					: null;
 
 				children.push({
 					activable:
@@ -208,7 +263,8 @@ function visit(
 					icon: EDITABLE_TYPE_ICONS[type],
 					id: childId,
 					itemType: ITEM_TYPES.editable,
-					name: editableId,
+					mapped: isMapped(editable),
+					name: mappedFieldLabel || editableId,
 					onHoverNode,
 					parentId: item.parentId,
 					removable: false,
@@ -226,6 +282,8 @@ function visit(
 						fragmentEntryLinks,
 						isMasterPage,
 						layoutData,
+						mappedInfoItems,
+						mappingFields,
 						masterLayoutData,
 						onHoverNode,
 						selectedViewportSize,
@@ -263,6 +321,8 @@ function visit(
 						fragmentEntryLinks,
 						isMasterPage,
 						layoutData,
+						mappedInfoItems,
+						mappingFields,
 						masterLayoutData,
 						onHoverNode,
 						selectedViewportSize,
@@ -280,6 +340,8 @@ function visit(
 					fragmentEntryLinks,
 					isMasterPage,
 					layoutData,
+					mappedInfoItems,
+					mappingFields,
 					masterLayoutData,
 					onHoverNode,
 					selectedViewportSize,
@@ -320,4 +382,52 @@ function getDocumentFragment(content) {
 	div.innerHTML = content;
 
 	return fragment.appendChild(div);
+}
+
+function getMappedFieldLabel(
+	editable,
+	collectionConfig,
+	mappedInfoItems,
+	mappingFields
+) {
+	const infoItem = mappedInfoItems.find(
+		({classNameId, classPK}) =>
+			editable.classNameId === classNameId && editable.classPK === classPK
+	);
+
+	const {selectedMappingTypes} = config;
+
+	if (!infoItem && !selectedMappingTypes && !collectionConfig) {
+		return null;
+	}
+
+	const key = collectionConfig
+		? getMappingFieldsKey(
+				collectionConfig.classNameId,
+				collectionConfig.itemSubtype
+		  )
+		: editable.mappedField
+		? getMappingFieldsKey(
+				selectedMappingTypes.type.id,
+				selectedMappingTypes.subtype.id || 0
+		  )
+		: getMappingFieldsKey(infoItem.classNameId, infoItem.classTypeId);
+
+	const fields = mappingFields[key];
+
+	if (fields) {
+		const field = fields
+			.flatMap((fieldSet) => fieldSet.fields)
+			.find(
+				(field) =>
+					field.key ===
+					(editable.mappedField ||
+						editable.fieldId ||
+						editable.collectionFieldId)
+			);
+
+		return field.label;
+	}
+
+	return null;
 }

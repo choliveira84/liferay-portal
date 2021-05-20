@@ -71,9 +71,13 @@ definition {
 		var portalURL = PropsUtil.get("portal.url");
 
 		for (var imageNumber : list "1,2") {
-			Site.openSiteConfigurationAdmin(siteURLKey = "test-site-name");
+			Site.openSiteSettingsAdmin(siteURLKey = "test-site-name");
 
-			Panel.expandPanel(panel = "Open Graph");
+			Click(
+				key_url = "site-configuration-google-pagespeed",
+				locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
+			Navigator.gotoNavTab(navTab = "Open Graph");
 
 			OpenGraph.configureOpenGraph(
 				customImage = "true",
@@ -111,9 +115,13 @@ definition {
 	test ClearImageAtPageLevel {
 		var portalURL = PropsUtil.get("portal.url");
 
-		Site.openSiteConfigurationAdmin(siteURLKey = "test-site-name");
+		Site.openSiteSettingsAdmin(siteURLKey = "test-site-name");
 
-		Panel.expandPanel(panel = "Open Graph");
+		Click(
+			key_url = "site-configuration-google-pagespeed",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
+		Navigator.gotoNavTab(navTab = "Open Graph");
 
 		AssertElementPresent(locator1 = "TextInput#OPEN_GRAPH_CUSTOM_IMAGE_DEFAULT_VALUE");
 
@@ -166,9 +174,13 @@ definition {
 	test ClearImageAtSiteLevel {
 		var portalURL = PropsUtil.get("portal.url");
 
-		Site.openSiteConfigurationAdmin(siteURLKey = "test-site-name");
+		Site.openSiteSettingsAdmin(siteURLKey = "test-site-name");
 
-		Panel.expandPanel(panel = "Open Graph");
+		Click(
+			key_url = "site-configuration-google-pagespeed",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
+		Navigator.gotoNavTab(navTab = "Open Graph");
 
 		OpenGraph.configureOpenGraph(
 			customImage = "true",
@@ -192,9 +204,13 @@ definition {
 			key_imageName = "Document_1.jpg",
 			locator1 = "SitePagesEditPage#PREVIEW_IMAGE");
 
-		Site.openSiteConfigurationAdmin(siteURLKey = "test-site-name");
+		Site.openSiteSettingsAdmin(siteURLKey = "test-site-name");
 
-		Panel.expandPanel(panel = "Open Graph");
+		Click(
+			key_url = "site-configuration-google-pagespeed",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
+		Navigator.gotoNavTab(navTab = "Open Graph");
 
 		Click(locator1 = "Button#CLEAR_OPEN_GRAPH_IMAGE");
 
@@ -229,9 +245,13 @@ definition {
 	test ConfigurePageSpecificAltDescription {
 		var portalURL = PropsUtil.get("portal.url");
 
-		Site.openSiteConfigurationAdmin(siteURLKey = "test-site-name");
+		Site.openSiteSettingsAdmin(siteURLKey = "test-site-name");
 
-		Panel.expandPanel(panel = "Open Graph");
+		Click(
+			key_url = "site-configuration-google-pagespeed",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
+		Navigator.gotoNavTab(navTab = "Open Graph");
 
 		OpenGraph.configureOpenGraph(
 			altDescription = "This is image alternative description",
@@ -272,9 +292,13 @@ definition {
 	test ConfigurePageSpecificImage {
 		var portalURL = PropsUtil.get("portal.url");
 
-		Site.openSiteConfigurationAdmin(siteURLKey = "test-site-name");
+		Site.openSiteSettingsAdmin(siteURLKey = "test-site-name");
 
-		Panel.expandPanel(panel = "Open Graph");
+		Click(
+			key_url = "site-configuration-google-pagespeed",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
+		Navigator.gotoNavTab(navTab = "Open Graph");
 
 		AssertElementPresent(locator1 = "TextInput#OPEN_GRAPH_CUSTOM_IMAGE_DEFAULT_VALUE");
 
@@ -302,9 +326,13 @@ definition {
 			key_imageName = "Document_2.jpg",
 			locator1 = "SitePagesEditPage#PREVIEW_IMAGE");
 
-		Site.openSiteConfigurationAdmin(siteURLKey = "test-site-name");
+		Site.openSiteSettingsAdmin(siteURLKey = "test-site-name");
 
-		Panel.expandPanel(panel = "Open Graph");
+		Click(
+			key_url = "site-configuration-google-pagespeed",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
+		Navigator.gotoNavTab(navTab = "Open Graph");
 
 		AssertVisible(
 			key_imageName = "Document_1.jpg",

@@ -408,6 +408,17 @@ mariadb.executable=${mariadb.executable}]]></echo>
 								</then>
 							</if>
 
+							<get-browser-property property.name="browser.docker.image" />
+
+							<if>
+								<isset property="browser.docker.image" />
+								<then>
+									<stop-docker-browser />
+
+									<start-docker-browser />
+								</then>
+							</if>
+
 							<antcall inheritall="false" target="copy-optional-jars">
 								<param name="database.type" value="@{database.type}" />
 								<param name="todir" value="lib/development" />
@@ -434,6 +445,15 @@ mariadb.executable=${mariadb.executable}]]></echo>
 									<antcall target="stop-app-server" />
 
 									<delete failonerror="false" file=".testable.portal.started" />
+								</then>
+							</if>
+
+							<get-browser-property property.name="browser.docker.image" />
+
+							<if>
+								<isset property="browser.docker.image" />
+								<then>
+									<stop-docker-browser />
 								</then>
 							</if>
 
@@ -2810,7 +2830,11 @@ log.sanitizer.enabled=false</echo>
 
 							<setup-test-batch-testable-tomcat test.portal.bundle.version="@{test.portal.bundle.version}" />
 
-							<antcall inheritAll="false" target="start-app-server-preserve-liferay-home" />
+							<get-test-batch-app-server-start-executable-arg-line />
+
+							<antcall inheritAll="false" target="start-app-server-preserve-liferay-home">
+								<param name="app.server.start.executable.arg.line" value="${test.batch.app.server.start.executable.arg.line}" />
+							</antcall>
 
 							<deploy-release-dependency-modules-post-startup />
 
@@ -4560,6 +4584,18 @@ log.sanitizer.enabled=false</echo>
 		<run-functional-test app.server.type="wildfly" app.server.version="17.0.0" database.type="mariadb" test.portal.log.assert="true" />
 	</target>
 
+	<target name="functional-smoke-wildfly220-mariadb104-jdk8">
+		<set-app-server-version-number app.server.type="wildfly" app.server.version="22.0.0" />
+
+		<run-functional-test app.server.type="wildfly" app.server.version="22.0.0" database.type="mariadb" test.portal.log.assert="true" />
+	</target>
+
+	<target name="functional-smoke-wildfly220-mariadb104-jdk11_open">
+		<set-app-server-version-number app.server.type="wildfly" app.server.version="22.0.0" />
+
+		<run-functional-test app.server.type="wildfly" app.server.version="22.0.0" database.type="mariadb" test.portal.log.assert="true" />
+	</target>
+
 	<target name="functional-suse15-tomcat90-mysql57-jdk8">
 		<run-functional-test app.server.type="tomcat" database.type="mysql" database.version="5.7" test.portal.log.assert="true" />
 	</target>
@@ -4689,6 +4725,10 @@ log.sanitizer.enabled=false</echo>
 	</target>
 
 	<target name="functional-ubuntu18-tomcat90-mysql57-jdk8">
+		<run-functional-test app.server.type="tomcat" database.type="mysql" database.version="5.7" test.portal.log.assert="true" />
+	</target>
+
+	<target name="functional-ubuntu20-tomcat90-mysql57-jdk8">
 		<run-functional-test app.server.type="tomcat" database.type="mysql" database.version="5.7" test.portal.log.assert="true" />
 	</target>
 

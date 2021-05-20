@@ -36,9 +36,9 @@ import com.liferay.headless.delivery.dto.v1_0.CustomField;
 import com.liferay.headless.delivery.dto.v1_0.Document;
 import com.liferay.headless.delivery.dto.v1_0.DocumentType;
 import com.liferay.headless.delivery.dto.v1_0.Rating;
+import com.liferay.headless.delivery.dto.v1_0.util.CustomFieldsUtil;
+import com.liferay.headless.delivery.dto.v1_0.util.DDMFormValuesUtil;
 import com.liferay.headless.delivery.internal.dto.v1_0.converter.DocumentDTOConverter;
-import com.liferay.headless.delivery.internal.dto.v1_0.util.CustomFieldsUtil;
-import com.liferay.headless.delivery.internal.dto.v1_0.util.DDMFormValuesUtil;
 import com.liferay.headless.delivery.internal.dto.v1_0.util.DisplayPageRendererUtil;
 import com.liferay.headless.delivery.internal.dto.v1_0.util.EntityFieldsUtil;
 import com.liferay.headless.delivery.internal.dto.v1_0.util.RatingUtil;
@@ -64,6 +64,7 @@ import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.BooleanFilter;
 import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.search.filter.TermFilter;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
@@ -86,6 +87,7 @@ import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.portal.vulcan.resource.EntityModelResource;
 import com.liferay.portal.vulcan.util.SearchUtil;
+import com.liferay.portlet.documentlibrary.constants.DLConstants;
 import com.liferay.ratings.kernel.service.RatingsEntryLocalService;
 
 import java.io.Serializable;
@@ -135,13 +137,13 @@ public class DocumentResourceImpl
 			HashMapBuilder.put(
 				"create",
 				addAction(
-					"ADD_DOCUMENT", "postAssetLibraryDocument",
-					"com.liferay.document.library", assetLibraryId)
+					ActionKeys.ADD_DOCUMENT, "postAssetLibraryDocument",
+					DLConstants.RESOURCE_NAME, assetLibraryId)
 			).put(
 				"get",
 				addAction(
-					"VIEW", "getAssetLibraryDocumentsPage",
-					"com.liferay.document.library", assetLibraryId)
+					ActionKeys.VIEW, "getAssetLibraryDocumentsPage",
+					DLConstants.RESOURCE_NAME, assetLibraryId)
 			).build(),
 			_createDocumentsPageBooleanQueryUnsafeConsumer(
 				assetLibraryId, flatten),
@@ -166,15 +168,15 @@ public class DocumentResourceImpl
 			HashMapBuilder.put(
 				"create",
 				addAction(
-					"ADD_DOCUMENT", folder.getFolderId(),
+					ActionKeys.ADD_DOCUMENT, folder.getFolderId(),
 					"postDocumentFolderDocument", folder.getUserId(),
-					"com.liferay.document.library", folder.getGroupId())
+					DLConstants.RESOURCE_NAME, folder.getGroupId())
 			).put(
 				"get",
 				addAction(
-					"VIEW", folder.getFolderId(),
+					ActionKeys.VIEW, folder.getFolderId(),
 					"getDocumentFolderDocumentsPage", folder.getUserId(),
-					"com.liferay.document.library", folder.getGroupId())
+					DLConstants.RESOURCE_NAME, folder.getGroupId())
 			).build(),
 			booleanQuery -> {
 				BooleanFilter booleanFilter =
@@ -183,7 +185,7 @@ public class DocumentResourceImpl
 				String field = Field.FOLDER_ID;
 
 				if (GetterUtil.getBoolean(flatten)) {
-					field = "treePath";
+					field = Field.TREE_PATH;
 				}
 
 				booleanFilter.add(
@@ -235,13 +237,13 @@ public class DocumentResourceImpl
 			HashMapBuilder.put(
 				"create",
 				addAction(
-					"ADD_DOCUMENT", "postSiteDocument",
-					"com.liferay.document.library", siteId)
+					ActionKeys.ADD_DOCUMENT, "postSiteDocument",
+					DLConstants.RESOURCE_NAME, siteId)
 			).put(
 				"get",
 				addAction(
-					"VIEW", "getSiteDocumentsPage",
-					"com.liferay.document.library", siteId)
+					ActionKeys.VIEW, "getSiteDocumentsPage",
+					DLConstants.RESOURCE_NAME, siteId)
 			).build(),
 			_createDocumentsPageBooleanQueryUnsafeConsumer(siteId, flatten),
 			search, aggregation, filter, pagination, sorts);
@@ -286,6 +288,8 @@ public class DocumentResourceImpl
 				),
 				null, DLVersionNumberIncrease.AUTOMATIC,
 				binaryFile.getInputStream(), binaryFile.getSize(),
+				existingFileEntry.getExpirationDate(),
+				existingFileEntry.getReviewDate(),
 				_getServiceContext(
 					() -> ArrayUtil.toArray(
 						_assetCategoryLocalService.getCategoryIds(
@@ -378,6 +382,8 @@ public class DocumentResourceImpl
 				),
 				null, DLVersionNumberIncrease.AUTOMATIC,
 				binaryFile.getInputStream(), binaryFile.getSize(),
+				existingFileEntry.getExpirationDate(),
+				existingFileEntry.getReviewDate(),
 				_getServiceContext(
 					() -> new Long[0], () -> new String[0],
 					existingFileEntry.getFolderId(), documentOptional,
@@ -403,7 +409,7 @@ public class DocumentResourceImpl
 
 	@Override
 	protected String getPermissionCheckerPortletName(Object id) {
-		return "com.liferay.document.library";
+		return DLConstants.RESOURCE_NAME;
 	}
 
 	@Override
@@ -428,7 +434,7 @@ public class DocumentResourceImpl
 
 		return _toDocument(
 			_dlAppService.addFileEntry(
-				repositoryId, documentFolderId, binaryFile.getFileName(),
+				null, repositoryId, documentFolderId, binaryFile.getFileName(),
 				binaryFile.getContentType(),
 				documentOptional.map(
 					Document::getTitle
@@ -440,7 +446,8 @@ public class DocumentResourceImpl
 				).orElse(
 					null
 				),
-				null, binaryFile.getInputStream(), binaryFile.getSize(),
+				null, binaryFile.getInputStream(), binaryFile.getSize(), null,
+				null,
 				_getServiceContext(
 					() -> new Long[0], () -> new String[0], documentFolderId,
 					documentOptional, groupId)));
@@ -667,25 +674,25 @@ public class DocumentResourceImpl
 					HashMapBuilder.put(
 						"create",
 						addAction(
-							"VIEW", fileEntry.getPrimaryKey(),
+							ActionKeys.VIEW, fileEntry.getPrimaryKey(),
 							"postDocumentMyRating", fileEntry.getUserId(),
 							DLFileEntry.class.getName(), fileEntry.getGroupId())
 					).put(
 						"delete",
 						addAction(
-							"VIEW", fileEntry.getPrimaryKey(),
+							ActionKeys.VIEW, fileEntry.getPrimaryKey(),
 							"deleteDocumentMyRating", fileEntry.getUserId(),
 							DLFileEntry.class.getName(), fileEntry.getGroupId())
 					).put(
 						"get",
 						addAction(
-							"VIEW", fileEntry.getPrimaryKey(),
+							ActionKeys.VIEW, fileEntry.getPrimaryKey(),
 							"getDocumentMyRating", fileEntry.getUserId(),
 							DLFileEntry.class.getName(), fileEntry.getGroupId())
 					).put(
 						"replace",
 						addAction(
-							"VIEW", fileEntry.getPrimaryKey(),
+							ActionKeys.VIEW, fileEntry.getPrimaryKey(),
 							"putDocumentMyRating", fileEntry.getUserId(),
 							DLFileEntry.class.getName(), fileEntry.getGroupId())
 					).build(),
@@ -720,39 +727,34 @@ public class DocumentResourceImpl
 				HashMapBuilder.put(
 					"delete",
 					addAction(
-						"DELETE", fileEntry.getPrimaryKey(), "deleteDocument",
-						fileEntry.getUserId(),
-						"com.liferay.document.library.kernel.model.DLFileEntry",
-						fileEntry.getGroupId())
+						ActionKeys.DELETE, fileEntry.getPrimaryKey(),
+						"deleteDocument", fileEntry.getUserId(),
+						DLFileEntry.class.getName(), fileEntry.getGroupId())
 				).put(
 					"get",
 					addAction(
-						"VIEW", fileEntry.getPrimaryKey(), "getDocument",
-						fileEntry.getUserId(),
-						"com.liferay.document.library.kernel.model.DLFileEntry",
-						fileEntry.getGroupId())
+						ActionKeys.VIEW, fileEntry.getPrimaryKey(),
+						"getDocument", fileEntry.getUserId(),
+						DLFileEntry.class.getName(), fileEntry.getGroupId())
 				).put(
 					"get-rendered-content-by-display-page",
 					addAction(
-						"VIEW", fileEntry.getPrimaryKey(),
+						ActionKeys.VIEW, fileEntry.getPrimaryKey(),
 						"getDocumentRenderedContentByDisplayPageDisplayPageKey",
-						fileEntry.getUserId(),
-						"com.liferay.document.library.kernel.model.DLFileEntry",
+						fileEntry.getUserId(), DLFileEntry.class.getName(),
 						fileEntry.getGroupId())
 				).put(
 					"replace",
 					addAction(
-						"UPDATE", fileEntry.getPrimaryKey(), "putDocument",
-						fileEntry.getUserId(),
-						"com.liferay.document.library.kernel.model.DLFileEntry",
-						fileEntry.getGroupId())
+						ActionKeys.UPDATE, fileEntry.getPrimaryKey(),
+						"putDocument", fileEntry.getUserId(),
+						DLFileEntry.class.getName(), fileEntry.getGroupId())
 				).put(
 					"update",
 					addAction(
-						"UPDATE", fileEntry.getPrimaryKey(), "patchDocument",
-						fileEntry.getUserId(),
-						"com.liferay.document.library.kernel.model.DLFileEntry",
-						fileEntry.getGroupId())
+						ActionKeys.UPDATE, fileEntry.getPrimaryKey(),
+						"patchDocument", fileEntry.getUserId(),
+						DLFileEntry.class.getName(), fileEntry.getGroupId())
 				).build(),
 				_dtoConverterRegistry, fileEntry.getFileEntryId(),
 				contextAcceptLanguage.getPreferredLocale(), contextUriInfo,

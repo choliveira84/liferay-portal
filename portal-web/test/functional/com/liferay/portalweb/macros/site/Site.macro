@@ -59,19 +59,27 @@ definition {
 			PortletEntry.inputName(name = "${siteName}");
 
 			Modal.save();
-
-			Click(
-				key_url = "site-configuration",
-				locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
 		}
 
 		if ("${siteType}" == "Site Template") {
 			if ("${uncheckPropagation}" == "true") {
-				Panel.expandPanel(panel = "Pages");
+				Click(
+					key_url = "site-configuration-google-pagespeed",
+					locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
+				Navigator.gotoNavTab(navTab = "Pages");
 
 				Uncheck.uncheckToggleSwitch(locator1 = "Checkbox#ENABLE_PROPAGATION");
+
+				PortletEntry.save();
+
+				Navigator.gotoBack();
 			}
 		}
+
+		Click(
+			key_url = "site-configuration-details",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
 
 		if ("${membershipType}" == "Private") {
 			Select(
@@ -92,9 +100,7 @@ definition {
 		if (isSet(parentSiteName)) {
 			WaitForLiferayEvent.initializeLiferayEventLog();
 
-			AssertClick(
-				locator1 = "Button#SELECT",
-				value1 = "Select");
+			Button.click(button = "Change");
 
 			var key_parentSiteName = "${parentSiteName}";
 
@@ -134,7 +140,7 @@ definition {
 		Modal.save();
 
 		Click(
-			key_url = "site-configuration",
+			key_url = "site-configuration-details",
 			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
 
 		AssertTextEquals(
@@ -153,12 +159,16 @@ definition {
 	}
 
 	macro addVirtualHostsURLCP {
-		Panel.expandPanel(panel = "Site URL");
+		Click(
+			key_url = "site-configuration-details",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
+		Navigator.gotoNavTab(navTab = "Site URL");
 
 		if (isSet(publicVirtualHosts)) {
 			AssertTextEquals(
 				locator1 = "SiteSettingsSiteURL#SITE_URL_VIRTUAL_HOSTS_PUBLIC_PAGES_LABEL",
-				value1 = "Public Pages");
+				value1 = "Public Pages Virtual Host");
 
 			Type(
 				locator1 = "TextInput#PUBLIC_VIRTUAL_HOST_URL",
@@ -168,7 +178,7 @@ definition {
 		if (isSet(privateVirtualHosts)) {
 			AssertTextEquals(
 				locator1 = "SiteSettingsSiteURL#SITE_URL_VIRTUAL_HOSTS_PRIVATE_PAGES_LABEL",
-				value1 = "Private Pages");
+				value1 = "Private Pages Virtual Host");
 
 			Type(
 				locator1 = "TextInput#PRIVATE_VIRTUAL_HOST_URL",
@@ -256,11 +266,11 @@ definition {
 	}
 
 	macro assignDefaultSiteTeam {
-		Click(locator1 = "SitesEditSite#MENU_ADVANCED_TAB");
+		Click(
+			key_url = "site-configuration-default-user-associations",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
 
-		AssertClick(
-			locator1 = "SiteSettingsDefaultUserAssociations#TEAMS_SELECT",
-			value1 = "Select");
+		Click(locator1 = "SiteSettingsDefaultUserAssociations#TEAMS_SELECT");
 
 		SelectFrame(locator1 = "IFrame#MODAL_BODY");
 
@@ -275,8 +285,6 @@ definition {
 		SelectFrame(value1 = "relative=top");
 
 		PortletEntry.save();
-
-		Click(locator1 = "SitesEditSite#MENU_ADVANCED_TAB");
 
 		var key_teamName = "${teamName}";
 
@@ -468,16 +476,9 @@ definition {
 	}
 
 	macro configureCurrentLanguagesCP {
-		if (isSet(localizedLanguageTab)) {
-			if (IsElementNotPresent(key_tab = "${localizedLanguageTab}", locator1 = "NavTab#ACTIVE_TAB_LINK")) {
-				Navigator.gotoNavTab(navTab = "${localizedLanguageTab}");
-			}
-		}
-		else {
-			if (IsElementNotPresent(key_tab = "Languages", locator1 = "NavTab#ACTIVE_TAB_LINK")) {
-				Navigator.gotoNavTab(navTab = "Languages");
-			}
-		}
+		Click(
+			key_url = "site-configuration-languages",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
 
 		Check.checkNotVisible(
 			index = "2",
@@ -631,11 +632,9 @@ definition {
 	}
 
 	macro disableRecycleBinCP {
-		AssertClick(
-			locator1 = "SitesEditSite#MENU_ADVANCED_TAB",
-			value1 = "Advanced");
-
-		Panel.expandPanel(panel = "Recycle Bin");
+		Click(
+			key_url = "site-configuration-recycle-bin",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
 
 		Uncheck.uncheckToggleSwitchNoErrorNoAssert(locator1 = "Checkbox#ENABLE_RECYCLE_BIN");
 
@@ -647,6 +646,10 @@ definition {
 	}
 
 	macro editCP {
+		Click(
+			key_url = "site-configuration-details",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
 		AssertTextEquals(
 			locator1 = "TextInput#NAME",
 			value1 = "${siteName}");
@@ -661,7 +664,11 @@ definition {
 	}
 
 	macro editFriendlyURLCP {
-		Panel.expandPanel(panel = "Site URL");
+		Click(
+			key_url = "site-configuration-details",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
+		Navigator.gotoNavTab(navTab = "Site URL");
 
 		AssertTextEquals(
 			locator1 = "SiteSettingsSiteURL#SITE_URL_FRIENDLY_URL_LABEL",
@@ -692,11 +699,9 @@ definition {
 	}
 
 	macro editGoogleAnalyticsIDCP {
-		AssertClick(
-			locator1 = "SitesEditSite#MENU_ADVANCED_TAB",
-			value1 = "Advanced");
-
-		Panel.expandPanel(panel = "Analytics");
+		Click(
+			key_url = "site-configuration-analytics",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
 
 		Type(
 			locator1 = "TextInput#GOOGLE_ANALYTICS_ID",
@@ -706,11 +711,9 @@ definition {
 	}
 
 	macro editPiwikCP {
-		AssertClick(
-			locator1 = "SitesEditSite#MENU_ADVANCED_TAB",
-			value1 = "Advanced");
-
-		Panel.expandPanel(panel = "Analytics");
+		Click(
+			key_url = "site-configuration-analytics",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
 
 		Type(
 			locator1 = "TextInput#PIWIK",
@@ -725,7 +728,7 @@ definition {
 			portlet = "Site Settings");
 
 		Click(
-			key_url = "site-configuration",
+			key_url = "site-configuration-details",
 			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
 
 		AssertElementPresent(locator1 = "SitesEditSite#SITE_ID");
@@ -762,6 +765,10 @@ definition {
 	}
 
 	macro inactivateCP {
+		Click(
+			key_url = "site-configuration-details",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
 		AssertTextEquals(
 			locator1 = "TextInput#NAME",
 			value1 = "${siteName}");
@@ -883,6 +890,10 @@ definition {
 	}
 
 	macro limitMembership {
+		Click(
+			key_url = "site-configuration-details",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
 		if ("${siteLimitMembership}" == "Yes") {
 			Check.checkToggleSwitch(locator1 = "SitesEditSite#PARENT_SITE_LIMIT_MEMBERSHIP_CHECKBOX");
 		}
@@ -894,12 +905,8 @@ definition {
 	}
 
 	macro manageMembershipOptions {
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			portlet = "Site Settings");
-
 		Click(
-			key_url = "site-configuration",
+			key_url = "site-configuration-details",
 			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
 
 		Pause(locator1 = "5000");
@@ -922,10 +929,6 @@ definition {
 		}
 
 		PortletEntry.save();
-	}
-
-	macro openSiteConfigurationAdmin {
-		Navigator.openWithAppendToBaseURL(urlAppend = "group/${siteURLKey}/~/control_panel/manage/-/site/settings?_com_liferay_configuration_admin_web_portlet_SiteSettingsPortlet_mvcRenderCommandName=%2Fconfiguration_admin%2Fview_configuration_screen&_com_liferay_configuration_admin_web_portlet_SiteSettingsPortlet_configurationScreenKey=site-configuration-general");
 	}
 
 	macro openSiteMembershipsAdmin {
@@ -1062,7 +1065,11 @@ definition {
 	}
 
 	macro selectPageType {
-		Panel.expandPanel(panel = "Pages");
+		Click(
+			key_url = "site-configuration-google-pagespeed",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
+		Navigator.gotoNavTab(navTab = "Pages");
 
 		if ("${selectPublicPages}" == "true") {
 			Select(
@@ -1075,8 +1082,6 @@ definition {
 				value1 = "${siteTemplate}");
 
 			if ("${checkPropagation}" == "true") {
-				Panel.expandPanel(panel = "Pages");
-
 				Check.checkToggleSwitch(locator1 = "Checkbox#PRIVATE_PAGES_ENABLE_PROPAGATION");
 			}
 		}
@@ -1085,9 +1090,11 @@ definition {
 	}
 
 	macro selectParentSite {
-		AssertClick(
-			locator1 = "SitesEditSite#PARENT_SITE_SELECT",
-			value1 = "Select");
+		Click(
+			key_url = "site-configuration-details",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
+		Button.click(button = "Change");
 
 		var key_parentSiteName = "${parentSiteName}";
 
@@ -1454,19 +1461,19 @@ definition {
 
 	macro viewSiteClonedFromSiteTemplateCP {
 		Click(
-			key_itemName = "General",
-			locator1 = "Panel#PANEL_NAV_ITEM_LINK");
+			key_url = "site-configuration-other",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
 
-		Panel.expandPanel(panel = "Site Template");
+		Navigator.gotoNavTab(navTab = "Site Template");
 
 		if ("${clonedFromTemplate}" == "true") {
 			AssertTextEquals.assertPartialText(
-				locator1 = "SiteSettingsSiteTemplate#SITE_CLONED_FROM_TEMPLATE_MESSAGE",
+				locator1 = "SiteSettingsSiteTemplate#CONTENT_CONTAINER",
 				value1 = "These pages are linked to site template ${siteTemplateName} without propagation of changes.");
 		}
 		else {
 			AssertTextEquals.assertPartialText(
-				locator1 = "SiteSettingsSiteTemplate#SITE_NOT_CLONED_FROM_TEMPLATE_MESSAGE",
+				locator1 = "SiteSettingsSiteTemplate#CONTENT_CONTAINER",
 				value1 = "This site is not related to a site template.");
 		}
 	}

@@ -68,13 +68,13 @@ public class PrivateMessagingUpgradeProcess extends UpgradeProcess {
 	}
 
 	private void _deleteThreads() throws Exception {
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				SQLTransformer.transform(
 					"select mbThreadId from PM_UserThread"));
-			ResultSet rs = ps.executeQuery()) {
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			while (rs.next()) {
-				_mbThreadLocalService.deleteMBThread(rs.getLong(1));
+			while (resultSet.next()) {
+				_mbThreadLocalService.deleteMBThread(resultSet.getLong(1));
 			}
 		}
 	}

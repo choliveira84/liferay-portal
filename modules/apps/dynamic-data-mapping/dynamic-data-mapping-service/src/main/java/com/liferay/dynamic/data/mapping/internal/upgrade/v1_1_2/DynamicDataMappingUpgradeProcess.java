@@ -104,15 +104,16 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 			return ddmForm;
 		}
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select definition from DDMStructure where structureId = ?")) {
 
-			ps.setLong(1, structureId);
+			preparedStatement.setLong(1, structureId);
 
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				if (resultSet.next()) {
 					ddmForm = DDMFormDeserializeUtil.deserialize(
-						_ddmFormDeserializer, rs.getString("definition"));
+						_ddmFormDeserializer,
+						resultSet.getString("definition"));
 
 					_ddmForms.put(structureId, ddmForm);
 
@@ -135,15 +136,16 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 			return fullHierarchyDDMForm;
 		}
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select parentStructureId from DDMStructure where " +
 					"structureId = ?")) {
 
-			ps.setLong(1, structureId);
+			preparedStatement.setLong(1, structureId);
 
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
-					long parentStructureId = rs.getLong("parentStructureId");
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				if (resultSet.next()) {
+					long parentStructureId = resultSet.getLong(
+						"parentStructureId");
 
 					fullHierarchyDDMForm = getDDMForm(structureId);
 
@@ -241,17 +243,18 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 	}
 
 	protected void upgradeDDMContentReferences(String query) throws Exception {
-		try (PreparedStatement ps1 = connection.prepareStatement(query);
-			PreparedStatement ps2 =
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
+				query);
+			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection,
 					"update DDMContent set data_= ? where contentId = ?");
-			ResultSet rs = ps1.executeQuery()) {
+			ResultSet resultSet = preparedStatement1.executeQuery()) {
 
-			while (rs.next()) {
-				String data = rs.getString("data_");
+			while (resultSet.next()) {
+				String data = resultSet.getString("data_");
 
-				long ddmStructureId = rs.getLong("structureId");
+				long ddmStructureId = resultSet.getLong("structureId");
 
 				DDMForm ddmForm = getFullHierarchyDDMForm(ddmStructureId);
 
@@ -261,85 +264,87 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 
 				transformDDMFormFieldValues(ddmFormValues);
 
-				ps2.setString(
+				preparedStatement2.setString(
 					1,
 					DDMFormValuesSerializeUtil.serialize(
 						ddmFormValues, _ddmFormValuesSerializer));
 
-				long contentId = rs.getLong("contentId");
+				long contentId = resultSet.getLong("contentId");
 
-				ps2.setLong(2, contentId);
+				preparedStatement2.setLong(2, contentId);
 
-				ps2.addBatch();
+				preparedStatement2.addBatch();
 			}
 
-			ps2.executeBatch();
+			preparedStatement2.executeBatch();
 		}
 	}
 
 	protected void upgradeDDMStructureReferences() throws Exception {
-		try (PreparedStatement ps1 = connection.prepareStatement(
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
 				"select DDMStructure.structureId from DDMStructure");
-			PreparedStatement ps2 =
+			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection,
 					"update DDMStructure set definition = ? where " +
 						"structureId = ?");
-			PreparedStatement ps3 = connection.prepareStatement(
+			PreparedStatement preparedStatement3 = connection.prepareStatement(
 				"select structureVersionId, definition from " +
 					"DDMStructureVersion where structureId = ?");
-			PreparedStatement ps4 =
+			PreparedStatement preparedStatement4 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection,
 					"update DDMStructureVersion set definition = ? where " +
 						"structureVersionId = ?")) {
 
-			try (ResultSet rs = ps1.executeQuery()) {
-				while (rs.next()) {
-					long ddmStructureId = rs.getLong("structureId");
+			try (ResultSet resultSet = preparedStatement1.executeQuery()) {
+				while (resultSet.next()) {
+					long ddmStructureId = resultSet.getLong("structureId");
 
 					DDMForm ddmForm = getDDMForm(ddmStructureId);
 
 					updateDDMFormFields(ddmForm);
 
-					ps2.setString(
+					preparedStatement2.setString(
 						1,
 						DDMFormSerializeUtil.serialize(
 							ddmForm, _ddmFormSerializer));
 
-					ps2.setLong(2, ddmStructureId);
+					preparedStatement2.setLong(2, ddmStructureId);
 
-					ps2.addBatch();
+					preparedStatement2.addBatch();
 
-					ps3.setLong(1, ddmStructureId);
+					preparedStatement3.setLong(1, ddmStructureId);
 
-					try (ResultSet rs2 = ps3.executeQuery()) {
-						while (rs2.next()) {
+					try (ResultSet resultSet2 =
+							preparedStatement3.executeQuery()) {
+
+						while (resultSet2.next()) {
 							ddmForm = DDMFormDeserializeUtil.deserialize(
 								_ddmFormDeserializer,
-								rs2.getString("definition"));
+								resultSet2.getString("definition"));
 
 							updateDDMFormFields(ddmForm);
 
-							ps4.setString(
+							preparedStatement4.setString(
 								1,
 								DDMFormSerializeUtil.serialize(
 									ddmForm, _ddmFormSerializer));
 
-							long structureVersionId = rs2.getLong(
+							long structureVersionId = resultSet2.getLong(
 								"structureVersionId");
 
-							ps4.setLong(2, structureVersionId);
+							preparedStatement4.setLong(2, structureVersionId);
 
-							ps4.addBatch();
+							preparedStatement4.addBatch();
 						}
 					}
 				}
 			}
 
-			ps2.executeBatch();
+			preparedStatement2.executeBatch();
 
-			ps4.executeBatch();
+			preparedStatement4.executeBatch();
 		}
 	}
 

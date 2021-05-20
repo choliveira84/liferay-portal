@@ -21,7 +21,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.CodeCoverageAssertor;
 import com.liferay.portal.kernel.test.rule.NewEnv;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.test.aspects.ReflectionUtilAdvice;
 import com.liferay.portal.test.rule.AdviseWith;
@@ -29,7 +29,6 @@ import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.portal.util.PropsImpl;
 
 import java.util.Collections;
-import java.util.Dictionary;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
@@ -118,13 +117,12 @@ public class ConfigurableUtilTest {
 
 		// Test dictionary
 
-		Dictionary<String, String> dictionary = new HashMapDictionary<>();
-
-		dictionary.put("testReqiredString", "testReqiredString1");
-
 		_assertTestConfiguration(
 			ConfigurableUtil.createConfigurable(
-				TestConfiguration.class, dictionary),
+				TestConfiguration.class,
+				HashMapDictionaryBuilder.put(
+					"testReqiredString", "testReqiredString1"
+				).build()),
 			"testReqiredString1");
 
 		// Test map
@@ -180,13 +178,12 @@ public class ConfigurableUtilTest {
 				"_testReqiredString",
 			"\"testReqiredString3\"");
 
-		Dictionary<String, String> dictionary = new HashMapDictionary<>();
-
-		dictionary.put("testReqiredString", "testReqiredString1");
-
 		_assertTestConfiguration(
 			ConfigurableUtil.createConfigurable(
-				TestConfiguration.class, dictionary),
+				TestConfiguration.class,
+				HashMapDictionaryBuilder.put(
+					"testReqiredString", "testReqiredString1"
+				).build()),
 			"testReqiredString3");
 
 		// Test map override

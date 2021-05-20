@@ -55,15 +55,15 @@ public class LayoutUpgradeProcess extends UpgradeProcess {
 
 	protected void updateLayouts() throws Exception {
 		try (LoggingTimer loggingTimer = new LoggingTimer();
-			PreparedStatement ps = connection.prepareStatement(
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				"select plid, typeSettings from Layout where type_ = ?")) {
 
-			ps.setString(1, "embedded");
+			preparedStatement.setString(1, "embedded");
 
-			try (ResultSet rs = ps.executeQuery()) {
-				while (rs.next()) {
-					long plid = rs.getLong("plid");
-					String typeSettings = rs.getString("typeSettings");
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				while (resultSet.next()) {
+					long plid = resultSet.getLong("plid");
+					String typeSettings = resultSet.getString("typeSettings");
 
 					updateLayout(plid, typeSettings);
 				}
@@ -74,13 +74,13 @@ public class LayoutUpgradeProcess extends UpgradeProcess {
 	protected void updateTypeSettings(long plid, String typeSettings)
 		throws Exception {
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"update Layout set typeSettings = ? where plid = ?")) {
 
-			ps.setString(1, typeSettings);
-			ps.setLong(2, plid);
+			preparedStatement.setString(1, typeSettings);
+			preparedStatement.setLong(2, plid);
 
-			ps.executeUpdate();
+			preparedStatement.executeUpdate();
 		}
 	}
 

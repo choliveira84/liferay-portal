@@ -20,7 +20,7 @@ import PropTypes from 'prop-types';
 import React, {useState} from 'react';
 
 import {config} from '../../app/config/index';
-import {useSelector} from '../../app/store/index';
+import {useSelector} from '../../app/contexts/StoreContext';
 import {useId} from '../../app/utils/useId';
 import {openItemSelector} from '../../core/openItemSelector';
 
@@ -72,7 +72,7 @@ export default function ItemSelector({
 	);
 
 	return (
-		<ClayForm.Group small>
+		<ClayForm.Group className="mb-2" small>
 			<label htmlFor={itemSelectorInputId}>{label}</label>
 
 			<div className="d-flex">

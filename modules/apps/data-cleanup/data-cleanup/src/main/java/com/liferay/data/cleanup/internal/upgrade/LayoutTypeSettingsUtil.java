@@ -38,19 +38,20 @@ public class LayoutTypeSettingsUtil {
 	public static void removePortletId(Connection connection, String portletId)
 		throws Exception {
 
-		try (PreparedStatement selectPS = connection.prepareStatement(
-				StringBundler.concat(
-					"select plid, typeSettings from Layout where typeSettings ",
-					"like '%", portletId, "%'"));
-			PreparedStatement updatePS =
+		try (PreparedStatement selectPreparedStatement =
+				connection.prepareStatement(
+					StringBundler.concat(
+						"select plid, typeSettings from Layout where ",
+						"typeSettings like '%", portletId, "%'"));
+			PreparedStatement updatePreparedStatement =
 				AutoBatchPreparedStatementUtil.autoBatch(
 					connection.prepareStatement(
 						"update Layout set typeSettings = ? where plid = ?"));
-			ResultSet rs = selectPS.executeQuery()) {
+			ResultSet resultSet = selectPreparedStatement.executeQuery()) {
 
-			while (rs.next()) {
-				long plid = rs.getLong(1);
-				String typeSettings = rs.getString(2);
+			while (resultSet.next()) {
+				long plid = resultSet.getLong(1);
+				String typeSettings = resultSet.getString(2);
 
 				UnicodeProperties unicodeProperties = new UnicodeProperties(
 					true);
@@ -102,14 +103,15 @@ public class LayoutTypeSettingsUtil {
 					entry.setValue(sb.toString());
 				}
 
-				updatePS.setString(1, unicodeProperties.toString());
+				updatePreparedStatement.setString(
+					1, unicodeProperties.toString());
 
-				updatePS.setLong(2, plid);
+				updatePreparedStatement.setLong(2, plid);
 
-				updatePS.addBatch();
+				updatePreparedStatement.addBatch();
 			}
 
-			updatePS.executeBatch();
+			updatePreparedStatement.executeBatch();
 		}
 	}
 

@@ -37,15 +37,15 @@ public class BlogsEntryUpgradeProcess extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		try (PreparedStatement ps1 = connection.prepareStatement(
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
 				"select groupId, entryId, urlTitle from BlogsEntry")) {
 
-			ResultSet rs = ps1.executeQuery();
+			ResultSet resultSet = preparedStatement1.executeQuery();
 
-			while (rs.next()) {
-				long groupId = rs.getLong(1);
-				long classPK = rs.getLong(2);
-				String urlTitle = rs.getString(3);
+			while (resultSet.next()) {
+				long groupId = resultSet.getLong(1);
+				long classPK = resultSet.getLong(2);
+				String urlTitle = resultSet.getString(3);
 
 				long classNameId = PortalUtil.getClassNameId(
 					BlogsEntry.class.getName());

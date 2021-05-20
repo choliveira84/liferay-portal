@@ -27,13 +27,33 @@ definition {
 	}
 
 	@description = "COMMERCE-6356. As a buyer, I want to be able to select the quantity of a product and add it to cart from Product details"
-	@ignore = "true"
 	@priority = "3"
 	test AddProductToCartFromProductDetails {
 		property portal.acceptance = "false";
+		property test.name.skip.portal.instance = "CommerceProductDetails#AddProductToCartFromProductDetails";
 
-		// TODO COMMERCE-6356 AddProductToCartFromProductDetails pending implementation
+		CommerceAccelerators.initializeNewSiteViaAccelerator(siteName = "Minium");
 
+		ApplicationsMenu.gotoSite(site = "Minium");
+
+		CommerceNavigator.gotoMiniumSidebarItem(menuItem = "Account Management");
+
+		CommerceAcceleratorsInitializer.createNewAccountViaFront(
+			accountName = "Test",
+			adminEmailAddress = "test@liferay.com");
+
+		CommerceNavigator.gotoMiniumSidebarItem(menuItem = "Catalog");
+
+		FrontStore.addInitializerProductToCart(
+			productName = "U-Joint",
+			productQuantity = "2");
+
+		CommerceNavigator.gotoMiniCart();
+
+		AssertElementPresent(
+			key_cartItemSKU = "MIN55861",
+			locator1 = "CommerceAccelerators#MINI_CART_ITEM_NAME",
+			value1 = "U-Joint");
 	}
 
 	@description = "COMMERCE-6354. As a buyer, I want to be able to add a product to wish list from Product Details and if I refresh the page, I want to be able to see that the product is already added to wishlist"
@@ -43,6 +63,7 @@ definition {
 		property portal.acceptance = "false";
 
 		// TODO COMMERCE-6354 AddProductToWishListFromProductDetails pending implementation
+
 	}
 
 	@description = "COMMERCE-6359. As a buyer, I want to be able to select only the allowed quantities of a product in Product Details, if set"
@@ -117,13 +138,40 @@ definition {
 		// TODO COMMERCE-6370 SelectOptionValueAndAddProductToCart pending implementation
 	}
 
-	@description = "COMMERCE-6371. As a buyer, I want to be able to select an option value(SKU contributor) that changes the price of the product and I want to see product price updating"
+	@description = "COMMERCE-6658. As a buyer, I want to be able to select an option value(Bundled Product) and I want to see product details updating(Price, SKU and Availability)"
+	@ignore = "true"
+	@priority = "3"
+	test SelectOptionValueAndAssertBundledProductDetailsAreUpdated {
+		property portal.acceptance = "false";
+
+		// TODO COMMERCE-6658 SelectOptionValueAndAssertBundledProductDetailsAreUpdated pending implementation
+	}
+
+	@description = "COMMERCE-6371. As a buyer, I want to be able to select an option value(SKU contributor) and I want to see product details updating(Price, SKU and Availability)"
 	@ignore = "true"
 	@priority = "3"
 	test SelectOptionValueAndAssertProductPriceIsUpdated {
 		property portal.acceptance = "false";
 
-		// TODO COMMERCE-6371 SelectOptionValueAndAssertProductPriceIsUpdated pending implementation
+		// TODO COMMERCE-6371 SelectOptionValueAndAssertProductDetailsAreUpdated pending implementation
+	}
+
+	@description = "COMMERCE-6659. I want to be able to use ADT to render Product Details widget and I want to be able to select a Display Template and see it applied to the widget"
+	@ignore = "true"
+	@priority = "3"
+	test UseADTInProductDetailsWidget {
+		property portal.acceptance = "false";
+
+		// TODO COMMERCE-6659 UseADTInProductDetailsWidget pending implementation
+	}
+
+	@description = "COMMERCE-6660. I want to be able to set a custom renderer for product type different than the default one(Simple/Grouped/Virtual)"
+	@ignore = "true"
+	@priority = "3"
+	test UseCustomRenderersInProductDetails {
+		property portal.acceptance = "false";
+
+		// TODO COMMERCE-6660 UseCustomRenderersInProductDetails pending implementation
 	}
 
 	@description = "COMMERCE-6364. As a buyer, I want the first selectable quantity of a product in Product Details to be the minimum multiple quantity if Minimum Order Quantity is higher than Multiple Order Quantity"
@@ -154,12 +202,46 @@ definition {
 	}
 
 	@description = "COMMERCE-6353. As a buyer, I want to be able to see product details in Product Details page(Product Availability, Number of Items in Stock, Product Name, Product SKU, Product MPN, Product Description, List Price, Product Specifications, Product Images/Attachments(if set))"
-	@ignore = "true"
 	@priority = "3"
 	test ViewProductDetailsWidget {
 		property portal.acceptance = "false";
+		property test.name.skip.portal.instance = "CommerceProductDetails#ViewProductDetailsWidget";
 
-		// TODO COMMERCE-6353 ViewProductDetailsWidget pending implementation
+		CommerceAccelerators.initializeNewSiteViaAccelerator(siteName = "Minium");
+
+		Navigator.openWithAppendToBaseURL(urlAppend = "web/minium");
+
+		Click(
+			key_productName = "U-Joint",
+			locator1 = "CommerceAccelerators#PRODUCT_CARD_NAME");
+
+		AssertElementPresent(locator1 = "CommerceFrontStore#FS_PRODUCT_STOCK_QUANTITY");
+
+		AssertElementPresent(
+			key_availability = "",
+			locator1 = "CommerceFrontStore#FS_PRODUCT_AVAILABILITY");
+
+		AssertElementPresent(locator1 = "CommerceFrontStore#FS_PRODUCT_NAME");
+
+		AssertElementPresent(
+			key_detail = "SKU",
+			locator1 = "CommerceFrontStore#FS_PRODUCT_DETAIL");
+
+		AssertElementPresent(
+			key_detail = "MPN",
+			locator1 = "CommerceFrontStore#FS_PRODUCT_DETAIL");
+
+		AssertElementPresent(locator1 = "CommerceAccelerators#PRODUCT_DETAILS_LIST_PRICE");
+
+		for (var detail : list "Weight,Dimensions,Material,Quantity,Warranty") {
+			AssertElementPresent(
+				key_specification = "${detail}",
+				locator1 = "CommerceFrontStore#FS_PRODUCT_SPECIFICATIONS");
+		}
+
+		AssertElementPresent(
+			key_FSProductImage = "",
+			locator1 = "CommerceFrontStore#FS_PRODUCT_IMAGE");
 	}
 
 }

@@ -68,6 +68,10 @@ public class DDMFormTemplateContextProcessor {
 		return _ddmForm;
 	}
 
+	public long getDDMFormInstanceId() {
+		return _ddmFormInstanceId;
+	}
+
 	public DDMFormLayout getDDMFormLayout() {
 		return _ddmFormLayout;
 	}
@@ -224,16 +228,18 @@ public class DDMFormTemplateContextProcessor {
 	}
 
 	protected void initModels() {
-		setDDMFormRules();
-
 		setDDMFormDefaultLocale();
-		setDDMFormValuesDefaultLocale();
+		setDDMFormInstanceId();
+		setDDMFormRules();
 		setDDMFormValuesAvailableLocales();
-
+		setDDMFormValuesDefaultLocale();
 		setGroupId();
 	}
 
 	protected void process() {
+		_ddmFormLayout.setNextPage(_jsonObject.getInt("nextPage"));
+		_ddmFormLayout.setPreviousPage(_jsonObject.getInt("previousPage"));
+
 		traversePages(_jsonObject.getJSONArray("pages"));
 	}
 
@@ -523,6 +529,10 @@ public class DDMFormTemplateContextProcessor {
 			GetterUtil.getString(visibilityExpression));
 	}
 
+	protected void setDDMFormInstanceId() {
+		_ddmFormInstanceId = _jsonObject.getLong("formId", 0);
+	}
+
 	protected void setDDMFormRules() {
 		List<DDMFormRule> ddmFormRules = getDDMFormRules(
 			_jsonObject.getJSONArray("rules"));
@@ -609,6 +619,7 @@ public class DDMFormTemplateContextProcessor {
 	}
 
 	private final DDMForm _ddmForm;
+	private long _ddmFormInstanceId;
 	private final DDMFormLayout _ddmFormLayout;
 	private final DDMFormValues _ddmFormValues;
 	private long _groupId;

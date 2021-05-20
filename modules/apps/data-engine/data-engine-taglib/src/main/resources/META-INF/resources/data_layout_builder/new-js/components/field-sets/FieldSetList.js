@@ -15,18 +15,22 @@
 import ClayButton from '@clayui/button';
 import {
 	EVENT_TYPES,
+	PagesVisitor,
 	useConfig,
 	useForm,
 	useFormState,
-} from 'dynamic-data-mapping-form-renderer';
-import React from 'react';
+} from 'data-engine-js-components-web';
+import React, {useEffect, useState} from 'react';
 
 import EmptyState from '../../../js/components/empty-state/EmptyState.es';
+import {useNewDeleteFieldSet} from '../../../js/components/field-sets/actions/useDeleteFieldSet.es';
+import {usePropagateFieldSet} from '../../../js/components/field-sets/actions/usePropagateFieldSet.es';
 import FieldType from '../../../js/components/field-types/FieldType.es';
 import {DRAG_FIELDSET_ADD} from '../../../js/drag-and-drop/dragTypes.es';
 import {getDataDefinitionFieldSet} from '../../../js/utils/dataConverter.es';
 import {getLocalizedValue, getPluralMessage} from '../../../js/utils/lang.es';
 import {getSearchRegex} from '../../../js/utils/search.es';
+import FieldSetModal from './FieldSetModal';
 
 function getSortedFieldsets(fieldsets) {
 	return fieldsets.sort((a, b) => {
@@ -47,6 +51,11 @@ function getFilteredFieldsets(fieldsets, keywords) {
 }
 
 export default function FieldSetList({searchTerm}) {
+	const [modalState, setModalState] = useState({
+		isVisible: false,
+	});
+	const [fieldSetsInUse, setFieldSetsInUse] = useState(new Set());
+
 	const {
 		activePage,
 		availableLanguageIds,
@@ -57,10 +66,31 @@ export default function FieldSetList({searchTerm}) {
 	} = useFormState();
 
 	const {allowInvalidAvailableLocalesForProperty, fieldTypes} = useConfig();
-
 	const dispatch = useForm();
 
 	const filteredFieldsets = getFilteredFieldsets(fieldSets, searchTerm);
+
+	useEffect(() => {
+		const fieldsInuse = new Set();
+
+		new PagesVisitor(pages).mapFields((field) => {
+			if (field.type === 'fieldset') {
+				fieldsInuse.add(field.ddmStructureId);
+			}
+		});
+		setFieldSetsInUse(fieldsInuse);
+	}, [pages]);
+
+	const toggleFieldSet = (fieldSet) => {
+		setModalState(({isVisible}) => ({
+			fieldSet,
+			isVisible: !isVisible,
+		}));
+	};
+
+	const deleteFieldSet = useNewDeleteFieldSet();
+
+	const propagateFieldSet = usePropagateFieldSet();
 
 	const onDoubleClick = ({fieldSet}) => {
 		dispatch({
@@ -83,13 +113,12 @@ export default function FieldSetList({searchTerm}) {
 		});
 	};
 
-	const onClickCreateNewFieldset = () => null;
 	const CreateNewFieldsetButton = () => (
 		<ClayButton
 			block
 			className="add-fieldset"
 			displayType="secondary"
-			onClick={onClickCreateNewFieldset}
+			onClick={() => toggleFieldSet()}
 		>
 			{Liferay.Language.get('create-new-fieldset')}
 		</ClayButton>
@@ -110,12 +139,45 @@ export default function FieldSetList({searchTerm}) {
 
 							return (
 								<FieldType
-									actions={[]}
+									actions={[
+										{
+											action: () =>
+												toggleFieldSet(fieldSet),
+											name: Liferay.Language.get('edit'),
+										},
+										{
+											action: () =>
+												propagateFieldSet({
+													fieldSet,
+													isDeleteAction: true,
+													modal: {
+														actionMessage: Liferay.Language.get(
+															'delete'
+														),
+														fieldSetMessage: Liferay.Language.get(
+															'the-fieldset-will-be-deleted-permanently-from'
+														),
+														headerMessage: Liferay.Language.get(
+															'delete'
+														),
+														status: 'danger',
+														warningMessage: Liferay.Language.get(
+															'this-action-may-erase-data-permanently'
+														),
+													},
+													onPropagate: deleteFieldSet,
+												}),
+											name: Liferay.Language.get(
+												'delete'
+											),
+										},
+									]}
 									description={getPluralMessage(
 										Liferay.Language.get('x-field'),
 										Liferay.Language.get('x-fields'),
 										fieldSet.dataDefinitionFields.length
 									)}
+									disabled={fieldSetsInUse.has(fieldSet.id)}
 									dragType={DRAG_FIELDSET_ADD}
 									fieldSet={fieldSet}
 									icon="forms"
@@ -144,6 +206,12 @@ export default function FieldSetList({searchTerm}) {
 						small
 					/>
 				</div>
+			)}
+			{modalState.isVisible && (
+				<FieldSetModal
+					fieldSet={modalState.fieldSet}
+					onClose={toggleFieldSet}
+				/>
 			)}
 		</>
 	);

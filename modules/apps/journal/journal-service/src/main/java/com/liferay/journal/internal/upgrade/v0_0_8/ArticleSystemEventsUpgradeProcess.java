@@ -85,17 +85,21 @@ public class ArticleSystemEventsUpgradeProcess extends UpgradeProcess {
 
 				String articleId = null;
 
-				try (PreparedStatement ps = connection.prepareStatement(
-						"select articleId from JournalArticleResource where " +
-							"JournalArticleResource.uuid_ = ? and " +
-								"JournalArticleResource.groupId = ?")) {
+				try (PreparedStatement preparedStatement =
+						connection.prepareStatement(
+							StringBundler.concat(
+								"select articleId from JournalArticleResource ",
+								"where JournalArticleResource.uuid_ = ? and ",
+								"JournalArticleResource.groupId = ?"))) {
 
-					ps.setString(1, systemEvent.getClassUuid());
-					ps.setLong(2, systemEvent.getGroupId());
+					preparedStatement.setString(1, systemEvent.getClassUuid());
+					preparedStatement.setLong(2, systemEvent.getGroupId());
 
-					try (ResultSet rs = ps.executeQuery()) {
-						if (rs.next()) {
-							articleId = rs.getString(1);
+					try (ResultSet resultSet =
+							preparedStatement.executeQuery()) {
+
+						if (resultSet.next()) {
+							articleId = resultSet.getString(1);
 						}
 					}
 				}
@@ -104,17 +108,24 @@ public class ArticleSystemEventsUpgradeProcess extends UpgradeProcess {
 					continue;
 				}
 
-				try (PreparedStatement ps = connection.prepareStatement(
-						"select 1 from JournalArticle where groupId = ? and " +
-							"articleId = ? and version = ? and status = ?")) {
+				try (PreparedStatement preparedStatement =
+						connection.prepareStatement(
+							StringBundler.concat(
+								"select 1 from JournalArticle where groupId = ",
+								"? and articleId = ? and version = ? and ",
+								"status = ?"))) {
 
-					ps.setLong(1, systemEvent.getGroupId());
-					ps.setString(2, articleId);
-					ps.setDouble(3, extraDataJSONObject.getDouble("version"));
-					ps.setInt(4, WorkflowConstants.STATUS_IN_TRASH);
+					preparedStatement.setLong(1, systemEvent.getGroupId());
+					preparedStatement.setString(2, articleId);
+					preparedStatement.setDouble(
+						3, extraDataJSONObject.getDouble("version"));
+					preparedStatement.setInt(
+						4, WorkflowConstants.STATUS_IN_TRASH);
 
-					try (ResultSet rs = ps.executeQuery()) {
-						if (rs.next()) {
+					try (ResultSet resultSet =
+							preparedStatement.executeQuery()) {
+
+						if (resultSet.next()) {
 							_systemEventLocalService.deleteSystemEvent(
 								systemEvent);
 						}

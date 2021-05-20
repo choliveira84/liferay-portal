@@ -66,7 +66,7 @@ import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -83,7 +83,6 @@ import java.text.SimpleDateFormat;
 
 import java.util.Collections;
 import java.util.Date;
-import java.util.Dictionary;
 import java.util.Map;
 import java.util.Set;
 
@@ -216,17 +215,15 @@ public class StructuredContentResourceTest
 
 		BundleContext bundleContext = bundle.getBundleContext();
 
-		Dictionary<String, String> properties = new HashMapDictionary<>();
-
-		properties.put(
-			"osgi.jaxrs.application.select",
-			"(osgi.jaxrs.name=Liferay.Headless.Delivery)");
-		properties.put("osgi.jaxrs.extension", "true");
-
 		ServiceRegistration<?> serviceRegistration =
 			bundleContext.registerService(
 				ContextResolver.class, new ExtensionContextResolver(),
-				properties);
+				HashMapDictionaryBuilder.put(
+					"osgi.jaxrs.application.select",
+					"(osgi.jaxrs.name=Liferay.Headless.Delivery)"
+				).put(
+					"osgi.jaxrs.extension", "true"
+				).build());
 
 		structuredContent = structuredContentResource.postSiteStructuredContent(
 			testGroup.getGroupId(), randomStructuredContent());

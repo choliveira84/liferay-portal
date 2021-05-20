@@ -95,18 +95,18 @@ public class UpgradeClassNames extends UpgradeKernelPackage {
 			sb.append("orp.roleId = nrp.roleId and orp.name = ? and nrp.name ");
 			sb.append("= ?");
 
-			try (PreparedStatement ps = connection.prepareStatement(
-					sb.toString())) {
+			try (PreparedStatement preparedStatement =
+					connection.prepareStatement(sb.toString())) {
 
-				ps.setString(1, _RESOURCE_NAMES[0][0]);
-				ps.setString(2, _RESOURCE_NAMES[0][1]);
+				preparedStatement.setString(1, _RESOURCE_NAMES[0][0]);
+				preparedStatement.setString(2, _RESOURCE_NAMES[0][1]);
 
-				ResultSet rs = ps.executeQuery();
+				ResultSet resultSet = preparedStatement.executeQuery();
 
-				while (rs.next()) {
+				while (resultSet.next()) {
 					String deleteSQL =
 						"delete from ResourcePermission where " +
-							"resourcePermissionId = " + rs.getLong(1);
+							"resourcePermissionId = " + resultSet.getLong(1);
 
 					runSQL(deleteSQL);
 				}
@@ -119,35 +119,38 @@ public class UpgradeClassNames extends UpgradeKernelPackage {
 
 	protected void deleteRelatedAssetEntries() throws UpgradeException {
 		try (LoggingTimer loggingTimer = new LoggingTimer();
-			PreparedStatement ps = connection.prepareStatement(
+			PreparedStatement preparedStatement1 = connection.prepareStatement(
 				"select entryId from AssetEntry where classNameId = ?");
-			PreparedStatement ps1 = AutoBatchPreparedStatementUtil.autoBatch(
-				connection.prepareStatement(
-					"delete from AssetLink where entryId1 = ? or entryId2 = " +
-						"?"));
-			PreparedStatement ps2 = AutoBatchPreparedStatementUtil.autoBatch(
-				connection.prepareStatement(
-					"delete from AssetEntry where entryId = ? "))) {
+			PreparedStatement preparedStatement2 =
+				AutoBatchPreparedStatementUtil.autoBatch(
+					connection.prepareStatement(
+						"delete from AssetLink where entryId1 = ? or " +
+							"entryId2 = ?"));
+			PreparedStatement preparedStatement3 =
+				AutoBatchPreparedStatementUtil.autoBatch(
+					connection.prepareStatement(
+						"delete from AssetEntry where entryId = ? "))) {
 
-			ps.setLong(1, PortalUtil.getClassNameId(_CLASS_NAME_CAL_EVENT));
+			preparedStatement1.setLong(
+				1, PortalUtil.getClassNameId(_CLASS_NAME_CAL_EVENT));
 
-			ResultSet rs = ps.executeQuery();
+			ResultSet resultSet = preparedStatement1.executeQuery();
 
-			while (rs.next()) {
-				long entryId = rs.getLong("entryId");
+			while (resultSet.next()) {
+				long entryId = resultSet.getLong("entryId");
 
-				ps1.setLong(1, entryId);
-				ps1.setLong(2, entryId);
+				preparedStatement2.setLong(1, entryId);
+				preparedStatement2.setLong(2, entryId);
 
-				ps1.addBatch();
+				preparedStatement2.addBatch();
 
-				ps2.setLong(1, entryId);
-				ps2.addBatch();
+				preparedStatement3.setLong(1, entryId);
+				preparedStatement3.addBatch();
 			}
 
-			ps1.executeBatch();
+			preparedStatement2.executeBatch();
 
-			ps2.executeBatch();
+			preparedStatement3.executeBatch();
 		}
 		catch (SQLException sqlException) {
 			throw new UpgradeException(sqlException);
@@ -166,58 +169,58 @@ public class UpgradeClassNames extends UpgradeKernelPackage {
 
 	protected void updateCalEventClassName() throws UpgradeException {
 		try (LoggingTimer loggingTimer = new LoggingTimer();
-			PreparedStatement ps1 = connection.prepareStatement(
+			PreparedStatement preparedStatement1 = connection.prepareStatement(
 				"select classNameId from ClassName_ where value like ?");
-			PreparedStatement ps2 = connection.prepareStatement(
+			PreparedStatement preparedStatement2 = connection.prepareStatement(
 				"select vocabularyId, settings_ from AssetVocabulary where " +
 					"settings_ like ?");
-			PreparedStatement ps3 = connection.prepareStatement(
+			PreparedStatement preparedStatement3 = connection.prepareStatement(
 				"update AssetVocabulary set settings_ = ? where vocabularyId " +
 					"= ?")) {
 
-			ps1.setString(1, _CLASS_NAME_CAL_EVENT + "%");
+			preparedStatement1.setString(1, _CLASS_NAME_CAL_EVENT + "%");
 
-			ResultSet rs = ps1.executeQuery();
+			ResultSet resultSet = preparedStatement1.executeQuery();
 
 			long calEventClassNameId = 0;
 
-			if (rs.next()) {
-				calEventClassNameId = rs.getLong("classNameId");
+			if (resultSet.next()) {
+				calEventClassNameId = resultSet.getLong("classNameId");
 			}
 			else {
 				return;
 			}
 
-			ps1.setString(1, _CLASS_NAME_CALENDAR_BOOKING + "%");
+			preparedStatement1.setString(1, _CLASS_NAME_CALENDAR_BOOKING + "%");
 
-			rs = ps1.executeQuery();
+			resultSet = preparedStatement1.executeQuery();
 
 			long calBookingClassNameId = 0;
 
-			if (rs.next()) {
-				calBookingClassNameId = rs.getLong("classNameId");
+			if (resultSet.next()) {
+				calBookingClassNameId = resultSet.getLong("classNameId");
 			}
 			else {
 				return;
 			}
 
-			ps2.setString(1, "%" + calEventClassNameId + "%");
+			preparedStatement2.setString(1, "%" + calEventClassNameId + "%");
 
-			rs = ps2.executeQuery();
+			resultSet = preparedStatement2.executeQuery();
 
-			while (rs.next()) {
-				String oldSettings = rs.getString("settings_");
-				long vocabularyId = rs.getLong("vocabularyId");
+			while (resultSet.next()) {
+				String oldSettings = resultSet.getString("settings_");
+				long vocabularyId = resultSet.getLong("vocabularyId");
 
 				String newSettings = StringUtil.replace(
 					oldSettings, String.valueOf(calEventClassNameId),
 					String.valueOf(calBookingClassNameId));
 
-				ps3.setString(1, newSettings);
+				preparedStatement3.setString(1, newSettings);
 
-				ps3.setLong(2, vocabularyId);
+				preparedStatement3.setLong(2, vocabularyId);
 
-				ps3.execute();
+				preparedStatement3.execute();
 			}
 		}
 		catch (SQLException sqlException) {

@@ -142,29 +142,30 @@ public class UpgradeKaleoDefinitionVersionTest {
 
 		String sql = sb.toString();
 
-		try (Connection con = DataAccess.getConnection();
-			PreparedStatement ps = con.prepareStatement(sql)) {
+		try (Connection connection = DataAccess.getConnection();
+			PreparedStatement preparedStatement = connection.prepareStatement(
+				sql)) {
 
-			ps.setLong(1, RandomTestUtil.randomLong());
-			ps.setLong(2, groupId);
-			ps.setLong(3, companyId);
-			ps.setLong(4, TestPropsValues.getUserId());
+			preparedStatement.setLong(1, RandomTestUtil.randomLong());
+			preparedStatement.setLong(2, groupId);
+			preparedStatement.setLong(3, companyId);
+			preparedStatement.setLong(4, TestPropsValues.getUserId());
 
 			User user = TestPropsValues.getUser();
 
-			ps.setString(5, user.getFullName());
+			preparedStatement.setString(5, user.getFullName());
 
-			ps.setTimestamp(6, _timestamp);
-			ps.setTimestamp(7, _timestamp);
-			ps.setString(8, name);
-			ps.setString(9, StringUtil.randomString());
-			ps.setString(10, StringUtil.randomString());
-			ps.setString(11, StringUtil.randomString());
-			ps.setInt(12, version);
-			ps.setBoolean(13, true);
-			ps.setLong(14, RandomTestUtil.randomLong());
+			preparedStatement.setTimestamp(6, _timestamp);
+			preparedStatement.setTimestamp(7, _timestamp);
+			preparedStatement.setString(8, name);
+			preparedStatement.setString(9, StringUtil.randomString());
+			preparedStatement.setString(10, StringUtil.randomString());
+			preparedStatement.setString(11, StringUtil.randomString());
+			preparedStatement.setInt(12, version);
+			preparedStatement.setBoolean(13, true);
+			preparedStatement.setLong(14, RandomTestUtil.randomLong());
 
-			ps.executeUpdate();
+			preparedStatement.executeUpdate();
 		}
 	}
 
@@ -199,8 +200,8 @@ public class UpgradeKaleoDefinitionVersionTest {
 	}
 
 	private void _setUpOldColumnsAndIndexes() throws Exception {
-		try (Connection con = DataAccess.getConnection()) {
-			_dbInspector = new DBInspector(con);
+		try (Connection connection = DataAccess.getConnection()) {
+			_dbInspector = new DBInspector(connection);
 
 			_addColumn("KaleoDefinition", "startKaleoNodeId");
 

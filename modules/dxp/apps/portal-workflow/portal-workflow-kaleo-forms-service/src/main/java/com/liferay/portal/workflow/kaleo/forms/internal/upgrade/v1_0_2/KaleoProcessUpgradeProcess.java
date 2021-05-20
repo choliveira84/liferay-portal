@@ -61,19 +61,19 @@ public class KaleoProcessUpgradeProcess extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select * from KaleoProcess");
-			ResultSet rs = ps.executeQuery()) {
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			while (rs.next()) {
-				String uuid = rs.getString("uuid_");
-				long kaleoProcessId = rs.getLong("kaleoProcessId");
-				long groupId = rs.getLong("groupId");
-				long companyId = rs.getLong("companyId");
-				long userId = rs.getLong("userId");
-				Timestamp createDate = rs.getTimestamp("createDate");
-				Timestamp modifiedDate = rs.getTimestamp("modifiedDate");
-				long ddlRecordSetId = rs.getLong("DDLRecordSetId");
+			while (resultSet.next()) {
+				String uuid = resultSet.getString("uuid_");
+				long kaleoProcessId = resultSet.getLong("kaleoProcessId");
+				long groupId = resultSet.getLong("groupId");
+				long companyId = resultSet.getLong("companyId");
+				long userId = resultSet.getLong("userId");
+				Timestamp createDate = resultSet.getTimestamp("createDate");
+				Timestamp modifiedDate = resultSet.getTimestamp("modifiedDate");
+				long ddlRecordSetId = resultSet.getLong("DDLRecordSetId");
 
 				if (Validator.isNull(uuid)) {
 					uuid = PortalUUIDUtil.generate();

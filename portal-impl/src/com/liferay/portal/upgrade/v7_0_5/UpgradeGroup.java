@@ -52,29 +52,32 @@ public class UpgradeGroup extends UpgradeProcess {
 			sb.append("(liveGroup_.parentGroupId != ");
 			sb.append("stagingGroup_.parentGroupId)");
 
-			try (PreparedStatement ps1 = connection.prepareStatement(
-					sb.toString());
-				PreparedStatement ps2 = connection.prepareStatement(
-					"select treePath from Group_ where groupId = ?");
-				PreparedStatement ps3 =
+			try (PreparedStatement preparedStatement1 =
+					connection.prepareStatement(sb.toString());
+				PreparedStatement preparedStatement2 =
+					connection.prepareStatement(
+						"select treePath from Group_ where groupId = ?");
+				PreparedStatement preparedStatement3 =
 					AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 						connection,
 						"update Group_ set parentGroupId = ?, treePath = ? " +
 							"where groupId = ?");
-				ResultSet rs1 = ps1.executeQuery()) {
+				ResultSet resultSet1 = preparedStatement1.executeQuery()) {
 
-				while (rs1.next()) {
-					long groupId = rs1.getLong(1);
+				while (resultSet1.next()) {
+					long groupId = resultSet1.getLong(1);
 
-					long parentGroupId = rs1.getLong(2);
+					long parentGroupId = resultSet1.getLong(2);
 
-					ps2.setLong(1, parentGroupId);
+					preparedStatement2.setLong(1, parentGroupId);
 
-					try (ResultSet rs2 = ps2.executeQuery()) {
+					try (ResultSet resultSet2 =
+							preparedStatement2.executeQuery()) {
+
 						String treePath = null;
 
-						if (rs2.next()) {
-							treePath = rs2.getString("treePath");
+						if (resultSet2.next()) {
+							treePath = resultSet2.getString("treePath");
 
 							treePath = treePath.concat(String.valueOf(groupId));
 
@@ -97,16 +100,16 @@ public class UpgradeGroup extends UpgradeProcess {
 							treePath = treePathSB.toString();
 						}
 
-						ps3.setLong(1, parentGroupId);
-						ps3.setString(2, treePath);
+						preparedStatement3.setLong(1, parentGroupId);
+						preparedStatement3.setString(2, treePath);
 
-						ps3.setLong(3, groupId);
+						preparedStatement3.setLong(3, groupId);
 
-						ps3.addBatch();
+						preparedStatement3.addBatch();
 					}
 				}
 
-				ps3.executeBatch();
+				preparedStatement3.executeBatch();
 			}
 		}
 	}
@@ -115,8 +118,8 @@ public class UpgradeGroup extends UpgradeProcess {
 
 	private class GroupTreeModel implements TreeModel {
 
-		public GroupTreeModel(PreparedStatement ps) {
-			_ps = ps;
+		public GroupTreeModel(PreparedStatement preparedStatement) {
+			_preparedStatement = preparedStatement;
 		}
 
 		@Override
@@ -141,10 +144,10 @@ public class UpgradeGroup extends UpgradeProcess {
 		@Override
 		public void updateTreePath(String treePath) {
 			try {
-				_ps.setString(1, treePath);
-				_ps.setLong(2, _groupId);
+				_preparedStatement.setString(1, treePath);
+				_preparedStatement.setLong(2, _groupId);
 
-				_ps.addBatch();
+				_preparedStatement.addBatch();
 			}
 			catch (SQLException sqlException) {
 				_log.error(
@@ -153,7 +156,7 @@ public class UpgradeGroup extends UpgradeProcess {
 		}
 
 		private long _groupId;
-		private final PreparedStatement _ps;
+		private final PreparedStatement _preparedStatement;
 
 	}
 

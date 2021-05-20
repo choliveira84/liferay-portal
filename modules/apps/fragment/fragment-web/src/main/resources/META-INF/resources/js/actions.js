@@ -25,9 +25,15 @@ export const ACTIONS = {
 			Liferay.Language.get('delete-collection'),
 			viewDeleteFragmentCollectionsURL,
 			(selectedItems) => {
-				const fragmentCollectionsForm = document.getElementById(
-					`${portletNamespace}fragmentCollectionsFm`
-				);
+				if (!selectedItems?.length) {
+					return;
+				}
+
+				const form = document.getElementById(`${portletNamespace}fm`);
+
+				if (!form) {
+					return;
+				}
 
 				if (
 					confirm(
@@ -36,17 +42,15 @@ export const ACTIONS = {
 						)
 					)
 				) {
-					selectedItems.forEach((item) => {
-						fragmentCollectionsForm.appendChild(
-							item.cloneNode(true)
-						);
-					});
+					const input = document.createElement('input');
+
+					input.name = `${portletNamespace}rowIds`;
+					input.value = selectedItems.map((item) => item.value);
+
+					form.appendChild(input);
 				}
 
-				submitForm(
-					fragmentCollectionsForm,
-					deleteFragmentCollectionURL
-				);
+				submitForm(form, deleteFragmentCollectionURL);
 			},
 			null,
 			portletNamespace
@@ -65,18 +69,24 @@ export const ACTIONS = {
 			Liferay.Language.get('export-collection'),
 			viewExportFragmentCollectionsURL,
 			(selectedItems) => {
-				const fragmentCollectionsForm = document.getElementById(
-					`${portletNamespace}fragmentCollectionsFm`
-				);
+				if (!selectedItems?.length) {
+					return;
+				}
 
-				selectedItems.forEach((item) => {
-					fragmentCollectionsForm.appendChild(item.cloneNode(true));
-				});
+				const form = document.getElementById(`${portletNamespace}fm`);
 
-				submitForm(
-					fragmentCollectionsForm,
-					exportFragmentCollectionsURL
-				);
+				if (!form) {
+					return;
+				}
+
+				const input = document.createElement('input');
+
+				input.name = `${portletNamespace}rowIds`;
+				input.value = selectedItems.map((item) => item.value);
+
+				form.appendChild(input);
+
+				submitForm(form, exportFragmentCollectionsURL);
 
 				processed = true;
 			},

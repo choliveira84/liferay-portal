@@ -21,15 +21,15 @@ import {openModal} from 'frontend-js-web';
 import PropTypes from 'prop-types';
 import React, {useEffect, useState} from 'react';
 
+import {EDITABLE_FRAGMENT_ENTRY_PROCESSOR} from '../../../../../app/config/constants/editableFragmentEntryProcessor';
+import {ITEM_ACTIVATION_ORIGINS} from '../../../../../app/config/constants/itemActivationOrigins';
+import {ITEM_TYPES} from '../../../../../app/config/constants/itemTypes';
 import {
 	useHoverItem,
 	useHoveredItemId,
 	useSelectItem,
-} from '../../../../../app/components/Controls';
-import {EDITABLE_FRAGMENT_ENTRY_PROCESSOR} from '../../../../../app/config/constants/editableFragmentEntryProcessor';
-import {ITEM_ACTIVATION_ORIGINS} from '../../../../../app/config/constants/itemActivationOrigins';
-import {ITEM_TYPES} from '../../../../../app/config/constants/itemTypes';
-import {useSelector} from '../../../../../app/store/index';
+} from '../../../../../app/contexts/ControlsContext';
+import {useSelector} from '../../../../../app/contexts/StoreContext';
 
 export default function PageContent({
 	actions,
@@ -131,30 +131,25 @@ export default function PageContent({
 		>
 			<div
 				className={classNames('d-flex', {
-					'align-items-baseline': subtype,
 					'align-items-center': !subtype,
 				})}
 			>
 				<ClayIcon
-					className="mr-3"
+					className={classNames('mr-3', {
+						'mt-1': subtype,
+					})}
 					focusable="false"
 					monospaced="true"
 					role="presentation"
 					symbol={icon || 'document-text'}
 				/>
 				<ClayLayout.ContentCol expand>
-					<span
-						className={classNames('text-truncate', {
-							title: type,
-						})}
-					>
+					<span className="font-weight-semi-bold text-truncate">
 						{title}
 					</span>
 
 					{subtype && (
-						<span className="text-secondary text-truncate">
-							{subtype}
-						</span>
+						<span className="text-secondary">{subtype}</span>
 					)}
 				</ClayLayout.ContentCol>
 
@@ -164,7 +159,7 @@ export default function PageContent({
 						onActiveChange={setActive}
 						trigger={
 							<ClayButton
-								className="btn-monospaced btn-sm text-secondary"
+								className="btn-sm mr-2 text-secondary"
 								displayType="unstyled"
 							>
 								<span className="sr-only">
@@ -216,7 +211,7 @@ export default function PageContent({
 					</ClayDropDown>
 				) : (
 					<ClayButton
-						className="btn-monospaced btn-sm text-secondary"
+						className="btn-sm mr-2 text-secondary"
 						displayType="unstyled"
 						onClick={onClickEditInlineText}
 					>

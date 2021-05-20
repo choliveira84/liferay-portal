@@ -95,21 +95,22 @@ public class AssetDisplayPageEntryUpgradeProcess extends UpgradeProcess {
 		User user = company.getDefaultUser();
 
 		try (LoggingTimer loggingTimer = new LoggingTimer();
-			PreparedStatement ps1 = connection.prepareStatement(
+			PreparedStatement preparedStatement1 = connection.prepareStatement(
 				SQLTransformer.transform(sb.toString()))) {
 
-			ps1.setLong(1, journalArticleClassNameId);
-			ps1.setLong(2, company.getCompanyId());
-			ps1.setLong(3, journalArticleClassNameId);
+			preparedStatement1.setLong(1, journalArticleClassNameId);
+			preparedStatement1.setLong(2, company.getCompanyId());
+			preparedStatement1.setLong(3, journalArticleClassNameId);
 
 			List<SaveAssetDisplayPageEntryUpgradeCallable>
 				saveAssetDisplayPageEntryUpgradeCallables = new ArrayList<>();
 
-			try (ResultSet rs = ps1.executeQuery()) {
-				while (rs.next()) {
-					long groupId = rs.getLong("groupId");
-					long resourcePrimKey = rs.getLong("resourcePrimKey");
-					String journalArticleUuid = rs.getString("classUuid");
+			try (ResultSet resultSet = preparedStatement1.executeQuery()) {
+				while (resultSet.next()) {
+					long groupId = resultSet.getLong("groupId");
+					long resourcePrimKey = resultSet.getLong("resourcePrimKey");
+					String journalArticleUuid = resultSet.getString(
+						"classUuid");
 
 					SaveAssetDisplayPageEntryUpgradeCallable
 						saveAssetDisplayPageEntryUpgradeCallable =
@@ -185,15 +186,15 @@ public class AssetDisplayPageEntryUpgradeProcess extends UpgradeProcess {
 		sb.append("remoteStagingGroupCount = 0");
 
 		try (LoggingTimer loggingTimer = new LoggingTimer();
-			PreparedStatement ps = connection.prepareStatement(
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				SQLTransformer.transform(sb.toString()))) {
 
-			ps.setLong(1, companyId);
+			preparedStatement.setLong(1, companyId);
 
-			try (ResultSet rs = ps.executeQuery()) {
-				while (rs.next()) {
-					long groupId = rs.getLong("groupId");
-					long liveGroupId = rs.getLong("liveGroupId");
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				while (resultSet.next()) {
+					long groupId = resultSet.getLong("groupId");
+					long liveGroupId = resultSet.getLong("liveGroupId");
 
 					_liveGroupIdsMap.put(groupId, liveGroupId);
 

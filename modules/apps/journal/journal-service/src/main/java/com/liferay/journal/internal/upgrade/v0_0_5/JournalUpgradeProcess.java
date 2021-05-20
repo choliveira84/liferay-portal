@@ -176,20 +176,21 @@ public class JournalUpgradeProcess extends UpgradeProcess {
 			sb.append("and DDMStructure.structureKey = JournalArticle.");
 			sb.append("DDMStructureKey and JournalArticle.classNameId != ?)");
 
-			try (PreparedStatement ps = connection.prepareStatement(
-					sb.toString())) {
+			try (PreparedStatement preparedStatement =
+					connection.prepareStatement(sb.toString())) {
 
-				ps.setString(1, GroupConstants.GLOBAL_FRIENDLY_URL);
-				ps.setLong(
+				preparedStatement.setString(
+					1, GroupConstants.GLOBAL_FRIENDLY_URL);
+				preparedStatement.setLong(
 					2, PortalUtil.getClassNameId(DDMStructure.class.getName()));
 
-				try (ResultSet rs = ps.executeQuery()) {
+				try (ResultSet resultSet = preparedStatement.executeQuery()) {
 					Map<Long, List<Long>> ddmStructureIdsMap = new HashMap<>();
 
-					while (rs.next()) {
-						long structureId = rs.getLong("structureId");
+					while (resultSet.next()) {
+						long structureId = resultSet.getLong("structureId");
 
-						long id = rs.getLong("id_");
+						long id = resultSet.getLong("id_");
 
 						List<Long> ddmStructureIds = ddmStructureIdsMap.get(id);
 
@@ -225,15 +226,15 @@ public class JournalUpgradeProcess extends UpgradeProcess {
 			sb.append("JournalArticle.DDMTemplateKey and ");
 			sb.append("JournalArticle.classNameId != ?)");
 
-			try (PreparedStatement ps = connection.prepareStatement(
-					sb.toString())) {
+			try (PreparedStatement preparedStatement =
+					connection.prepareStatement(sb.toString())) {
 
-				ps.setLong(1, ddmStructureClassNameId);
+				preparedStatement.setLong(1, ddmStructureClassNameId);
 
-				try (ResultSet rs = ps.executeQuery()) {
-					while (rs.next()) {
-						long templateId = rs.getLong("templateId");
-						long id = rs.getLong("id_");
+				try (ResultSet resultSet = preparedStatement.executeQuery()) {
+					while (resultSet.next()) {
+						long templateId = resultSet.getLong("templateId");
+						long id = resultSet.getLong("id_");
 
 						_ddmTemplateLinkLocalService.addTemplateLink(
 							journalArticleClassNameId, id, templateId);
@@ -353,12 +354,14 @@ public class JournalUpgradeProcess extends UpgradeProcess {
 				"select JournalArticle.content from JournalArticle where " +
 					"JournalArticle.id_ = ?";
 
-			try (PreparedStatement ps = connection.prepareStatement(sql)) {
-				ps.setLong(1, articleId);
+			try (PreparedStatement preparedStatement =
+					connection.prepareStatement(sql)) {
 
-				try (ResultSet rs = ps.executeQuery()) {
-					if (rs.next()) {
-						String content = rs.getString("content");
+				preparedStatement.setLong(1, articleId);
+
+				try (ResultSet resultSet = preparedStatement.executeQuery()) {
+					if (resultSet.next()) {
+						String content = resultSet.getString("content");
 
 						Document document = SAXReaderUtil.read(content);
 
@@ -533,29 +536,29 @@ public class JournalUpgradeProcess extends UpgradeProcess {
 			String content)
 		throws Exception {
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"update JournalArticle set DDMStructureKey = ?, " +
 					"DDMTemplateKey = ?, content = ? where id_ = ?")) {
 
-			ps.setString(1, ddmStructureKey);
-			ps.setString(2, ddmTemplateKey);
-			ps.setString(3, content);
-			ps.setLong(4, id);
+			preparedStatement.setString(1, ddmStructureKey);
+			preparedStatement.setString(2, ddmTemplateKey);
+			preparedStatement.setString(3, content);
+			preparedStatement.setLong(4, id);
 
-			ps.executeUpdate();
+			preparedStatement.executeUpdate();
 		}
 	}
 
 	protected void updateJournalArticleContent(long id, String content)
 		throws Exception {
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"update JournalArticle set content = ? where id_ = ?")) {
 
-			ps.setString(1, content);
-			ps.setLong(2, id);
+			preparedStatement.setString(1, content);
+			preparedStatement.setLong(2, id);
 
-			ps.executeUpdate();
+			preparedStatement.executeUpdate();
 		}
 	}
 
@@ -567,21 +570,21 @@ public class JournalUpgradeProcess extends UpgradeProcess {
 	}
 
 	protected void updateJournalArticles(long companyId) throws Exception {
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select id_, groupId, content, DDMStructureKey from " +
 					"JournalArticle where companyId = " + companyId);
-			ResultSet rs = ps.executeQuery()) {
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			String name = addBasicWebContentStructureAndTemplate(companyId);
 
-			while (rs.next()) {
-				long id = rs.getLong("id_");
-				String content = rs.getString("content");
+			while (resultSet.next()) {
+				long id = resultSet.getLong("id_");
+				String content = resultSet.getString("content");
 
-				String ddmStructureKey = rs.getString("DDMStructureKey");
+				String ddmStructureKey = resultSet.getString("DDMStructureKey");
 
 				if (Validator.isNull(ddmStructureKey)) {
-					long groupId = rs.getLong("groupId");
+					long groupId = resultSet.getLong("groupId");
 
 					content = convertStaticContentToDynamic(groupId, content);
 

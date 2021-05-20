@@ -150,8 +150,9 @@ public class DDMStructureUpgradeProcess extends UpgradeProcess {
 
 		sb.append(")");
 
-		try (PreparedStatement ps1 = connection.prepareStatement(sb.toString());
-			PreparedStatement ps2 =
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
+				sb.toString());
+			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection,
 					"update DDMStructure set definition = ? where " +
@@ -159,30 +160,30 @@ public class DDMStructureUpgradeProcess extends UpgradeProcess {
 
 			int parameterIndex = 1;
 
-			ps1.setLong(
+			preparedStatement1.setLong(
 				parameterIndex,
 				PortalUtil.getClassNameId(DDMFormInstance.class.getName()));
 
 			for (long structureId : _structureIds) {
 				parameterIndex++;
 
-				ps1.setLong(parameterIndex, structureId);
+				preparedStatement1.setLong(parameterIndex, structureId);
 			}
 
-			try (ResultSet rs = ps1.executeQuery()) {
-				while (rs.next()) {
-					String definition = rs.getString("definition");
+			try (ResultSet resultSet = preparedStatement1.executeQuery()) {
+				while (resultSet.next()) {
+					String definition = resultSet.getString("definition");
 
-					ps2.setString(1, definition);
+					preparedStatement2.setString(1, definition);
 
-					long structureId = rs.getLong("structureId");
+					long structureId = resultSet.getLong("structureId");
 
-					ps2.setLong(2, structureId);
+					preparedStatement2.setLong(2, structureId);
 
-					ps2.addBatch();
+					preparedStatement2.addBatch();
 				}
 
-				ps2.executeBatch();
+				preparedStatement2.executeBatch();
 			}
 		}
 	}
@@ -201,22 +202,23 @@ public class DDMStructureUpgradeProcess extends UpgradeProcess {
 		sb.append("DDMStructureVersion.structureId where ");
 		sb.append("DDMStructure.classNameId = ?");
 
-		try (PreparedStatement ps1 = connection.prepareStatement(sb.toString());
-			PreparedStatement ps2 =
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
+				sb.toString());
+			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection,
 					"update DDMStructureLayout set definition = ? where " +
 						"structureLayoutId = ?")) {
 
-			ps1.setLong(
+			preparedStatement1.setLong(
 				1, PortalUtil.getClassNameId(DDMFormInstance.class.getName()));
 
-			try (ResultSet rs = ps1.executeQuery()) {
-				while (rs.next()) {
+			try (ResultSet resultSet = preparedStatement1.executeQuery()) {
+				while (resultSet.next()) {
 					DDMFormLayout ddmFormLayout =
 						DDMFormLayoutDeserializeUtil.deserialize(
 							_ddmFormLayoutDeserializer,
-							rs.getString("definition"));
+							resultSet.getString("definition"));
 
 					boolean pagination = Objects.equals(
 						ddmFormLayout.getPaginationMode(), "pagination");
@@ -230,13 +232,13 @@ public class DDMStructureUpgradeProcess extends UpgradeProcess {
 						_hasMoreThanOneDDMFormFieldPerColumn(ddmFormLayout);
 
 					if (hasMoreThanOneDDMFormFieldPerColumn) {
-						long structureVersionId = rs.getLong(
+						long structureVersionId = resultSet.getLong(
 							"structureVersionId");
 
 						ddmFormLayout = _upgradeDDMStructureLayoutDefinition(
 							ddmFormLayout, structureVersionId);
 
-						_structureIds.add(rs.getLong("structureId"));
+						_structureIds.add(resultSet.getLong("structureId"));
 					}
 
 					if (pagination || hasMoreThanOneDDMFormFieldPerColumn) {
@@ -248,21 +250,21 @@ public class DDMStructureUpgradeProcess extends UpgradeProcess {
 											ddmFormLayout
 										).build());
 
-						ps2.setString(
+						preparedStatement2.setString(
 							1,
 							ddmFormLayoutSerializerSerializeResponse.
 								getContent());
 
-						long structureLayoutId = rs.getLong(
+						long structureLayoutId = resultSet.getLong(
 							"structureLayoutId");
 
-						ps2.setLong(2, structureLayoutId);
+						preparedStatement2.setLong(2, structureLayoutId);
 
-						ps2.addBatch();
+						preparedStatement2.addBatch();
 					}
 				}
 
-				ps2.executeBatch();
+				preparedStatement2.executeBatch();
 			}
 		}
 	}
@@ -321,34 +323,36 @@ public class DDMStructureUpgradeProcess extends UpgradeProcess {
 		sb.append("DDMStructureVersion.structureId where ");
 		sb.append("DDMStructure.classNameId = ?");
 
-		try (PreparedStatement ps1 = connection.prepareStatement(sb.toString());
-			PreparedStatement ps2 =
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
+				sb.toString());
+			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection,
 					"update DDMStructureVersion set definition = ? where " +
 						"structureVersionId = ?")) {
 
-			ps1.setLong(
+			preparedStatement1.setLong(
 				1, PortalUtil.getClassNameId(DDMFormInstance.class.getName()));
 
-			try (ResultSet rs = ps1.executeQuery()) {
-				while (rs.next()) {
-					long structureVersionId = rs.getLong("structureVersionId");
+			try (ResultSet resultSet = preparedStatement1.executeQuery()) {
+				while (resultSet.next()) {
+					long structureVersionId = resultSet.getLong(
+						"structureVersionId");
 
 					if (_nestedFieldsMap.get(structureVersionId) != null) {
-						ps2.setString(
+						preparedStatement2.setString(
 							1,
 							_upgradeDDMStructureVersionDefinition(
-								rs.getString("definition"),
+								resultSet.getString("definition"),
 								structureVersionId));
 
-						ps2.setLong(2, structureVersionId);
+						preparedStatement2.setLong(2, structureVersionId);
 
-						ps2.addBatch();
+						preparedStatement2.addBatch();
 					}
 				}
 
-				ps2.executeBatch();
+				preparedStatement2.executeBatch();
 			}
 		}
 	}

@@ -1,0 +1,4 @@
+Bundle-Name: Liferay Object Web
+Bundle-SymbolicName: com.liferay.object.web
+Bundle-Version: 1.0.0
+Web-ContextPath: /object-web

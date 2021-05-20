@@ -25,6 +25,8 @@ export default {
 	 * @param {function} options.onNetworkStatus
 	 */
 	getCollectionField({
+		classNameId,
+		classPK,
 		collection,
 		languageId,
 		listItemStyle,
@@ -37,6 +39,8 @@ export default {
 			config.getCollectionFieldURL,
 			{
 				body: {
+					classNameId,
+					classPK,
 					languageId,
 					layoutObjectReference: JSON.stringify(collection),
 					listItemStyle,
@@ -57,17 +61,11 @@ export default {
 	 * @param {string} options.itemType Collection itemType
 	 * @param {function} options.onNetworkStatus
 	 */
-	getCollectionMappingFields({
-		fieldType,
-		itemSubtype,
-		itemType,
-		onNetworkStatus,
-	}) {
+	getCollectionMappingFields({itemSubtype, itemType, onNetworkStatus}) {
 		return serviceFetch(
 			config.getCollectionMappingFieldsURL,
 			{
 				body: {
-					fieldType,
 					itemSubtype,
 					itemType,
 				},

@@ -15,7 +15,7 @@
 package com.liferay.portal.db.partition;
 
 import com.liferay.petra.function.UnsafeConsumer;
-import com.liferay.petra.lang.SafeClosable;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.dao.jdbc.util.ConnectionWrapper;
@@ -113,8 +113,8 @@ public class DBPartitionUtil {
 		}
 
 		for (long companyId : PortalInstances.getCompanyIdsBySQL()) {
-			try (SafeClosable safeClosable =
-					CompanyThreadLocal.setWithSafeClosable(companyId)) {
+			try (SafeCloseable safeCloseable =
+					CompanyThreadLocal.setWithSafeCloseable(companyId)) {
 
 				unsafeConsumer.accept(companyId);
 			}
@@ -189,13 +189,14 @@ public class DBPartitionUtil {
 		throws SQLException {
 
 		if (_DATABASE_PARTITION_ENABLED) {
-			try (PreparedStatement ps = connection.prepareStatement(
-					"select companyId from Company where webId = '" +
-						PropsValues.COMPANY_DEFAULT_WEB_ID + "'");
-				ResultSet rs = ps.executeQuery()) {
+			try (PreparedStatement preparedStatement =
+					connection.prepareStatement(
+						"select companyId from Company where webId = '" +
+							PropsValues.COMPANY_DEFAULT_WEB_ID + "'");
+				ResultSet resultSet = preparedStatement.executeQuery()) {
 
-				if (rs.next()) {
-					_defaultCompanyId = rs.getLong(1);
+				if (resultSet.next()) {
+					_defaultCompanyId = resultSet.getLong(1);
 				}
 			}
 		}

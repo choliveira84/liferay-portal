@@ -16,19 +16,32 @@ import React, {useMemo} from 'react';
 
 import {EDITABLE_FRAGMENT_ENTRY_PROCESSOR} from '../../../../../app/config/constants/editableFragmentEntryProcessor';
 import {EDITABLE_TYPES} from '../../../../../app/config/constants/editableTypes';
+import {config} from '../../../../../app/config/index';
+import {useSelector} from '../../../../../app/contexts/StoreContext';
 import selectLanguageId from '../../../../../app/selectors/selectLanguageId';
-import {useSelector} from '../../../../../app/store/index';
 import SidebarPanelContent from '../../../../../common/components/SidebarPanelContent';
 import NoPageContents from './NoPageContents';
 import PageContents from './PageContents';
 
-const getEditableValues = (fragmentEntryLinks, languageId) =>
+const getEditableTitle = (editable, languageId) => {
+	const div = document.createElement('div');
+
+	div.innerHTML =
+		editable[languageId] ||
+		editable[config.defaultLanguageId] ||
+		editable.defaultValue;
+
+	return div.textContent;
+};
+
+const getEditableValues = (fragmentEntryLinks, segmentsExperienceId) =>
 	Object.values(fragmentEntryLinks)
 		.filter(
 			(fragmentEntryLink) =>
 				!fragmentEntryLink.masterLayout &&
 				fragmentEntryLink.editableValues &&
-				!fragmentEntryLink.removed
+				!fragmentEntryLink.removed &&
+				fragmentEntryLink.segmentsExperienceId === segmentsExperienceId
 		)
 		.map((fragmentEntryLink) => {
 			const editableValues = Object.entries(
@@ -56,14 +69,13 @@ const getEditableValues = (fragmentEntryLinks, languageId) =>
 				...editableValuesB,
 			],
 			[]
-		)
-		.filter((fragmentEntryLink) => fragmentEntryLink[languageId]);
+		);
 
 const normalizeEditableValues = (editable, languageId) => {
 	return {
 		...editable,
 		icon: 'align-left',
-		title: editable[languageId] || editable.title || editable.defaultValue,
+		title: getEditableTitle(editable, languageId),
 	};
 };
 
@@ -80,13 +92,17 @@ export default function ContentsSidebar() {
 	const fragmentEntryLinks = useSelector((state) => state.fragmentEntryLinks);
 	const languageId = useSelector(selectLanguageId);
 	const pageContents = useSelector((state) => state.pageContents);
+	const segmentsExperienceId = useSelector(
+		(state) => state.segmentsExperienceId
+	);
 
 	const inlineTextContents = useMemo(
 		() =>
-			getEditableValues(fragmentEntryLinks, languageId).map((editable) =>
-				normalizeEditableValues(editable, languageId)
-			),
-		[fragmentEntryLinks, languageId]
+			getEditableValues(
+				fragmentEntryLinks,
+				segmentsExperienceId
+			).map((editable) => normalizeEditableValues(editable, languageId)),
+		[fragmentEntryLinks, languageId, segmentsExperienceId]
 	);
 
 	const contents = normalizePageContents(pageContents);

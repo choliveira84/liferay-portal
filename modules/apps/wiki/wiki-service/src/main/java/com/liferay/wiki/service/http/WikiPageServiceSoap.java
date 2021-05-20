@@ -84,6 +84,12 @@ public class WikiPageServiceSoap {
 		}
 	}
 
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
+	 #addPage(String, long, String, String, String, boolean, String, String,
+	 String, ServiceContext)}
+	 */
+	@Deprecated
 	public static com.liferay.wiki.model.WikiPageSoap addPage(
 			long nodeId, String title, String content, String summary,
 			boolean minorEdit, String format, String parentTitle,
@@ -96,6 +102,29 @@ public class WikiPageServiceSoap {
 				WikiPageServiceUtil.addPage(
 					nodeId, title, content, summary, minorEdit, format,
 					parentTitle, redirectTitle, serviceContext);
+
+			return com.liferay.wiki.model.WikiPageSoap.toSoapModel(returnValue);
+		}
+		catch (Exception exception) {
+			_log.error(exception, exception);
+
+			throw new RemoteException(exception.getMessage());
+		}
+	}
+
+	public static com.liferay.wiki.model.WikiPageSoap addPage(
+			String externalReferenceCode, long nodeId, String title,
+			String content, String summary, boolean minorEdit, String format,
+			String parentTitle, String redirectTitle,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws RemoteException {
+
+		try {
+			com.liferay.wiki.model.WikiPage returnValue =
+				WikiPageServiceUtil.addPage(
+					externalReferenceCode, nodeId, title, content, summary,
+					minorEdit, format, parentTitle, redirectTitle,
+					serviceContext);
 
 			return com.liferay.wiki.model.WikiPageSoap.toSoapModel(returnValue);
 		}

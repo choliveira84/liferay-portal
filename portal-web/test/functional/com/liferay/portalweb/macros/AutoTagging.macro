@@ -43,10 +43,10 @@ definition {
 				site = "${site}");
 
 			Click(
-				key_url = "site-configuration",
+				key_url = "site-configuration-asset-auto-tagger",
 				locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
 
-			Panel.expandPanel(panel = "Asset Auto Tagging");
+			Navigator.gotoNavTab(navTab = "Asset Auto Tagging");
 
 			Uncheck.uncheckToggleSwitch(locator1 = "Checkbox#ENABLE_AUTO_TAGGING");
 		}
@@ -103,10 +103,10 @@ definition {
 				site = "${site}");
 
 			Click(
-				key_url = "site-configuration",
+				key_url = "site-configuration-asset-auto-tagger",
 				locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
 
-			Panel.expandPanel(panel = "Asset Auto Tagging");
+			Navigator.gotoNavTab(navTab = "Asset Auto Tagging");
 
 			Check.checkToggleSwitch(locator1 = "Checkbox#ENABLE_AUTO_TAGGING");
 		}

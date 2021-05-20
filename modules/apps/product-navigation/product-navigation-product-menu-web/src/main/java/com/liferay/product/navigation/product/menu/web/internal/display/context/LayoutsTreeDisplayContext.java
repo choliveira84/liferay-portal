@@ -26,11 +26,13 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletURL;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
+import com.liferay.portal.kernel.portlet.PortletQName;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -67,24 +69,34 @@ public class LayoutsTreeDisplayContext {
 	}
 
 	public String getAddChildCollectionURLTemplate() throws Exception {
+		PortletURL addChildCollectionURL = getAddCollectionLayoutURL();
+
+		if (addChildCollectionURL == null) {
+			return StringPool.BLANK;
+		}
+
 		return StringBundler.concat(
-			getAddCollectionLayoutURL(), StringPool.AMPERSAND,
-			PortalUtil.getPortletNamespace(LayoutAdminPortletKeys.GROUP_PAGES),
-			"selPlid={plid}");
+			addChildCollectionURL, StringPool.AMPERSAND,
+			PortletQName.PUBLIC_RENDER_PARAMETER_NAMESPACE, "selPlid={plid}");
 	}
 
 	public String getAddChildURLTemplate() throws Exception {
+		PortletURL addLayoutURL = getAddLayoutURL();
+
+		if (addLayoutURL == null) {
+			return StringPool.BLANK;
+		}
+
 		return StringBundler.concat(
-			getAddLayoutURL(), StringPool.AMPERSAND,
-			PortalUtil.getPortletNamespace(LayoutAdminPortletKeys.GROUP_PAGES),
-			"selPlid={plid}");
+			addLayoutURL, StringPool.AMPERSAND,
+			PortletQName.PUBLIC_RENDER_PARAMETER_NAMESPACE, "selPlid={plid}");
 	}
 
-	public String getAddCollectionLayoutURL() throws Exception {
+	public PortletURL getAddCollectionLayoutURL() throws Exception {
 		Group scopeGroup = _themeDisplay.getScopeGroup();
 
 		if (scopeGroup.isStaged() && !scopeGroup.isStagingGroup()) {
-			return StringPool.BLANK;
+			return null;
 		}
 
 		Layout layout = _themeDisplay.getLayout();
@@ -103,14 +115,14 @@ public class LayoutsTreeDisplayContext {
 			"groupId", _themeDisplay.getSiteGroupId()
 		).setParameter(
 			"privateLayout", isPrivateLayout()
-		).buildString();
+		).build();
 	}
 
-	public String getAddLayoutURL() throws Exception {
+	public PortletURL getAddLayoutURL() throws Exception {
 		Group scopeGroup = _themeDisplay.getScopeGroup();
 
 		if (scopeGroup.isStaged() && !scopeGroup.isStagingGroup()) {
-			return StringPool.BLANK;
+			return null;
 		}
 
 		Layout layout = _themeDisplay.getLayout();
@@ -129,7 +141,7 @@ public class LayoutsTreeDisplayContext {
 			"groupId", _themeDisplay.getSiteGroupId()
 		).setParameter(
 			"privateLayout", isPrivateLayout()
-		).buildString();
+		).build();
 	}
 
 	public String getAdministrationPortletURL() {
@@ -142,7 +154,7 @@ public class LayoutsTreeDisplayContext {
 		).buildString();
 	}
 
-	public String getConfigureLayoutSetURL() throws PortalException {
+	public PortletURL getConfigureLayoutSetURL() throws PortalException {
 		Layout layout = _themeDisplay.getLayout();
 
 		return PortletURLBuilder.create(
@@ -159,7 +171,7 @@ public class LayoutsTreeDisplayContext {
 			"groupId", _themeDisplay.getScopeGroupId()
 		).setParameter(
 			"privateLayout", isPrivateLayout()
-		).buildString();
+		).build();
 	}
 
 	public String getConfigureLayoutURL() throws PortalException {
@@ -199,8 +211,7 @@ public class LayoutsTreeDisplayContext {
 	public String getConfigureLayoutURLTemplate() throws Exception {
 		return StringBundler.concat(
 			getConfigureLayoutURL(), StringPool.AMPERSAND,
-			PortalUtil.getPortletNamespace(LayoutAdminPortletKeys.GROUP_PAGES),
-			"selPlid={plid}");
+			PortletQName.PUBLIC_RENDER_PARAMETER_NAMESPACE, "selPlid={plid}");
 	}
 
 	public long getGroupId() {
@@ -260,11 +271,11 @@ public class LayoutsTreeDisplayContext {
 
 	public Map<String, Object> getPageTypeSelectorData() throws Exception {
 		return HashMapBuilder.<String, Object>put(
-			"addCollectionLayoutURL", getAddCollectionLayoutURL()
+			"addCollectionLayoutURL", _setSelPlid(getAddCollectionLayoutURL())
 		).put(
-			"addLayoutURL", getAddLayoutURL()
+			"addLayoutURL", _setSelPlid(getAddLayoutURL())
 		).put(
-			"configureLayoutSetURL", getConfigureLayoutSetURL()
+			"configureLayoutSetURL", _setSelPlid(getConfigureLayoutSetURL())
 		).put(
 			"namespace", getNamespace()
 		).put(
@@ -298,6 +309,18 @@ public class LayoutsTreeDisplayContext {
 		).setWindowState(
 			LiferayWindowState.EXCLUSIVE
 		).buildString();
+	}
+
+	public long getSelPlid() {
+		Layout layout = _themeDisplay.getLayout();
+
+		if (layout.isTypeControlPanel()) {
+			return ParamUtil.get(
+				_liferayPortletRequest, "selPlid",
+				LayoutConstants.DEFAULT_PLID);
+		}
+
+		return layout.getPlid();
 	}
 
 	public String getViewCollectionItemsURL()
@@ -344,6 +367,17 @@ public class LayoutsTreeDisplayContext {
 					ProductNavigationProductMenuWebKeys.PRIVATE_LAYOUT,
 				"false"),
 			layout.isPrivateLayout());
+	}
+
+	private String _setSelPlid(PortletURL portletURL) {
+		if (portletURL == null) {
+			return StringPool.BLANK;
+		}
+
+		portletURL.setParameter(
+			"selPlid", String.valueOf(LayoutConstants.DEFAULT_PLID));
+
+		return portletURL.toString();
 	}
 
 	private Long _groupId;

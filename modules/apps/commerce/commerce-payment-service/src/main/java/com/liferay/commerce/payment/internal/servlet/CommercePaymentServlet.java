@@ -106,13 +106,9 @@ public class CommercePaymentServlet extends HttpServlet {
 			CommercePaymentResult commercePaymentResult = _startPayment(
 				httpServletRequest);
 
-			if (!commercePaymentResult.isSuccess()) {
-				httpServletResponse.sendRedirect(_nextUrl);
+			if (commercePaymentResult.isSuccess() &&
+				commercePaymentResult.isOnlineRedirect()) {
 
-				return;
-			}
-
-			if (commercePaymentResult.isOnlineRedirect()) {
 				URL redirectURL = new URL(
 					commercePaymentResult.getRedirectUrl());
 
@@ -159,14 +155,29 @@ public class CommercePaymentServlet extends HttpServlet {
 				httpServletResponse.sendRedirect(_nextUrl);
 			}
 
-			if (CommercePaymentConstants.
+			if (commercePaymentResult.isSuccess() &&
+				(CommercePaymentConstants.
 					COMMERCE_PAYMENT_METHOD_TYPE_ONLINE_STANDARD ==
-						commercePaymentMethodType) {
+						commercePaymentMethodType)) {
 
-				_commercePaymentEngine.completePayment(
-					_commerceOrderId,
-					commercePaymentResult.getAuthTransactionId(),
-					httpServletRequest);
+				if (commerceOrder.isSubscriptionOrder()) {
+					_commerceSubscriptionEngine.completeRecurringPayment(
+						_commerceOrderId,
+						commercePaymentResult.getAuthTransactionId(),
+						httpServletRequest);
+				}
+				else {
+					_commercePaymentEngine.completePayment(
+						_commerceOrderId,
+						commercePaymentResult.getAuthTransactionId(),
+						httpServletRequest);
+				}
+
+				httpServletResponse.sendRedirect(_nextUrl);
+			}
+
+			if (!commercePaymentResult.isSuccess() &&
+				!httpServletResponse.isCommitted()) {
 
 				httpServletResponse.sendRedirect(_nextUrl);
 			}

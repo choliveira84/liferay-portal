@@ -41,6 +41,7 @@ import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 				"setDataType('predefinedValue', getValue('dataType'))",
 				"setValidationDataType('validation', getValue('dataType'))",
 				"setValidationFieldName('validation', getValue('name'))",
+				"setVisible('characterOptions', getValue('inputMask'))",
 				"setVisible('confirmationErrorMessage', getValue('requireConfirmation'))",
 				"setVisible('confirmationLabel', getValue('requireConfirmation'))",
 				"setVisible('direction', getValue('requireConfirmation'))",
@@ -86,7 +87,7 @@ import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 								"requireConfirmation", "direction",
 								"confirmationLabel", "confirmationErrorMessage",
 								"validation", "tooltip", "inputMask",
-								"inputMaskFormat"
+								"inputMaskFormat", "characterOptions"
 							}
 						)
 					}
@@ -98,15 +99,19 @@ import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 public interface NumericDDMFormFieldTypeSettings
 	extends DefaultDDMFormFieldTypeSettings {
 
+	@DDMFormField(label = "%character-options", type = "help_text")
+	public boolean characterOptions();
+
 	@DDMFormField(
 		dataType = "string", label = "%error-message",
-		predefinedValue = "%the-information-does-not-match", type = "text"
+		properties = "initialValue=%the-information-does-not-match",
+		type = "text"
 	)
 	public LocalizedValue confirmationErrorMessage();
 
 	@DDMFormField(
-		dataType = "string", label = "%label", predefinedValue = "%confirm",
-		type = "text"
+		dataType = "string", label = "%label",
+		properties = "initialValue=%confirm", type = "text"
 	)
 	public LocalizedValue confirmationLabel();
 
@@ -128,18 +133,21 @@ public interface NumericDDMFormFieldTypeSettings
 
 	@DDMFormField(
 		label = "%input-mask", properties = "showAsSwitcher=true",
-		visibilityExpression = "FALSE"
+		visibilityExpression = "TRUE"
 	)
 	public boolean inputMask();
 
 	@DDMFormField(
 		dataType = "string", label = "%format",
 		properties = {
-			"placeholder=%input-mask-format-placeholder", "regex=^[^1-8]+$"
+			"placeholder=%input-mask-format-placeholder",
+			"tooltip=%an-input-mask-helps-to-ensure-a-predefined-format"
 		},
 		required = true,
 		tip = "%to-create-a-custom-input-mask-you-will-need-to-use-a-specific-set-of-characters",
-		type = "text"
+		type = "text",
+		validationErrorMessage = "%you-must-add-at-least-one-0-or-one-9",
+		validationExpression = "match(inputMaskFormat, '^$|^(?=.*[09])([^1-8]+)$')"
 	)
 	public LocalizedValue inputMaskFormat();
 

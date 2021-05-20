@@ -49,10 +49,12 @@ import com.liferay.item.selector.criteria.InfoItemItemSelectorReturnType;
 import com.liferay.item.selector.criteria.InfoListItemSelectorReturnType;
 import com.liferay.item.selector.criteria.URLItemSelectorReturnType;
 import com.liferay.item.selector.criteria.UUIDItemSelectorReturnType;
+import com.liferay.item.selector.criteria.VideoEmbeddableHTMLItemSelectorReturnType;
 import com.liferay.item.selector.criteria.image.criterion.ImageItemSelectorCriterion;
 import com.liferay.item.selector.criteria.info.item.criterion.InfoItemItemSelectorCriterion;
 import com.liferay.item.selector.criteria.info.item.criterion.InfoListItemSelectorCriterion;
 import com.liferay.item.selector.criteria.url.criterion.URLItemSelectorCriterion;
+import com.liferay.item.selector.criteria.video.criterion.VideoItemSelectorCriterion;
 import com.liferay.layout.admin.constants.LayoutAdminPortletKeys;
 import com.liferay.layout.content.page.editor.constants.ContentPageEditorPortletKeys;
 import com.liferay.layout.content.page.editor.sidebar.panel.ContentPageEditorSidebarPanel;
@@ -63,6 +65,7 @@ import com.liferay.layout.content.page.editor.web.internal.constants.ContentPage
 import com.liferay.layout.content.page.editor.web.internal.constants.ContentPageEditorConstants;
 import com.liferay.layout.content.page.editor.web.internal.util.ContentUtil;
 import com.liferay.layout.content.page.editor.web.internal.util.FragmentEntryLinkItemSelectorUtil;
+import com.liferay.layout.content.page.editor.web.internal.util.MappingContentUtil;
 import com.liferay.layout.content.page.editor.web.internal.util.StyleBookEntryUtil;
 import com.liferay.layout.content.page.editor.web.internal.util.layout.structure.LayoutStructureUtil;
 import com.liferay.layout.display.page.LayoutDisplayPageObjectProvider;
@@ -135,6 +138,7 @@ import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
@@ -159,6 +163,7 @@ import com.liferay.style.book.util.DefaultStyleBookEntryUtil;
 import com.liferay.style.book.util.comparator.StyleBookEntryNameComparator;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -347,6 +352,10 @@ public class ContentPageEditorDisplayContext {
 
 					return layout.isDraft();
 				}
+			).put(
+				"dropdownWidgetTopperEnabled",
+				_ffLayoutContentPageEditorConfiguration.
+					dropdownWidgetTopperEnabled()
 			).put(
 				"duplicateItemURL",
 				getFragmentEntryActionURL(
@@ -589,6 +598,8 @@ public class ContentPageEditorDisplayContext {
 				getFragmentEntryActionURL(
 					"/layout_content_page_editor/update_segments_experience")
 			).put(
+				"videoItemSelectorURL", _getVideoItemSelectorURL()
+			).put(
 				"workflowEnabled", isWorkflowEnabled()
 			).build()
 		).put(
@@ -611,6 +622,8 @@ public class ContentPageEditorDisplayContext {
 				}
 			).put(
 				"mappedInfoItems", _getMappedInfoItems()
+			).put(
+				"mappingFields", _getMappingFieldsJSONObject()
 			).put(
 				"masterLayout", _getMasterLayoutJSONObject()
 			).put(
@@ -672,6 +685,32 @@ public class ContentPageEditorDisplayContext {
 		return WorkflowDefinitionLinkLocalServiceUtil.hasWorkflowDefinitionLink(
 			publishedLayout.getCompanyId(), publishedLayout.getGroupId(),
 			Layout.class.getName());
+	}
+
+	protected List<ItemSelectorCriterion>
+		getCollectionItemSelectorCriterions() {
+
+		InfoListItemSelectorCriterion infoListItemSelectorCriterion =
+			new InfoListItemSelectorCriterion();
+
+		infoListItemSelectorCriterion.setDesiredItemSelectorReturnTypes(
+			new InfoListItemSelectorReturnType());
+		infoListItemSelectorCriterion.setItemTypes(
+			_getInfoItemFormProviderClassNames());
+
+		InfoListProviderItemSelectorCriterion
+			infoListProviderItemSelectorCriterion =
+				new InfoListProviderItemSelectorCriterion();
+
+		infoListProviderItemSelectorCriterion.setDesiredItemSelectorReturnTypes(
+			new InfoListProviderItemSelectorReturnType());
+		infoListProviderItemSelectorCriterion.setItemTypes(
+			_getInfoItemFormProviderClassNames());
+		infoListProviderItemSelectorCriterion.setPlid(themeDisplay.getPlid());
+
+		return Arrays.asList(
+			infoListItemSelectorCriterion,
+			infoListProviderItemSelectorCriterion);
 	}
 
 	protected String getFragmentEntryActionURL(String action) {
@@ -894,30 +933,14 @@ public class ContentPageEditorDisplayContext {
 	}
 
 	private String _getCollectionSelectorURL() {
-		InfoListItemSelectorCriterion infoListItemSelectorCriterion =
-			new InfoListItemSelectorCriterion();
-
-		infoListItemSelectorCriterion.setItemTypes(
-			_getInfoItemFormProviderClassNames());
-
-		infoListItemSelectorCriterion.setDesiredItemSelectorReturnTypes(
-			new InfoListItemSelectorReturnType());
-
-		InfoListProviderItemSelectorCriterion
-			infoListProviderItemSelectorCriterion =
-				new InfoListProviderItemSelectorCriterion();
-
-		infoListProviderItemSelectorCriterion.setDesiredItemSelectorReturnTypes(
-			new InfoListProviderItemSelectorReturnType());
-		infoListProviderItemSelectorCriterion.setItemTypes(
-			_getInfoItemFormProviderClassNames());
-		infoListProviderItemSelectorCriterion.setPlid(themeDisplay.getPlid());
+		List<ItemSelectorCriterion> collectionItemSelectorCriterions =
+			getCollectionItemSelectorCriterions();
 
 		PortletURL infoListSelectorURL = _itemSelector.getItemSelectorURL(
 			RequestBackedPortletURLFactoryUtil.create(httpServletRequest),
 			_renderResponse.getNamespace() + "selectInfoList",
-			infoListItemSelectorCriterion,
-			infoListProviderItemSelectorCriterion);
+			collectionItemSelectorCriterions.toArray(
+				new ItemSelectorCriterion[0]));
 
 		if (infoListSelectorURL == null) {
 			return StringPool.BLANK;
@@ -1118,9 +1141,6 @@ public class ContentPageEditorDisplayContext {
 		for (Map.Entry<String, List<Map<String, Object>>> entry :
 				fragmentCollectionMap.entrySet()) {
 
-			FragmentRenderer fragmentRenderer =
-				fragmentCollectionFragmentRenderers.get(entry.getKey());
-
 			dynamicFragments.add(
 				HashMapBuilder.<String, Object>put(
 					"fragmentCollectionId", entry.getKey()
@@ -1128,11 +1148,17 @@ public class ContentPageEditorDisplayContext {
 					"fragmentEntries", entry.getValue()
 				).put(
 					"name",
-					LanguageUtil.get(
-						ResourceBundleUtil.getBundle(
-							themeDisplay.getLocale(),
-							fragmentRenderer.getClass()),
-						"fragment.collection.label." + entry.getKey())
+					() -> {
+						FragmentRenderer fragmentRenderer =
+							fragmentCollectionFragmentRenderers.get(
+								entry.getKey());
+
+						return LanguageUtil.get(
+							ResourceBundleUtil.getBundle(
+								themeDisplay.getLocale(),
+								fragmentRenderer.getClass()),
+							"fragment.collection.label." + entry.getKey());
+					}
 				).build());
 		}
 
@@ -1564,6 +1590,10 @@ public class ContentPageEditorDisplayContext {
 						"masterLayout",
 						layout.getMasterLayoutPlid() ==
 							fragmentEntryLink.getPlid()
+					).put(
+						"segmentsExperienceId",
+						String.valueOf(
+							fragmentEntryLink.getSegmentsExperienceId())
 					).putAll(
 						_getFragmentEntry(
 							fragmentEntryLink, fragmentEntry, content)
@@ -1804,16 +1834,31 @@ public class ContentPageEditorDisplayContext {
 				ContentUtil.getMappedLayoutDisplayPageObjectProviders(
 					getGroupId(), themeDisplay.getPlid());
 
+		Layout layout = themeDisplay.getLayout();
+
+		if (layout.getMasterLayoutPlid() > 0) {
+			layoutDisplayPageObjectProviders.addAll(
+				ContentUtil.getMappedLayoutDisplayPageObjectProviders(
+					getGroupId(), layout.getMasterLayoutPlid()));
+		}
+
 		for (LayoutDisplayPageObjectProvider<?>
 				layoutDisplayPageObjectProvider :
 					layoutDisplayPageObjectProviders) {
 
 			mappedInfoItems.add(
 				HashMapBuilder.<String, Object>put(
+					"className",
+					PortalUtil.getClassName(
+						layoutDisplayPageObjectProvider.getClassNameId())
+				).put(
 					"classNameId",
 					layoutDisplayPageObjectProvider.getClassNameId()
 				).put(
 					"classPK", layoutDisplayPageObjectProvider.getClassPK()
+				).put(
+					"classTypeId",
+					layoutDisplayPageObjectProvider.getClassTypeId()
 				).put(
 					"title",
 					layoutDisplayPageObjectProvider.getTitle(
@@ -1822,6 +1867,34 @@ public class ContentPageEditorDisplayContext {
 		}
 
 		return mappedInfoItems;
+	}
+
+	private JSONObject _getMappingFieldsJSONObject() throws Exception {
+		Set<Map<String, Object>> mappedInfoItems = _getMappedInfoItems();
+
+		JSONObject mappingFieldsJSONObject = JSONFactoryUtil.createJSONObject();
+
+		for (Map<String, Object> mappedInfoItem : mappedInfoItems) {
+			long classNameId = MapUtil.getLong(mappedInfoItem, "classNameId");
+			long classTypeId = MapUtil.getLong(mappedInfoItem, "classTypeId");
+
+			String uniqueMappingFieldKey =
+				classNameId + StringPool.DASH + classTypeId;
+
+			if (mappingFieldsJSONObject.has(uniqueMappingFieldKey)) {
+				continue;
+			}
+
+			mappingFieldsJSONObject.put(
+				uniqueMappingFieldKey,
+				MappingContentUtil.getMappingFieldsJSONArray(
+					String.valueOf(classTypeId), themeDisplay.getScopeGroupId(),
+					infoItemServiceTracker,
+					PortalUtil.getClassName(classNameId),
+					themeDisplay.getLocale()));
+		}
+
+		return mappingFieldsJSONObject;
 	}
 
 	private JSONObject _getMasterLayoutJSONObject() {
@@ -2156,6 +2229,21 @@ public class ContentPageEditorDisplayContext {
 		_urlItemSelectorCriterion = itemSelectorCriterion;
 
 		return _urlItemSelectorCriterion;
+	}
+
+	private String _getVideoItemSelectorURL() {
+		VideoItemSelectorCriterion videoItemSelectorCriterion =
+			new VideoItemSelectorCriterion();
+
+		videoItemSelectorCriterion.setDesiredItemSelectorReturnTypes(
+			new VideoEmbeddableHTMLItemSelectorReturnType());
+
+		PortletURL itemSelectorURL = _itemSelector.getItemSelectorURL(
+			RequestBackedPortletURLFactoryUtil.create(httpServletRequest),
+			_renderResponse.getNamespace() + "selectVideo",
+			videoItemSelectorCriterion);
+
+		return itemSelectorURL.toString();
 	}
 
 	private List<Map<String, Object>> _getWidgetCategories(

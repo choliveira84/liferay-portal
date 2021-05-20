@@ -20,25 +20,30 @@ import {Editor} from './Editor';
 import '../css/main.scss';
 
 const BalloonEditor = ({config = {}, contents, name, ...otherProps}) => {
-	const [cssClass, setCssClass] = useState('');
-
 	const defaultExtraPlugins = 'balloontoolbar,floatingspace';
 
-	const getConfig = () => {
-		const extraPlugins = config.extraPlugins
-			? `${config.extraPlugins}`
-			: '';
+	const [cssClass, setCssClass] = useState('');
 
-		return {
-			...config,
-			extraAllowedContent: '*',
-			extraPlugins: `${extraPlugins}${defaultExtraPlugins}`,
-		};
+	const extraPlugins = config.extraPlugins ? `${config.extraPlugins},` : '';
+
+	const basicToolbars = {
+		toolbarImage: 'JustifyLeft,JustifyCenter,JustifyRight',
+		toolbarLink: 'Link,Unlink',
+		toolbarText:
+			'Bold,Italic,Underline,BulletedList,NumberedList,Link' +
+			'JustifyLeft,JustifyCenter,JustifyRight,RemoveFormat',
+	};
+
+	const editorConfig = {
+		...basicToolbars,
+		...config,
+		extraAllowedContent: '*',
+		extraPlugins: `${extraPlugins}${defaultExtraPlugins}`,
 	};
 
 	return (
 		<Editor
-			config={getConfig()}
+			config={editorConfig}
 			name={name}
 			onBeforeLoad={(CKEDITOR) => {
 				CKEDITOR.disableAutoInline = true;
@@ -56,27 +61,33 @@ const BalloonEditor = ({config = {}, contents, name, ...otherProps}) => {
 				const balloonToolbars = editor.balloonToolbars;
 
 				balloonToolbars.create({
-					buttons:
-						'Bold,Italic,Underline,RemoveFormat,Link,NumberedList,BulletedList,JustifyLeft,JustifyCenter,JustifyRight,JustifyBlock,Anchor',
+					buttons: editorConfig.toolbarText,
 					cssSelector: '*',
 				});
 
 				balloonToolbars.create({
-					buttons: 'Link,Unlink',
-					priority:
-						window.CKEDITOR.plugins.balloontoolbar.PRIORITY.HIGH,
-					refresh(editor, path) {
-						return path.contains('a');
-					},
-				});
-
-				balloonToolbars.create({
-					buttons:
-						'JustifyLeft,JustifyCenter,JustifyRight,Link,Unlink',
+					buttons: editorConfig.toolbarImage,
 					priority:
 						window.CKEDITOR.plugins.balloontoolbar.PRIORITY.HIGH,
 					widgets: 'image,image2',
 				});
+
+				balloonToolbars.create({
+					buttons: editorConfig.toolbarLink,
+					cssSelector: 'a',
+					priority:
+						window.CKEDITOR.plugins.balloontoolbar.PRIORITY.HIGH,
+				});
+
+				if (editorConfig.toolbarVideo) {
+					balloonToolbars.create({
+						buttons: editorConfig.toolbarVideo,
+						cssSelector: 'div[data-widget="videoembed"]',
+						priority:
+							window.CKEDITOR.plugins.balloontoolbar.PRIORITY
+								.HIGH,
+					});
+				}
 
 				if (contents) {
 					editor.setData(contents);

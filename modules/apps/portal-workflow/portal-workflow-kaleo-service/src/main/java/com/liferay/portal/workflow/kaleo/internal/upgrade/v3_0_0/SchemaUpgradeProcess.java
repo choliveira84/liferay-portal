@@ -51,14 +51,14 @@ import java.util.List;
 public class SchemaUpgradeProcess extends UpgradeProcess {
 
 	protected void addBatch(
-			PreparedStatement ps, long kaleoDefinitionId,
+			PreparedStatement preparedStatement, long kaleoDefinitionId,
 			long kaleoDefinitionVersionId)
 		throws SQLException {
 
-		ps.setLong(1, kaleoDefinitionId);
-		ps.setLong(2, kaleoDefinitionVersionId);
+		preparedStatement.setLong(1, kaleoDefinitionId);
+		preparedStatement.setLong(2, kaleoDefinitionVersionId);
 
-		ps.addBatch();
+		preparedStatement.addBatch();
 	}
 
 	protected void addKaleoDefinitionId() throws Exception {
@@ -195,8 +195,9 @@ public class SchemaUpgradeProcess extends UpgradeProcess {
 		List<PreparedStatement> preparedStatements = new ArrayList<>(18);
 
 		try (LoggingTimer loggingTimer = new LoggingTimer();
-			PreparedStatement ps = connection.prepareStatement(sb1.toString());
-			ResultSet rs = ps.executeQuery()) {
+			PreparedStatement preparedStatement = connection.prepareStatement(
+				sb1.toString());
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			for (String tableName : _TABLE_NAMES) {
 				StringBundler sb2 = new StringBundler(4);
@@ -211,25 +212,27 @@ public class SchemaUpgradeProcess extends UpgradeProcess {
 						connection, sb2.toString()));
 			}
 
-			while (rs.next()) {
-				long kaleoDefinitionId = rs.getLong("kaleoDefinitionId");
-				long kaleoDefinitionVersionId = rs.getLong(
+			while (resultSet.next()) {
+				long kaleoDefinitionId = resultSet.getLong("kaleoDefinitionId");
+				long kaleoDefinitionVersionId = resultSet.getLong(
 					"kaleoDefinitionVersionId");
 
-				for (PreparedStatement preparedStatement : preparedStatements) {
+				for (PreparedStatement curPreparedStatement :
+						preparedStatements) {
+
 					addBatch(
-						preparedStatement, kaleoDefinitionId,
+						curPreparedStatement, kaleoDefinitionId,
 						kaleoDefinitionVersionId);
 				}
 			}
 
-			for (PreparedStatement preparedStatement : preparedStatements) {
-				preparedStatement.executeBatch();
+			for (PreparedStatement curPreparedStatement : preparedStatements) {
+				curPreparedStatement.executeBatch();
 			}
 		}
 		finally {
-			for (PreparedStatement preparedStatement : preparedStatements) {
-				DataAccess.cleanUp(preparedStatement);
+			for (PreparedStatement curPreparedStatement : preparedStatements) {
+				DataAccess.cleanUp(curPreparedStatement);
 			}
 		}
 	}

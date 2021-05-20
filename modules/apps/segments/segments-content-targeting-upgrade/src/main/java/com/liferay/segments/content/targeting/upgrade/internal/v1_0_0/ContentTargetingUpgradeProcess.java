@@ -102,15 +102,15 @@ public class ContentTargetingUpgradeProcess extends UpgradeProcess {
 	protected String getCriteria(long userSegmentId) throws Exception {
 		Criteria criteria = new Criteria();
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select companyId, ruleKey, typeSettings from " +
 					"CT_RuleInstance where userSegmentId = ?")) {
 
-			ps.setLong(1, userSegmentId);
+			preparedStatement.setLong(1, userSegmentId);
 
-			try (ResultSet rs = ps.executeQuery()) {
-				while (rs.next()) {
-					String ruleKey = rs.getString("ruleKey");
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				while (resultSet.next()) {
+					String ruleKey = resultSet.getString("ruleKey");
 
 					RuleConverter ruleConverter =
 						_ruleConverterRegistry.getRuleConverter(ruleKey);
@@ -125,8 +125,8 @@ public class ContentTargetingUpgradeProcess extends UpgradeProcess {
 						continue;
 					}
 
-					long companyId = rs.getLong("companyId");
-					String typeSettings = rs.getString("typeSettings");
+					long companyId = resultSet.getLong("companyId");
+					String typeSettings = resultSet.getString("typeSettings");
 
 					ruleConverter.convert(companyId, criteria, typeSettings);
 				}
@@ -138,14 +138,14 @@ public class ContentTargetingUpgradeProcess extends UpgradeProcess {
 
 	protected void upgradeContentTargetingUserSegments() throws Exception {
 		try (LoggingTimer loggingTimer = new LoggingTimer();
-			PreparedStatement ps1 = connection.prepareStatement(
+			PreparedStatement preparedStatement1 = connection.prepareStatement(
 				"select * from CT_UserSegment");
-			ResultSet rs = ps1.executeQuery()) {
+			ResultSet resultSet = preparedStatement1.executeQuery()) {
 
 			ServiceContext serviceContext = new ServiceContext();
 
-			while (rs.next()) {
-				long userSegmentId = rs.getLong("userSegmentId");
+			while (resultSet.next()) {
+				long userSegmentId = resultSet.getLong("userSegmentId");
 
 				if (_log.isInfoEnabled()) {
 					_log.info(
@@ -154,15 +154,17 @@ public class ContentTargetingUpgradeProcess extends UpgradeProcess {
 				}
 
 				Map<Locale, String> nameMap =
-					LocalizationUtil.getLocalizationMap(rs.getString("name"));
+					LocalizationUtil.getLocalizationMap(
+						resultSet.getString("name"));
 				Map<Locale, String> descriptionMap =
 					LocalizationUtil.getLocalizationMap(
-						rs.getString("description"));
+						resultSet.getString("description"));
 
-				serviceContext.setScopeGroupId(rs.getLong("groupId"));
+				serviceContext.setScopeGroupId(resultSet.getLong("groupId"));
 				serviceContext.setUserId(
 					PortalUtil.getValidUserId(
-						rs.getLong("companyId"), rs.getLong("userId")));
+						resultSet.getLong("companyId"),
+						resultSet.getLong("userId")));
 
 				_segmentsEntryLocalService.addSegmentsEntry(
 					"ct_" + userSegmentId, nameMap, descriptionMap, true,

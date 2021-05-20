@@ -92,24 +92,24 @@ public class KBAttachmentsUpgradeProcess extends UpgradeProcess {
 	}
 
 	protected void updateAttachments() throws Exception {
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select kbArticleId, resourcePrimKey, groupId, companyId, " +
 					"userId, status from KBArticle");
-			ResultSet rs = ps.executeQuery()) {
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			while (rs.next()) {
-				long groupId = rs.getLong("groupId");
-				long companyId = rs.getLong("companyId");
+			while (resultSet.next()) {
+				long groupId = resultSet.getLong("groupId");
+				long companyId = resultSet.getLong("companyId");
 
-				long classPK = rs.getLong("resourcePrimKey");
+				long classPK = resultSet.getLong("resourcePrimKey");
 
-				int status = rs.getInt("status");
+				int status = resultSet.getInt("status");
 
 				if (status != WorkflowConstants.STATUS_APPROVED) {
-					classPK = rs.getLong("kbArticleId");
+					classPK = resultSet.getLong("kbArticleId");
 				}
 
-				long userId = rs.getLong("userId");
+				long userId = resultSet.getLong("userId");
 
 				updateAttachments(companyId, groupId, classPK, userId);
 			}

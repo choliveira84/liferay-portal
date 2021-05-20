@@ -413,6 +413,12 @@ definition {
 			locator1 = "FormViewBuilder#FIELD_ELLIPSIS_ACTION");
 	}
 
+	macro editFieldSetName {
+		Type(
+			locator1 = "FormViewBuilder#FIELD_SET_NAME",
+			value1 = "${fieldSetName}");
+	}
+
 	macro editOptionsRow {
 		var key_rowNumber = "${rowNumber}";
 

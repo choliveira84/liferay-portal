@@ -12,8 +12,8 @@
  * details.
  */
 
+import {PagesVisitor} from 'data-engine-js-components-web';
 import {FieldSupport} from 'dynamic-data-mapping-form-builder';
-import {PagesVisitor} from 'dynamic-data-mapping-form-renderer';
 import {createContext} from 'react';
 
 import {
@@ -428,11 +428,18 @@ const createReducer = (dataLayoutBuilder) => {
 			case SWITCH_SIDEBAR_PANEL: {
 				const {sidebarOpen, sidebarPanelId} = action.payload;
 
-				return {
-					...state,
-					sidebarOpen,
-					sidebarPanelId,
-				};
+				if ((sidebarOpen || sidebarOpen === false) && sidebarPanelId) {
+					return {
+						...state,
+						sidebarOpen,
+						sidebarPanelId,
+					};
+				}
+				else {
+					return {
+						...state,
+					};
+				}
 			}
 			case UPDATE_APP_PROPS: {
 				return {

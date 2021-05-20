@@ -136,6 +136,12 @@ public class ObjectDefinitionLocalServiceUtil {
 		return getService().deletePersistedModel(persistedModel);
 	}
 
+	public static void deployObjectDefinition(
+		ObjectDefinition objectDefinition) {
+
+		getService().deployObjectDefinition(objectDefinition);
+	}
+
 	public static <T> T dslQuery(DSLQuery dslQuery) {
 		return getService().dslQuery(dslQuery);
 	}
@@ -337,18 +343,8 @@ public class ObjectDefinitionLocalServiceUtil {
 		return getService().getPersistedModel(primaryKeyObj);
 	}
 
-	public static void registerObjectDefinition(
-		ObjectDefinition objectDefinition) {
-
-		getService().registerObjectDefinition(objectDefinition);
-	}
-
-	public static void unregisterObjectDefinition(long objectDefinitionId) {
-		getService().unregisterObjectDefinition(objectDefinitionId);
-	}
-
-	public static void unregisterObjectDefinitions() {
-		getService().unregisterObjectDefinitions();
+	public static void undeployObjectDefinition(long objectDefinitionId) {
+		getService().undeployObjectDefinition(objectDefinitionId);
 	}
 
 	/**

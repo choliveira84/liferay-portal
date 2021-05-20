@@ -31,6 +31,14 @@ definition {
 		return "${newPassword}";
 	}
 
+	macro setPortalInstanceName {
+		if (isSet(portalURL)) {
+			var portalInstanceName = JSONCompany.parsePortalInstanceURL(portalURL = "${portalURL}");
+		}
+
+		return "${portalInstanceName}";
+	}
+
 	macro setRequireReset {
 		if (!(isSet(requireReset))) {
 			var requireReset = "true";
@@ -51,6 +59,8 @@ definition {
 		Variables.assertDefined(parameterList = "${userEmailAddress}");
 
 		var userId = JSONUserAPI._getUserIdByEmailAddress(
+			creatorEmailAddress = "${creatorEmailAddress}",
+			creatorPassword = "${creatorPassword}",
 			portalInstanceName = "${portalInstanceName}",
 			userEmailAddress = "${userEmailAddress}");
 

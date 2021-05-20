@@ -104,14 +104,14 @@ public class LayoutPageTemplateEntryUpgradeProcess extends UpgradeProcess {
 			"layoutPageTemplateEntryKey");
 
 		try (Statement s = connection.createStatement();
-			ResultSet rs = s.executeQuery(
+			ResultSet resultSet = s.executeQuery(
 				"select distinct layoutPageTemplateEntryKey, name from " +
 					"LayoutPageTemplateEntry")) {
 
-			while (rs.next()) {
-				names.add(rs.getString("name"));
+			while (resultSet.next()) {
+				names.add(resultSet.getString("name"));
 				layoutPageTemplateEntryKeys.add(
-					rs.getString("layoutPageTemplateEntryKey"));
+					resultSet.getString("layoutPageTemplateEntryKey"));
 			}
 		}
 	}
@@ -145,30 +145,31 @@ public class LayoutPageTemplateEntryUpgradeProcess extends UpgradeProcess {
 		_loadDistinctKeysAndNames();
 
 		try (Statement s = connection.createStatement();
-			ResultSet rs = s.executeQuery(
+			ResultSet resultSet = s.executeQuery(
 				"select layoutPageTemplateEntryId, " +
 					"layoutPageTemplateEntryKey, layoutPrototypeId, name " +
 						"from LayoutPageTemplateEntry");
-			PreparedStatement ps = AutoBatchPreparedStatementUtil.autoBatch(
-				connection.prepareStatement(
-					"update LayoutPageTemplateEntry set " +
-						"layoutPageTemplateEntryKey = ?, name = ? where " +
-							"layoutPageTemplateEntryId = ?"))) {
+			PreparedStatement preparedStatement =
+				AutoBatchPreparedStatementUtil.autoBatch(
+					connection.prepareStatement(
+						"update LayoutPageTemplateEntry set " +
+							"layoutPageTemplateEntryKey = ?, name = ? where " +
+								"layoutPageTemplateEntryId = ?"))) {
 
-			while (rs.next()) {
-				String name = rs.getString("name");
+			while (resultSet.next()) {
+				String name = resultSet.getString("name");
 
 				if (LayoutPageTemplateEntryValidator.isValidName(name)) {
 					continue;
 				}
 
-				long layoutPageTemplateEntryId = rs.getLong(
+				long layoutPageTemplateEntryId = resultSet.getLong(
 					"layoutPageTemplateEntryId");
 
 				String layoutPageTemplateEntryKey = _generateValidString(
-					rs.getString("layoutPageTemplateEntryKey"));
+					resultSet.getString("layoutPageTemplateEntryKey"));
 
-				ps.setString(
+				preparedStatement.setString(
 					1,
 					_getUniqueColumnValue(
 						layoutPageTemplateEntryKey,
@@ -176,18 +177,19 @@ public class LayoutPageTemplateEntryUpgradeProcess extends UpgradeProcess {
 
 				String newName = _generateValidString(name);
 
-				ps.setString(2, _getUniqueColumnValue(newName, "name"));
+				preparedStatement.setString(
+					2, _getUniqueColumnValue(newName, "name"));
 
-				ps.setLong(3, layoutPageTemplateEntryId);
+				preparedStatement.setLong(3, layoutPageTemplateEntryId);
 
-				long layoutPrototypeId = rs.getLong("layoutPrototypeId");
+				long layoutPrototypeId = resultSet.getLong("layoutPrototypeId");
 
 				_updateLayoutPrototypeName(layoutPrototypeId, name, newName);
 
-				ps.addBatch();
+				preparedStatement.addBatch();
 			}
 
-			ps.executeBatch();
+			preparedStatement.executeBatch();
 		}
 	}
 

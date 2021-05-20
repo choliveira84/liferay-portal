@@ -487,7 +487,7 @@ message.
 				</if>
 
 				<copy
-					todir="${app.server.lib.global.dir}"
+					todir="${app.server.lib.portal.dir}"
 				>
 					<fileset
 						dir="lib/development"
@@ -527,13 +527,6 @@ message.
 					file="${tstamp.value}"
 					tofile="${app.server.portal.war.name}"
 				/>
-			</then>
-		</if>
-
-		<if>
-			<equals arg1="${app.server.type}" arg2="websphere" />
-			<then>
-				<ant dir="support-websphere" inheritAll="false" target="deploy" />
 			</then>
 		</if>
 	</target>
@@ -1340,6 +1333,13 @@ print AdminControl.invoke(appManager, 'startApplication', 'liferay-portal')
 				</if>
 
 				<delete file="wsadmin.py" />
+
+				<!--
+				See LPS-131764. Temporarily clear logs after WebSphere install
+				until osgi/core is migrated into the portal WAR.
+				-->
+
+				<delete dir="${liferay.home}/logs" />
 			</then>
 		</if>
 	</target>

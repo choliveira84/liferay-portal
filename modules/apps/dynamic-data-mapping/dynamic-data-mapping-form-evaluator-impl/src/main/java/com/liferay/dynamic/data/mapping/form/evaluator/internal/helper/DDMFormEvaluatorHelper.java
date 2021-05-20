@@ -33,6 +33,8 @@ import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueAccesso
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueEditingAware;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueLocalizer;
 import com.liferay.dynamic.data.mapping.form.field.type.DefaultDDMFormFieldValueAccessor;
+import com.liferay.dynamic.data.mapping.form.page.change.DDMFormPageChange;
+import com.liferay.dynamic.data.mapping.form.page.change.DDMFormPageChangeTracker;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldValidation;
@@ -68,8 +70,6 @@ import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -79,13 +79,15 @@ import java.util.stream.Stream;
 public class DDMFormEvaluatorHelper {
 
 	public DDMFormEvaluatorHelper(
-		DDMFormEvaluatorEvaluateRequest ddmFormEvaluatorEvaluateRequest,
 		DDMExpressionFactory ddmExpressionFactory,
-		DDMFormFieldTypeServicesTracker ddmFormFieldTypeServicesTracker) {
+		DDMFormEvaluatorEvaluateRequest ddmFormEvaluatorEvaluateRequest,
+		DDMFormFieldTypeServicesTracker ddmFormFieldTypeServicesTracker,
+		DDMFormPageChangeTracker ddmFormPageChangeTracker) {
 
-		_ddmFormEvaluatorEvaluateRequest = ddmFormEvaluatorEvaluateRequest;
 		_ddmExpressionFactory = ddmExpressionFactory;
+		_ddmFormEvaluatorEvaluateRequest = ddmFormEvaluatorEvaluateRequest;
 		_ddmFormFieldTypeServicesTracker = ddmFormFieldTypeServicesTracker;
+		_ddmFormPageChangeTracker = ddmFormPageChangeTracker;
 
 		createResourceBundle(_ddmFormEvaluatorEvaluateRequest.getLocale());
 
@@ -104,7 +106,7 @@ public class DDMFormEvaluatorHelper {
 
 		_ddmFormLayout = ddmFormEvaluatorEvaluateRequest.getDDMFormLayout();
 
-		_ddmFormRuleHelper = new DDMFormEvaluatorRuleHelper(
+		_ddmFormEvaluatorRuleHelper = new DDMFormEvaluatorRuleHelper(
 			_ddmFormFieldsMap, ddmFormEvaluatorExpressionObserver);
 
 		ddmFormEvaluatorDDMExpressionFieldAccessor =
@@ -122,6 +124,8 @@ public class DDMFormEvaluatorHelper {
 	}
 
 	public DDMFormEvaluatorEvaluateResponse evaluate() {
+		evaluateDDMFormPageChange();
+
 		evaluateVisibilityExpressions();
 
 		List<DDMFormRule> ddmFormRules = null;
@@ -201,6 +205,31 @@ public class DDMFormEvaluatorHelper {
 			portletResourceBundle, portalResourceBundle);
 	}
 
+	protected void evaluateDDMFormPageChange() {
+		if (_ddmFormLayout == null) {
+			return;
+		}
+
+		if (_ddmFormLayout.getNextPage() == _ddmFormLayout.getPreviousPage()) {
+			return;
+		}
+
+		DDMFormPageChange ddmFormPageChange =
+			_ddmFormPageChangeTracker.getDDMFormPageChangeByDDMFormInstanceId(
+				String.valueOf(
+					_ddmFormEvaluatorEvaluateRequest.getDDMFormInstanceId()));
+
+		if (ddmFormPageChange == null) {
+			return;
+		}
+
+		DDMFormEvaluatorEvaluateResponse ddmFormEvaluatorEvaluateResponse =
+			ddmFormPageChange.evaluate(_ddmFormEvaluatorEvaluateRequest);
+
+		_ddmFormFieldsPropertyChanges.putAll(
+			ddmFormEvaluatorEvaluateResponse.getDDMFormFieldsPropertyChanges());
+	}
+
 	protected void evaluateDDMFormRule(DDMFormRule ddmFormRule) {
 		if (Validator.isNotNull(ddmFormRule.getCondition())) {
 			if (evaluateDDMFormRuleCondition(ddmFormRule.getCondition())) {
@@ -230,7 +259,8 @@ public class DDMFormEvaluatorHelper {
 					copyDDMFormRule.setActions(actionsNotEvaluated);
 				}
 
-				_ddmFormRuleHelper.checkFieldAffectedByAction(copyDDMFormRule);
+				_ddmFormEvaluatorRuleHelper.checkFieldAffectedByAction(
+					copyDDMFormRule);
 			}
 		}
 	}
@@ -328,20 +358,6 @@ public class DDMFormEvaluatorHelper {
 		}
 
 		return getBooleanPropertyValue(ddmFormFieldContextKey, "visible", true);
-	}
-
-	protected boolean filterVisibleFieldsWithRegex(
-		DDMFormEvaluatorFieldContextKey ddmFormEvaluatorFieldContextKey) {
-
-		if (Validator.isNull(
-				_getFieldPropertyResponseValue(
-					ddmFormEvaluatorFieldContextKey, "regex"))) {
-
-			return false;
-		}
-
-		return getBooleanPropertyValue(
-			ddmFormEvaluatorFieldContextKey, "visible", true);
 	}
 
 	protected <K, V> void forEachEntry(
@@ -507,26 +523,6 @@ public class DDMFormEvaluatorHelper {
 			ddmFormEvaluatorFieldContextKey, "readOnly", false);
 	}
 
-	protected boolean isFieldValueInvalid(
-		DDMFormEvaluatorFieldContextKey ddmFormEvaluatorFieldContextKey) {
-
-		Pattern pattern = Pattern.compile(
-			GetterUtil.getString(
-				_getFieldPropertyResponseValue(
-					ddmFormEvaluatorFieldContextKey, "regex")));
-
-		Matcher matcher = pattern.matcher(
-			GetterUtil.getString(
-				_getFieldPropertyResponseValue(
-					ddmFormEvaluatorFieldContextKey, "value")));
-
-		if (matcher.matches()) {
-			return false;
-		}
-
-		return true;
-	}
-
 	protected boolean isFieldVisible(
 		DDMFormEvaluatorFieldContextKey ddmFormFieldContextKey) {
 
@@ -598,7 +594,6 @@ public class DDMFormEvaluatorHelper {
 		validateFieldsMarkedAsRequired();
 		validateFieldsWithConfirmationField();
 		validateFieldsWithDDMFormFieldValidation();
-		validateFieldsWithRegex();
 	}
 
 	protected void validateFieldsMarkedAsRequired() {
@@ -657,24 +652,6 @@ public class DDMFormEvaluatorHelper {
 		forEachEntry(
 			ddmFormFieldValidations,
 			this::validateFieldWithDDMFormFieldValidation);
-	}
-
-	protected void validateFieldsWithRegex() {
-		Set<Map.Entry<String, DDMFormField>> entrySet =
-			_ddmFormFieldsMap.entrySet();
-
-		Stream<Map.Entry<String, DDMFormField>> stream = entrySet.stream();
-
-		stream.flatMap(
-			entry -> _getDDMFormEvaluatorFieldContextKey(entry.getKey())
-		).filter(
-			this::filterVisibleFieldsWithRegex
-		).filter(
-			this::isFieldValueInvalid
-		).forEach(
-			ddmFormEvaluatorFieldContextKey -> setFieldAsInvalid(
-				ddmFormEvaluatorFieldContextKey, StringPool.BLANK)
-		);
 	}
 
 	protected void validateFieldWithDDMFormFieldValidation(
@@ -921,13 +898,14 @@ public class DDMFormEvaluatorHelper {
 		_ddmFormEvaluatorEvaluateRequest;
 	private final DDMFormEvaluatorFormValuesHelper
 		_ddmFormEvaluatorFormValuesHelper;
+	private final DDMFormEvaluatorRuleHelper _ddmFormEvaluatorRuleHelper;
 	private final Map<String, DDMFormField> _ddmFormFieldsMap;
 	private final Map<DDMFormEvaluatorFieldContextKey, Map<String, Object>>
 		_ddmFormFieldsPropertyChanges = new HashMap<>();
 	private final DDMFormFieldTypeServicesTracker
 		_ddmFormFieldTypeServicesTracker;
 	private final DDMFormLayout _ddmFormLayout;
-	private final DDMFormEvaluatorRuleHelper _ddmFormRuleHelper;
+	private final DDMFormPageChangeTracker _ddmFormPageChangeTracker;
 	private List<String> _evaluatedActions;
 	private final Map<Integer, Integer> _pageFlow = new HashMap<>();
 	private ResourceBundle _resourceBundle;

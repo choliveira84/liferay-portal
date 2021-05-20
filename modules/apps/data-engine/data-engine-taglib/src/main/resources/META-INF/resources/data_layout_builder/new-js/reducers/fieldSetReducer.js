@@ -12,28 +12,23 @@
  * details.
  */
 
+import {PagesVisitor} from 'data-engine-js-components-web';
 import {
 	FieldSetUtil,
 	FieldSupport,
 	SettingsContext,
 } from 'dynamic-data-mapping-form-builder';
-import {PagesVisitor} from 'dynamic-data-mapping-form-renderer';
 
+import {getDDMFormField} from '../../js/utils/dataConverter.es';
+import {normalizeDataLayoutRows} from '../../js/utils/normalizers.es';
 import {EVENT_TYPES} from '../eventTypes';
 
 export default (state, action, config) => {
 	switch (action.type) {
-		case EVENT_TYPES.FIELD_SET.UPDATE: {
-			const {dataDefinitionId, editingDataDefinitionId} = state;
-			const fieldSets = action.payload.fieldSets.filter(
-				(fieldSet) =>
-					fieldSet.id !== dataDefinitionId &&
-					fieldSet.id !== editingDataDefinitionId
-			);
-
+		case EVENT_TYPES.FIELD_SET.UPDATE_LIST: {
 			return {
 				...state,
-				fieldSets,
+				fieldSets: action.payload.fieldSets,
 			};
 		}
 		case EVENT_TYPES.FIELD_SET.ADD: {
@@ -135,6 +130,54 @@ export default (state, action, config) => {
 				pages,
 				parentFieldName,
 			});
+		}
+		case EVENT_TYPES.FIELD_SET.UPDATE: {
+			const {fieldSet} = action.payload;
+			const {fieldTypes} = config;
+			const {editingLanguageId, pages} = state;
+
+			const visitor = new PagesVisitor(pages);
+
+			const newPages = visitor.mapFields((field) => {
+				if (field.ddmStructureId !== fieldSet.id) {
+					return field;
+				}
+
+				const nestedFields = fieldSet.dataDefinitionFields.map(
+					({name}) => {
+						const field = getDDMFormField({
+							dataDefinition: fieldSet,
+							editingLanguageId,
+							fieldName: name,
+							fieldTypes,
+						});
+
+						return {
+							...field,
+							label:
+								field.label[editingLanguageId] ??
+								field.label[fieldSet.defaultLanguageId],
+						};
+					}
+				);
+
+				const rows = normalizeDataLayoutRows(
+					fieldSet.defaultDataLayout.dataLayoutPages
+				);
+
+				const updatedFieldSetDefinition = {
+					...field,
+					nestedFields,
+					rows,
+				};
+
+				return updatedFieldSetDefinition;
+			});
+
+			return {
+				...state,
+				pages: newPages,
+			};
 		}
 		default:
 			return state;

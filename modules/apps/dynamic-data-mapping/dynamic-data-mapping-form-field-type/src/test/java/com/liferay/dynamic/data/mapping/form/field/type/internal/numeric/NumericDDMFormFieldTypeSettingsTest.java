@@ -17,6 +17,8 @@ package com.liferay.dynamic.data.mapping.form.field.type.internal.numeric;
 import com.liferay.dynamic.data.mapping.form.field.type.BaseDDMFormFieldTypeSettingsTestCase;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
+import com.liferay.dynamic.data.mapping.model.DDMFormFieldValidation;
+import com.liferay.dynamic.data.mapping.model.DDMFormFieldValidationExpression;
 import com.liferay.dynamic.data.mapping.model.DDMFormRule;
 import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.dynamic.data.mapping.util.DDMFormFactory;
@@ -72,14 +74,14 @@ public class NumericDDMFormFieldTypeSettingsTest
 
 		Assert.assertNotNull(confirmationErrorMessageDDMFormField.getLabel());
 		Assert.assertNotNull(
-			confirmationErrorMessageDDMFormField.getPredefinedValue());
+			confirmationErrorMessageDDMFormField.getProperty("initialValue"));
 
 		DDMFormField confirmationLabelDDMFormField = ddmFormFieldsMap.get(
 			"confirmationLabel");
 
 		Assert.assertNotNull(confirmationLabelDDMFormField.getLabel());
 		Assert.assertNotNull(
-			confirmationLabelDDMFormField.getPredefinedValue());
+			confirmationLabelDDMFormField.getProperty("initialValue"));
 
 		DDMFormField dataTypeDDMFormField = ddmFormFieldsMap.get("dataType");
 
@@ -117,13 +119,24 @@ public class NumericDDMFormFieldTypeSettingsTest
 
 		Assert.assertEquals(
 			"string", inputMaskFormatDDMFormField.getDataType());
+
+		DDMFormFieldValidation ddmFormFieldValidation =
+			inputMaskFormatDDMFormField.getDDMFormFieldValidation();
+
+		DDMFormFieldValidationExpression ddmFormFieldValidationExpression =
+			ddmFormFieldValidation.getDDMFormFieldValidationExpression();
+
 		Assert.assertEquals(
-			"^[^1-8]+$", inputMaskFormatDDMFormField.getProperty("regex"));
+			"match(inputMaskFormat, '^$|^(?=.*[09])([^1-8]+)$')",
+			ddmFormFieldValidationExpression.getValue());
+
 		Assert.assertEquals("text", inputMaskFormatDDMFormField.getType());
 		Assert.assertEquals(true, inputMaskFormatDDMFormField.isRequired());
 		Assert.assertNotNull(inputMaskFormatDDMFormField.getLabel());
 		Assert.assertNotNull(
 			inputMaskFormatDDMFormField.getProperty("placeholder"));
+		Assert.assertNotNull(
+			inputMaskFormatDDMFormField.getProperty("tooltip"));
 		Assert.assertNotNull(inputMaskFormatDDMFormField.getTip());
 
 		DDMFormField placeholderDDMFormField = ddmFormFieldsMap.get(
@@ -178,7 +191,7 @@ public class NumericDDMFormFieldTypeSettingsTest
 
 		actions = ddmFormRule1.getActions();
 
-		Assert.assertEquals(actions.toString(), 8, actions.size());
+		Assert.assertEquals(actions.toString(), 9, actions.size());
 
 		Assert.assertTrue(
 			actions.toString(),

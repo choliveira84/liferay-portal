@@ -125,15 +125,15 @@ public class ShoppingUpgradeProcess extends UpgradeProcess {
 	}
 
 	private void _deleteImages(String type) throws Exception {
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				SQLTransformer.transform(
 					StringBundler.concat(
 						"select ", type, "Id from ShoppingItem where ", type,
 						" = [$TRUE$]")));
-			ResultSet rs = ps.executeQuery()) {
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			while (rs.next()) {
-				_imageLocalService.deleteImage(rs.getLong(1));
+			while (resultSet.next()) {
+				_imageLocalService.deleteImage(resultSet.getLong(1));
 			}
 		}
 	}

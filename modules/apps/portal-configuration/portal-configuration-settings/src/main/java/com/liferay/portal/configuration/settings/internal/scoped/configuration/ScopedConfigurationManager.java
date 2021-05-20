@@ -21,7 +21,7 @@ import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.settings.LocationVariableResolver;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -91,13 +91,12 @@ public class ScopedConfigurationManager implements ManagedServiceFactory {
 	}
 
 	public void register() {
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put(Constants.SERVICE_PID, _factoryPid + ".scoped");
-
 		_managedServiceFactoryServiceRegistration =
 			_bundleContext.registerService(
-				ManagedServiceFactory.class, this, properties);
+				ManagedServiceFactory.class, this,
+				HashMapDictionaryBuilder.<String, Object>put(
+					Constants.SERVICE_PID, _factoryPid + ".scoped"
+				).build());
 	}
 
 	public void unregister() {

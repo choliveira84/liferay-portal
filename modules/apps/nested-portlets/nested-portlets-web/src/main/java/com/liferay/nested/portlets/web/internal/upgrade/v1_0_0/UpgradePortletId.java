@@ -46,14 +46,14 @@ public class UpgradePortletId extends BasePortletIdUpgradeProcess {
 	protected void updateNestedPortletLayoutRevisionTypeSettings()
 		throws Exception {
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select layoutRevisionId, typeSettings from LayoutRevision " +
 					"where typeSettings LIKE '%nested-column-ids%'");
-			ResultSet rs = ps.executeQuery()) {
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			while (rs.next()) {
-				long layoutRevisionId = rs.getLong("layoutRevisionId");
-				String typeSettings = rs.getString("typeSettings");
+			while (resultSet.next()) {
+				long layoutRevisionId = resultSet.getLong("layoutRevisionId");
+				String typeSettings = resultSet.getString("typeSettings");
 
 				String oldPortletId = "_118_INSTANCE_";
 				String newPortletId =
@@ -74,15 +74,15 @@ public class UpgradePortletId extends BasePortletIdUpgradeProcess {
 	}
 
 	protected void updateNestedPortletLayoutTypeSettings() throws Exception {
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select plid, typeSettings from Layout where typeSettings " +
 					"LIKE '%nested-column-ids%'");
 
-			ResultSet rs = ps.executeQuery()) {
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			while (rs.next()) {
-				long plid = rs.getLong("plid");
-				String typeSettings = rs.getString("typeSettings");
+			while (resultSet.next()) {
+				long plid = resultSet.getLong("plid");
+				String typeSettings = resultSet.getString("typeSettings");
 
 				String oldPortletId = "_118_INSTANCE_";
 				String newPortletId =

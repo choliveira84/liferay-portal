@@ -620,7 +620,7 @@ public abstract class BaseTaxonomyVocabularyResourceTestCase {
 			RoleConstants.TYPE_REGULAR);
 
 		assertHttpResponseStatusCode(
-			204,
+			200,
 			taxonomyVocabularyResource.
 				putAssetLibraryTaxonomyVocabularyPermissionHttpResponse(
 					testDepotEntry.getDepotEntryId(),
@@ -1089,7 +1089,7 @@ public abstract class BaseTaxonomyVocabularyResourceTestCase {
 			RoleConstants.TYPE_REGULAR);
 
 		assertHttpResponseStatusCode(
-			204,
+			200,
 			taxonomyVocabularyResource.
 				putSiteTaxonomyVocabularyPermissionHttpResponse(
 					taxonomyVocabulary.getSiteId(),
@@ -1353,7 +1353,7 @@ public abstract class BaseTaxonomyVocabularyResourceTestCase {
 			RoleConstants.TYPE_REGULAR);
 
 		assertHttpResponseStatusCode(
-			204,
+			200,
 			taxonomyVocabularyResource.
 				putTaxonomyVocabularyPermissionHttpResponse(
 					taxonomyVocabulary.getId(),
@@ -1407,10 +1407,7 @@ public abstract class BaseTaxonomyVocabularyResourceTestCase {
 
 				Class<?> clazz = object.getClass();
 
-				for (Field field :
-						ReflectionUtil.getDeclaredFields(
-							clazz.getSuperclass())) {
-
+				for (Field field : getDeclaredFields(clazz.getSuperclass())) {
 					arraySB.append(field.getName());
 					arraySB.append(": ");
 
@@ -1456,9 +1453,7 @@ public abstract class BaseTaxonomyVocabularyResourceTestCase {
 
 		StringBuilder sb = new StringBuilder("{");
 
-		for (Field field :
-				ReflectionUtil.getDeclaredFields(TaxonomyVocabulary.class)) {
-
+		for (Field field : getDeclaredFields(TaxonomyVocabulary.class)) {
 			if (!ArrayUtil.contains(
 					getAdditionalAssertFieldNames(), field.getName())) {
 
@@ -1720,7 +1715,7 @@ public abstract class BaseTaxonomyVocabularyResourceTestCase {
 		graphQLFields.add(new GraphQLField("siteId"));
 
 		for (Field field :
-				ReflectionUtil.getDeclaredFields(
+				getDeclaredFields(
 					com.liferay.headless.admin.taxonomy.dto.v1_0.
 						TaxonomyVocabulary.class)) {
 
@@ -1755,7 +1750,7 @@ public abstract class BaseTaxonomyVocabularyResourceTestCase {
 				}
 
 				List<GraphQLField> childrenGraphQLFields = getGraphQLFields(
-					ReflectionUtil.getDeclaredFields(clazz));
+					getDeclaredFields(clazz));
 
 				graphQLFields.add(
 					new GraphQLField(field.getName(), childrenGraphQLFields));
@@ -1959,6 +1954,17 @@ public abstract class BaseTaxonomyVocabularyResourceTestCase {
 		}
 
 		return false;
+	}
+
+	protected Field[] getDeclaredFields(Class clazz) throws Exception {
+		Stream<Field> stream = Stream.of(
+			ReflectionUtil.getDeclaredFields(clazz));
+
+		return stream.filter(
+			field -> !field.isSynthetic()
+		).toArray(
+			Field[]::new
+		);
 	}
 
 	protected java.util.Collection<EntityField> getEntityFields()

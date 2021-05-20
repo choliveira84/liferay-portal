@@ -107,14 +107,14 @@ public class UpgradePortletPreferences
 		sb.append("JournalArticleResource.resourcePrimKey where ");
 		sb.append("JournalArticle.uuid_ = ?");
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				sb.toString())) {
 
-			ps.setString(1, journalArticleUuid);
+			preparedStatement.setString(1, journalArticleUuid);
 
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
-					return rs.getString("uuid_");
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				if (resultSet.next()) {
+					return resultSet.getString("uuid_");
 				}
 
 				return null;

@@ -1,4 +1,5 @@
 @component-name = "app-builder-workflow"
+@ignore = "true"
 definition {
 
 	property custom.properties = "default.layout.template.id=1_column";
@@ -2428,10 +2429,9 @@ definition {
 	}
 
 	@description = "LRQA-64406 Automate LPS-116593: As an App Adm, I want to be warned when a Form View cannot be used to create new records for Custom Objects in the Start-Step of the Workflow"
+	@ignore = "true"
 	@priority = "4"
 	test WarningDuringStartStep {
-		property portal.upstream = "quarantine";
-
 		AppBuilderAdmin.addCustomObject(
 			customObjectName = "my custom object",
 			isCreatingFormView = "true",

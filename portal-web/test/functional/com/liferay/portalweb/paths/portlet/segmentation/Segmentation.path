@@ -40,7 +40,7 @@
 </tr>
 <tr>
 	<td>CRITERION_INPUT_FORM_CONTROL</td>
-	<td>//div[@class='criterion']//*[contains(@data-testid, '${key_criterion}')]</td>
+	<td>//div[@class='criterion']//*[contains(@data-testid, '${key_criterion}') and (contains(@class,'form-control'))] | //div[@class='criterion']//*[contains(@data-testid, '${key_criterion}')]/following-sibling::input[contains(@class,'form-control')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -51,6 +51,16 @@
 <tr>
 	<td>CRITERION_INPUT_OPTION</td>
 	<td>//div[@class='criterion'][1]//select[contains(@class, 'criterion-input')]/option[.='${key_criterionInputOption}']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>CRITERION_CONJUNCTION</td>
+	<td>//div[contains(@class,'criteria')]//button[contains(@class,'dropdown-toggle')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>CRITERION_CONJUNCTION_ITEM</td>
+	<td>//button[contains(@class,'dropdown-item') and contains(.,'${key_criterionConjunctionItem}')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -76,11 +86,6 @@
 <tr>
 	<td>PROPERTY_FIELD</td>
 	<td>//div[@class='criterion'][1]//*[@data-testid='simple-string']</td>
-	<td></td>
-</tr>
-<tr>
-	<td>ORGANIZATION_MENU</td>
-	<td>//a[contains(@class, 'sidebar-collapse-header') and contains(text(),'Organization')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -111,11 +116,6 @@
 <tr>
 	<td>SEGMENT_OPTIONS_MENU</td>
 	<td>//*[@id='qfkd____']</td>
-	<td></td>
-</tr>
-<tr>
-	<td>SESSION_MENU</td>
-	<td>//a[contains(@class, 'sidebar-collapse-header') and contains(text(),'Session')]</td>
 	<td></td>
 </tr>
 <tr>

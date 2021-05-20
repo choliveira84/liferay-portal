@@ -105,16 +105,17 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 	}
 
 	@Override
-	public PortalInstance postPortalInstance(
-			String initializerKey, PortalInstance portalInstance)
+	public PortalInstance postPortalInstance(PortalInstance portalInstance)
 		throws Exception {
 
 		PortalInstanceInitializer portalInstanceInitializer = null;
 
-		if (Validator.isNotNull(initializerKey)) {
+		if (Validator.isNotNull(
+				portalInstance.getPortalInstanceInitializerKey())) {
+
 			portalInstanceInitializer =
 				_portalInstanceInitializerRegistry.getPortalInstanceInitializer(
-					initializerKey);
+					portalInstance.getPortalInstanceInitializerKey());
 
 			if (portalInstanceInitializer == null) {
 				throw new ValidationException("Invalid initializer key");
@@ -132,7 +133,9 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 		_portalInstancesLocalService.synchronizePortalInstances();
 
 		if (portalInstanceInitializer != null) {
-			portalInstanceInitializer.initialize(company.getCompanyId());
+			portalInstanceInitializer.initialize(
+				company.getCompanyId(), contextHttpServletRequest,
+				portalInstance.getPortalInstanceInitializerPayload());
 		}
 
 		return _toPortalInstance(company);

@@ -13,83 +13,29 @@
  */
 
 import classNames from 'classnames';
+import {useConfig, useForm, useFormState} from 'data-engine-js-components-web';
+import {EVENT_TYPES as CORE_EVENT_TYPES} from 'data-engine-js-components-web/js/core/actions/eventTypes.es';
 import {FieldsSidebar} from 'data-engine-taglib';
-import {
-	useConfig,
-	useForm,
-	useFormState,
-} from 'dynamic-data-mapping-form-renderer';
-import {EVENT_TYPES as CORE_EVENT_TYPES} from 'dynamic-data-mapping-form-renderer/js/core/actions/eventTypes.es';
 import React from 'react';
 
 import {EVENT_TYPES} from '../../../eventTypes.es';
-import ElementSetList from './ElementSetList.es';
 
 export const FormsFieldSidebar = ({title}) => {
-	const {
-		dataProviderInstanceParameterSettingsURL,
-		dataProviderInstancesURL,
-		fieldSetDefinitionURL,
-		fieldTypes,
-		functionsMetadata,
-		functionsURL,
-		portletNamespace,
-	} = useConfig();
+	const {fieldTypes} = useConfig();
 	const {
 		activePage,
 		defaultLanguageId,
 		editingLanguageId,
-		fieldSets,
 		focusedField,
 		pages,
 		rules,
 	} = useFormState();
 
-	const tabs = [
-		{
-			label: Liferay.Language.get('element-sets'),
-			render: ({searchTerm}) => (
-				<ElementSetList
-					definitionURL={fieldSetDefinitionURL}
-					editingLanguageId={editingLanguageId}
-					elementSets={fieldSets}
-					namespace={portletNamespace}
-					searchTerm={searchTerm}
-				/>
-			),
-		},
-	];
-
 	const dispatch = useForm();
-
-	const config = {
-		allowFieldSets: false,
-		allowMultiplePages: false,
-		allowNestedFields: false,
-		allowRules: true,
-		allowSuccessPage: false,
-		disabledProperties: [],
-		disabledTabs: [],
-		ruleSettings: {
-			dataProviderInstanceParameterSettingsURL,
-			dataProviderInstancesURL,
-			functionsMetadata,
-			functionsURL,
-		},
-		tabs,
-		unimplementedProperties: [
-			'allowGuestUsers',
-			'fieldNamespace',
-			'readOnly',
-			'visibilityExpression',
-		],
-		visibleProperties: [],
-	};
 
 	return (
 		<FieldsSidebar
 			classNames={classNames}
-			config={config}
 			dataLayout={{
 				dataLayoutFields: [],
 				dataLayoutPages: [],

@@ -48,8 +48,10 @@ import javax.servlet.http.HttpServletResponse;
 
 import javax.validation.constraints.NotNull;
 
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -109,29 +111,25 @@ public abstract class BaseStructuredContentResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'GET' 'http://localhost:8080/o/headless-admin-content/v1.0/structured-contents/{structuredContentId}'  -u 'test@liferay.com:test'
+	 * curl -X 'POST' 'http://localhost:8080/o/headless-admin-content/v1.0/sites/{siteId}/structured-contents/draft'  -u 'test@liferay.com:test'
 	 */
-	@GET
-	@Operation(
-		description = "Retrieves all versions of a structured content via its ID."
-	)
+	@Consumes({"application/json", "application/xml"})
+	@Operation(description = "Creates a draft of a structured content")
 	@Override
-	@Parameters(
-		value = {
-			@Parameter(in = ParameterIn.PATH, name = "structuredContentId")
-		}
-	)
-	@Path("/structured-contents/{structuredContentId}")
+	@Parameters(value = {@Parameter(in = ParameterIn.PATH, name = "siteId")})
+	@Path("/sites/{siteId}/structured-contents/draft")
+	@POST
 	@Produces({"application/json", "application/xml"})
 	@Tags(value = {@Tag(name = "StructuredContent")})
-	public Page<com.liferay.headless.delivery.dto.v1_0.StructuredContent>
-			getStructuredContentsStructuredContentPage(
-				@NotNull @Parameter(hidden = true)
-				@PathParam("structuredContentId")
-				Long structuredContentId)
+	public com.liferay.headless.delivery.dto.v1_0.StructuredContent
+			postSiteStructuredContentDraft(
+				@NotNull @Parameter(hidden = true) @PathParam("siteId") Long
+					siteId,
+				com.liferay.headless.delivery.dto.v1_0.StructuredContent
+					structuredContent)
 		throws Exception {
 
-		return Page.of(Collections.emptyList());
+		return new com.liferay.headless.delivery.dto.v1_0.StructuredContent();
 	}
 
 	/**
@@ -188,6 +186,34 @@ public abstract class BaseStructuredContentResourceImpl
 		throws Exception {
 
 		return new com.liferay.headless.delivery.dto.v1_0.StructuredContent();
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'GET' 'http://localhost:8080/o/headless-admin-content/v1.0/structured-contents/{structuredContentId}/versions'  -u 'test@liferay.com:test'
+	 */
+	@GET
+	@Operation(
+		description = "Retrieves all versions of a structured content via its ID."
+	)
+	@Override
+	@Parameters(
+		value = {
+			@Parameter(in = ParameterIn.PATH, name = "structuredContentId")
+		}
+	)
+	@Path("/structured-contents/{structuredContentId}/versions")
+	@Produces({"application/json", "application/xml"})
+	@Tags(value = {@Tag(name = "StructuredContent")})
+	public Page<com.liferay.headless.delivery.dto.v1_0.StructuredContent>
+			getStructuredContentsVersionsPage(
+				@NotNull @Parameter(hidden = true)
+				@PathParam("structuredContentId")
+				Long structuredContentId)
+		throws Exception {
+
+		return Page.of(Collections.emptyList());
 	}
 
 	public void setContextAcceptLanguage(AcceptLanguage contextAcceptLanguage) {

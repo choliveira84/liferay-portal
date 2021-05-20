@@ -136,6 +136,8 @@ public interface CPContentHelper {
 
 	public boolean hasChildCPDefinitions(long cpDefinitionId);
 
+	public boolean hasCPDefinitionOptionRels(long cpDefinitionId);
+
 	public boolean hasCPDefinitionSpecificationOptionValues(long cpDefinitionId)
 		throws PortalException;
 

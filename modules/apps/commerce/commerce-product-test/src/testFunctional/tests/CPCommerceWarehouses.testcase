@@ -102,12 +102,52 @@ definition {
 	}
 
 	@description = "This is a test for COMMERCE-6203. Get stock quantity of a SKU"
-	@ignore = "true"
 	@priority = "3"
 	test GetSKUStockQuantity {
 		property portal.acceptance = "false";
 
-		// TODO COMMERCE-6203 GetSKUStockQuantity Pending Implementation
+		CommerceAccelerators.initializeNewSiteViaAccelerator(siteName = "Minium");
+
+		CommerceNavigator.gotoPortlet(
+			category = "Product Management",
+			portlet = "Products");
+
+		AppBuilderAdmin.searchByItem(itemName = "ABS Sensor");
+
+		Click(
+			key_entryName = "ABS Sensor",
+			locator1 = "CommerceEntry#TABLE_LIST_TITLE");
+
+		CommerceEntry.gotoMenuTab(menuTab = "SKUs");
+
+		Click(
+			key_entryName = "MIN93015",
+			locator1 = "CommerceEntry#TABLE_LIST_TITLE");
+
+		SelectFrame.selectFrameNoLoading(locator1 = "CommerceEntry#IFRAME_SIDE_PANEL");
+
+		CommerceEntry.gotoMenuTab(menuTab = "Inventory");
+
+		var count1 = "0";
+		var amount = "0";
+
+		while (IsElementPresent(key_value1 = "${count1}", locator1 = "CommerceEntry#WAREHOUSE_INVENTORY_ITEM_QUANTITY")) {
+			var temp1 = selenium.getAttribute("//input[contains(@id,'_com_liferay_commerce_product_definitions_web_internal_portlet_CPDefinitionsPortlet_commerceInventoryWarehouseItemQuantity${count1}')]@value");
+			var amount = MathUtil.sum("${temp1}", "${amount}");
+			var count1 = MathUtil.sum("${count1}", "1");
+		}
+
+		Refresh();
+
+		CommerceNavigator.gotoPortlet(
+			category = "Inventory Management",
+			portlet = "Inventory");
+
+		AppBuilderAdmin.searchByItem(itemName = "MIN93015");
+
+		AssertTextEquals(
+			locator1 = "CommerceEntry#INVENTORY_BY_WAREHOUSE_AVAILABLE_LABEL",
+			value1 = "${amount}");
 	}
 
 	@description = "This is a test for COMMERCE-6205. Get warehouse names given a SKU"
@@ -138,12 +178,93 @@ definition {
 	}
 
 	@description = "This is a test for COMMERCE-5708. As a product specialist i want to update the quantity of a product inside a warehouse"
-	@ignore = "true"
 	@priority = "3"
 	test UpdateInventorySKUQuantity {
 		property portal.acceptance = "false";
 
-		// TODO COMMERCE-5708 UpdateInventorySKUQuantity Pending Implementation
+		var key_inventoryName = "test new warehouse";
+
+		ApplicationsMenu.gotoPortlet(
+			category = "Inventory Management",
+			panel = "Commerce",
+			portlet = "Warehouses");
+
+		Click(locator1 = "Button#PLUS");
+
+		CommerceEntry.addNewAccountGroupsEntry(entryName = "test new warehouse");
+
+		Check.checkToggleSwitch(
+			key_toggleSwitchLabel = "Active",
+			locator1 = "ToggleSwitch#ANY_TOGGLE_SWITCH");
+
+		Click(locator1 = "CommerceEntry#WAREHOUSE_GEOLOCATION");
+
+		Type(
+			key_fieldLabel = "Latitude",
+			locator1 = "TextInput#GENERIC_TEXT_INPUT",
+			value1 = "50");
+
+		Type(
+			key_fieldLabel = "Longitude",
+			locator1 = "TextInput#GENERIC_TEXT_INPUT",
+			value1 = "50");
+
+		Button.clickSave();
+
+		CommerceNavigator.gotoPortlet(
+			category = "Product Management",
+			panel = "Commerce",
+			portlet = "Catalogs");
+
+		Click(locator1 = "Button#PLUS");
+
+		CommerceEntry.addNewCatalogsEntry(
+			catalogCurrency = "US Dollar",
+			catalogLanguage = "English (United States)",
+			catalogName = "Master");
+
+		Button.click(button = "Submit");
+
+		ApplicationsMenu.gotoPortlet(
+			category = "Product Management",
+			panel = "Commerce",
+			portlet = "Products");
+
+		CPCommerceCatalog.newProductsEntry(
+			productCatalog = "Master",
+			productName = "Simple T-Shirt",
+			productType = "Simple");
+
+		Button.clickPublish();
+
+		CommerceEntry.gotoMenuTab(menuTab = "SKUs");
+
+		CommerceNavigator.gotoEntry(entryName = "default");
+
+		SelectFrame.selectFrameNoLoading(locator1 = "CommerceEntry#IFRAME_SIDE_PANEL");
+
+		CommerceEntry.gotoMenuTab(menuTab = "Inventory");
+
+		Type(
+			locator1 = "CommerceEntry#INVENTORY_INPUT",
+			value1 = "50");
+
+		Button.clickSave();
+
+		Click(locator1 = "Icon#CLOSE");
+
+		SelectFrame.selectFrameTop();
+
+		ApplicationsMenu.gotoPortlet(
+			category = "Inventory Management",
+			panel = "Commerce",
+			portlet = "Inventory");
+
+		Search.searchCP(searchTerm = "default");
+
+		AssertVisible(
+			key_productQuantity = "50",
+			locator1 = "CommerceOrders#ORDER_DETAILS_PRODUCT_QUANTITY");
 	}
 
 }

@@ -12,12 +12,12 @@
  * details.
  */
 
-import {RulesSupport} from 'dynamic-data-mapping-form-builder';
-import {PagesVisitor, getUid} from 'dynamic-data-mapping-form-renderer';
+import {PagesVisitor, getUid} from 'data-engine-js-components-web';
 import {
 	INITIAL_PAGES,
 	INITIAL_STATE,
-} from 'dynamic-data-mapping-form-renderer/js/core/config/index.es';
+} from 'data-engine-js-components-web/js/core/config/index.es';
+import {RulesSupport} from 'dynamic-data-mapping-form-builder';
 
 export const BUILDER_INITIAL_STATE = {
 	...INITIAL_STATE,
@@ -42,7 +42,7 @@ export const BUILDER_INITIAL_STATE = {
 			),
 		},
 	},
-	paginationMode: 'multi_pages',
+	paginationMode: 'multi-pages',
 	rules: [],
 };
 

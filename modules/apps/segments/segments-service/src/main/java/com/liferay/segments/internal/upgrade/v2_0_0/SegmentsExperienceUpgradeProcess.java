@@ -49,11 +49,13 @@ public class SegmentsExperienceUpgradeProcess extends UpgradeProcess {
 
 		String sql = sb.toString();
 
-		try (PreparedStatement ps = connection.prepareStatement(sql)) {
-			ps.setString(1, segmentsExperienceKey);
-			ps.setLong(2, segmentsExperienceId);
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				sql)) {
 
-			ps.executeUpdate();
+			preparedStatement.setString(1, segmentsExperienceKey);
+			preparedStatement.setLong(2, segmentsExperienceId);
+
+			preparedStatement.executeUpdate();
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
@@ -67,12 +69,12 @@ public class SegmentsExperienceUpgradeProcess extends UpgradeProcess {
 
 		sb.append("select segmentsExperienceId from SegmentsExperience");
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				sb.toString())) {
 
-			try (ResultSet rs = ps.executeQuery()) {
-				while (rs.next()) {
-					long segmentsExperienceId = rs.getLong(
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				while (resultSet.next()) {
+					long segmentsExperienceId = resultSet.getLong(
 						"segmentsExperienceId");
 
 					_updateSegmentsExperience(

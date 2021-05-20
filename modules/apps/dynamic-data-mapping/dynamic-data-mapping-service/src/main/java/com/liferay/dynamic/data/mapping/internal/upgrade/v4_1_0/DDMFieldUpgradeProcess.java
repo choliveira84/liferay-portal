@@ -316,17 +316,17 @@ public class DDMFieldUpgradeProcess extends UpgradeProcess {
 			return ddmForm;
 		}
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select definition from DDMStructure where structureId = ? " +
 					"and ctCollectionId = 0")) {
 
-			ps.setLong(1, structureId);
+			preparedStatement.setLong(1, structureId);
 
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				if (resultSet.next()) {
 					ddmForm = DDMFormDeserializeUtil.deserialize(
 						_jsonDDMFormJSONDeserializer,
-						rs.getString("definition"));
+						resultSet.getString("definition"));
 
 					_ddmForms.put(structureId, ddmForm);
 
@@ -349,15 +349,16 @@ public class DDMFieldUpgradeProcess extends UpgradeProcess {
 			return fullHierarchyDDMForm;
 		}
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select parentStructureId from DDMStructure where " +
 					"structureId = ? and ctCollectionId = 0")) {
 
-			ps.setLong(1, structureId);
+			preparedStatement.setLong(1, structureId);
 
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
-					long parentStructureId = rs.getLong("parentStructureId");
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				if (resultSet.next()) {
+					long parentStructureId = resultSet.getLong(
+						"parentStructureId");
 
 					fullHierarchyDDMForm = _getDDMForm(structureId);
 

@@ -14,12 +14,12 @@
 
 package com.liferay.portal.tools.rest.builder.internal.freemarker.tool.java.parser;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.util.CamelCaseUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.TextFormatter;
 import com.liferay.portal.kernel.util.TreeMapBuilder;
@@ -136,7 +136,7 @@ public class ResourceOpenAPIParser {
 		Set<String> methodAnnotations = new TreeSet<>();
 
 		if ((operation.getDescription() != null) || operation.isDeprecated()) {
-			StringBuilder sb = new StringBuilder("@Operation(");
+			StringBundler sb = new StringBundler("@Operation(");
 
 			if (operation.isDeprecated()) {
 				methodAnnotations.add("@Deprecated");
@@ -159,7 +159,7 @@ public class ResourceOpenAPIParser {
 		}
 
 		if (operation.getTags() != null) {
-			StringBuilder sb = new StringBuilder("");
+			StringBundler sb = new StringBundler("");
 
 			for (String tag : operation.getTags()) {
 				sb.append("@Tag(name=\"");
@@ -173,7 +173,7 @@ public class ResourceOpenAPIParser {
 		List<JavaMethodParameter> javaMethodParameters =
 			javaMethodSignature.getJavaMethodParameters();
 
-		StringBuilder sb = new StringBuilder("");
+		StringBundler sb = new StringBundler("");
 
 		for (JavaMethodParameter javaMethodParameter : javaMethodParameters) {
 			String parameterName = javaMethodParameter.getParameterName();
@@ -332,7 +332,7 @@ public class ResourceOpenAPIParser {
 			return "";
 		}
 
-		StringBuilder sb = new StringBuilder();
+		StringBundler sb = new StringBundler(4);
 
 		sb.append(
 			String.format(
@@ -757,7 +757,7 @@ public class ResourceOpenAPIParser {
 	}
 
 	private static String _getPageClassName(String returnType) {
-		StringBuilder sb = new StringBuilder();
+		StringBundler sb = new StringBundler(4);
 
 		sb.append(Page.class.getName());
 		sb.append("<");
@@ -816,7 +816,7 @@ public class ResourceOpenAPIParser {
 				continue;
 			}
 
-			StringBuilder sb = new StringBuilder();
+			StringBundler sb = new StringBundler(10);
 
 			String defaultValue = _getDefaultValue(
 				openAPIYAML, parameter.getSchema());
@@ -835,8 +835,7 @@ public class ResourceOpenAPIParser {
 				sb.append("@NotNull");
 			}
 
-			sb.append("@Parameter(hidden=true)");
-			sb.append("@");
+			sb.append("@Parameter(hidden=true)@");
 			sb.append(StringUtil.upperCaseFirstLetter(parameter.getIn()));
 			sb.append("Param(\"");
 			sb.append(parameter.getName());
@@ -944,7 +943,9 @@ public class ResourceOpenAPIParser {
 				return void.class.getName();
 			}
 
-			if ((operation instanceof Get) && path.endsWith("permissions")) {
+			if ((operation instanceof Get || operation instanceof Put) &&
+				path.endsWith("/permissions")) {
+
 				return _getPageClassName(
 					"[L" + Permission.class.getName() + ";");
 			}

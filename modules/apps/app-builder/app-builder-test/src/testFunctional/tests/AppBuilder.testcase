@@ -1,4 +1,5 @@
 @component-name = "app-builder"
+@ignore = "true"
 definition {
 
 	property custom.properties = "default.layout.template.id=1_column";
@@ -1058,7 +1059,7 @@ definition {
 	test DefineTranslationForFieldSets {
 		property portal.acceptance = "true";
 
-		Site.openSiteConfigurationAdmin(siteURLKey = "guest");
+		Site.openSiteSettingsAdmin(siteURLKey = "guest");
 
 		Site.configureCurrentLanguagesCP(defaultSiteLanguage = "Spanish (Spain)");
 
@@ -1090,8 +1091,8 @@ definition {
 
 		FormViewBuilder.validateLocalizationForFieldSet(symbolName = "es-ES");
 
-		Navigator.openURL();
-		Site.openSiteConfigurationAdmin(siteURLKey = "guest");
+		Site.openSiteSettingsAdmin(siteURLKey = "guest");
+
 		Site.configureCurrentLanguagesCP(defaultSiteLanguage = "English (United States)");
 	}
 

@@ -50,17 +50,17 @@ public class StagingConfigurationClassNamesUpgradeProcess
 	}
 
 	protected void updateStagingConfiguration() throws Exception {
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				SQLTransformer.transform(
 					"select groupId, companyId, typeSettings from Group_ " +
 						"where liveGroupId = 0 and site = [$TRUE$] and " +
 							"typeSettings like '%staged=true%'"))) {
 
-			try (ResultSet rs = ps.executeQuery()) {
-				while (rs.next()) {
-					long groupId = rs.getLong("groupId");
-					long companyId = rs.getLong("companyId");
-					String typeSettings = rs.getString("typeSettings");
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				while (resultSet.next()) {
+					long groupId = resultSet.getLong("groupId");
+					long companyId = resultSet.getLong("companyId");
+					String typeSettings = resultSet.getString("typeSettings");
 
 					_updateStagingConfiguration(
 						groupId, companyId, typeSettings);
@@ -74,18 +74,18 @@ public class StagingConfigurationClassNamesUpgradeProcess
 
 		Map<String, String> adminPortletIdsMap = new HashMap<>();
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				SQLTransformer.transform(
 					"select portletId from Portlet where companyId = ? and " +
 						"active_ = [$TRUE$]"))) {
 
-			ps.setLong(1, companyId);
+			preparedStatement.setLong(1, companyId);
 
 			Set<String> allPortletIds = new HashSet<>();
 
-			try (ResultSet rs = ps.executeQuery()) {
-				while (rs.next()) {
-					String portletId = rs.getString("portletId");
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				while (resultSet.next()) {
+					String portletId = resultSet.getString("portletId");
 
 					allPortletIds.add(portletId);
 				}

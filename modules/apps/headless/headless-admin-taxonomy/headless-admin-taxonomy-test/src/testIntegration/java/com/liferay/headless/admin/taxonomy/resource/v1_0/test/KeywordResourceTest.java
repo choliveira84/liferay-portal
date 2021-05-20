@@ -24,6 +24,7 @@ import com.liferay.headless.admin.taxonomy.client.pagination.Pagination;
 import com.liferay.headless.admin.taxonomy.client.permission.Permission;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.role.RoleConstants;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.RoleTestUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -109,13 +110,13 @@ public class KeywordResourceTest extends BaseKeywordResourceTestCase {
 		Role role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
 
 		assertHttpResponseStatusCode(
-			204,
+			200,
 			keywordResource.putKeywordPermissionHttpResponse(
 				keyword.getId(),
 				new Permission[] {
 					new Permission() {
 						{
-							setActionIds(new String[] {"MANAGE_TAG"});
+							setActionIds(new String[] {ActionKeys.MANAGE_TAG});
 							setRoleName(role.getName());
 						}
 					}

@@ -43,14 +43,14 @@ public class CommercePaymentMethodGroupRelUpgradeProcess
 	protected void doUpgrade() throws Exception {
 		try (Statement s = connection.createStatement();
 
-			ResultSet rs = s.executeQuery(
+			ResultSet resultSet = s.executeQuery(
 				"select CPaymentMethodGroupRelId, groupId from " +
 					"CommercePaymentMethodGroupRel")) {
 
-			PreparedStatement ps = null;
+			PreparedStatement preparedStatement = null;
 
-			while (rs.next()) {
-				long groupId = rs.getLong("groupId");
+			while (resultSet.next()) {
+				long groupId = resultSet.getLong("groupId");
 
 				long channelGroupId = _getCommerceChannelGroupIdBySiteGroupId(
 					groupId);
@@ -59,17 +59,17 @@ public class CommercePaymentMethodGroupRelUpgradeProcess
 					continue;
 				}
 
-				long cPaymentMethodGroupRelId = rs.getLong(
+				long cPaymentMethodGroupRelId = resultSet.getLong(
 					"CPaymentMethodGroupRelId");
 
-				ps = connection.prepareStatement(
+				preparedStatement = connection.prepareStatement(
 					"update CommercePaymentMethodGroupRel set groupId = ? " +
 						"where CPaymentMethodGroupRelId = ?");
 
-				ps.setLong(1, channelGroupId);
-				ps.setLong(2, cPaymentMethodGroupRelId);
+				preparedStatement.setLong(1, channelGroupId);
+				preparedStatement.setLong(2, cPaymentMethodGroupRelId);
 
-				ps.executeUpdate();
+				preparedStatement.executeUpdate();
 			}
 		}
 	}
@@ -86,10 +86,10 @@ public class CommercePaymentMethodGroupRelUpgradeProcess
 		try (Statement s = connection.createStatement()) {
 			s.setMaxRows(1);
 
-			try (ResultSet rs = s.executeQuery(sql)) {
-				if (rs.next()) {
-					companyId = rs.getLong("companyId");
-					commerceChannelId = rs.getLong("commerceChannelId");
+			try (ResultSet resultSet = s.executeQuery(sql)) {
+				if (resultSet.next()) {
+					companyId = resultSet.getLong("companyId");
+					commerceChannelId = resultSet.getLong("commerceChannelId");
 				}
 			}
 		}

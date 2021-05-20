@@ -95,17 +95,17 @@ public class UpgradeOracleTest {
 		throws Exception {
 
 		try (Connection connection = DataAccess.getConnection();
-			PreparedStatement ps = connection.prepareStatement(
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				StringBundler.concat(
 					"select char_used from user_tab_columns where table_name ",
 					"= '", tableName, "' and column_name = '", columnName,
 					"'"))) {
 
-			ResultSet rs = ps.executeQuery();
+			ResultSet resultSet = preparedStatement.executeQuery();
 
-			rs.next();
+			resultSet.next();
 
-			return rs.getString(1);
+			return resultSet.getString(1);
 		}
 	}
 

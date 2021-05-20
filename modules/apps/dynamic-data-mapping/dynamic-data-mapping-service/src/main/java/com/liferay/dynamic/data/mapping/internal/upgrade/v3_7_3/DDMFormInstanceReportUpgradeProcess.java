@@ -101,34 +101,35 @@ public class DDMFormInstanceReportUpgradeProcess extends UpgradeProcess {
 		sb2.append("groupId, companyId, createDate, modifiedDate, ");
 		sb2.append("formInstanceId, data_) values (?, ?, ?, ?, ?, ?, ?)");
 
-		try (PreparedStatement ps1 = connection.prepareStatement(
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
 				"select formInstanceId, groupId, companyId, createDate from " +
 					"DDMFormInstance")) {
 
-			ResultSet rs1 = ps1.executeQuery();
+			ResultSet resultSet1 = preparedStatement1.executeQuery();
 
-			while (rs1.next()) {
-				long formInstanceId = rs1.getLong("formInstanceId");
+			while (resultSet1.next()) {
+				long formInstanceId = resultSet1.getLong("formInstanceId");
 
 				JSONObject dataJSONObject = _jsonFactory.createJSONObject();
 
-				try (PreparedStatement ps2 = connection.prepareStatement(
-						sb1.toString())) {
+				try (PreparedStatement preparedStatement2 =
+						connection.prepareStatement(sb1.toString())) {
 
-					ps2.setLong(1, formInstanceId);
-					ps2.setInt(2, WorkflowConstants.STATUS_APPROVED);
+					preparedStatement2.setLong(1, formInstanceId);
+					preparedStatement2.setInt(
+						2, WorkflowConstants.STATUS_APPROVED);
 
-					ResultSet rs2 = ps2.executeQuery();
+					ResultSet resultSet2 = preparedStatement2.executeQuery();
 
-					while (rs2.next()) {
+					while (resultSet2.next()) {
 						dataJSONObject = _processDDMFormValues(
 							dataJSONObject,
 							_getDDMFormValues(
-								rs2.getString("data_"),
+								resultSet2.getString("data_"),
 								DDMFormDeserializeUtil.deserialize(
 									_ddmFormDeserializer,
-									rs2.getString("definition"))),
-							rs2.getLong("formInstanceRecordId"));
+									resultSet2.getString("definition"))),
+							resultSet2.getLong("formInstanceRecordId"));
 
 						dataJSONObject.put(
 							"totalItems",
@@ -136,25 +137,25 @@ public class DDMFormInstanceReportUpgradeProcess extends UpgradeProcess {
 					}
 				}
 
-				long groupId = rs1.getLong("groupId");
+				long groupId = resultSet1.getLong("groupId");
 
-				long companyId = rs1.getLong("companyId");
+				long companyId = resultSet1.getLong("companyId");
 
-				Timestamp createDate = rs1.getTimestamp("createDate");
+				Timestamp createDate = resultSet1.getTimestamp("createDate");
 
-				try (PreparedStatement ps3 =
+				try (PreparedStatement preparedStatement3 =
 						AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 							connection, sb2.toString())) {
 
-					ps3.setLong(1, increment());
-					ps3.setLong(2, groupId);
-					ps3.setLong(3, companyId);
-					ps3.setTimestamp(4, createDate);
-					ps3.setTimestamp(5, createDate);
-					ps3.setLong(6, formInstanceId);
-					ps3.setString(7, dataJSONObject.toString());
+					preparedStatement3.setLong(1, increment());
+					preparedStatement3.setLong(2, groupId);
+					preparedStatement3.setLong(3, companyId);
+					preparedStatement3.setTimestamp(4, createDate);
+					preparedStatement3.setTimestamp(5, createDate);
+					preparedStatement3.setLong(6, formInstanceId);
+					preparedStatement3.setString(7, dataJSONObject.toString());
 
-					ps3.execute();
+					preparedStatement3.execute();
 				}
 			}
 		}

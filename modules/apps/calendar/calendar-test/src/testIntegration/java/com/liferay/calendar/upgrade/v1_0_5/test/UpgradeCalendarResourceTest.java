@@ -123,33 +123,34 @@ public class UpgradeCalendarResourceTest {
 	protected long getCalendarResourceUserId(CalendarResource calendarResource)
 		throws SQLException {
 
-		try (Connection con = DataAccess.getConnection()) {
-			PreparedStatement ps = con.prepareStatement(
+		try (Connection connection = DataAccess.getConnection()) {
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				"select userId from CalendarResource where " +
 					"calendarResourceId = ?");
 
-			ps.setLong(1, calendarResource.getCalendarResourceId());
+			preparedStatement.setLong(
+				1, calendarResource.getCalendarResourceId());
 
-			ResultSet rs = ps.executeQuery();
+			ResultSet resultSet = preparedStatement.executeQuery();
 
-			rs.next();
+			resultSet.next();
 
-			return rs.getLong(1);
+			return resultSet.getLong(1);
 		}
 	}
 
 	protected long getCalendarUserId(Calendar calendar) throws SQLException {
-		try (Connection con = DataAccess.getConnection()) {
-			PreparedStatement ps = con.prepareStatement(
+		try (Connection connection = DataAccess.getConnection()) {
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				"select userId from Calendar where calendarId = ?");
 
-			ps.setLong(1, calendar.getCalendarId());
+			preparedStatement.setLong(1, calendar.getCalendarId());
 
-			ResultSet rs = ps.executeQuery();
+			ResultSet resultSet = preparedStatement.executeQuery();
 
-			rs.next();
+			resultSet.next();
 
-			return rs.getLong(1);
+			return resultSet.getLong(1);
 		}
 	}
 

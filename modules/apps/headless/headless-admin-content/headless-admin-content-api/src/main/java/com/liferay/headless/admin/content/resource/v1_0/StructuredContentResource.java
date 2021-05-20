@@ -56,8 +56,11 @@ public interface StructuredContentResource {
 				Filter filter, Pagination pagination, Sort[] sorts)
 		throws Exception;
 
-	public Page<com.liferay.headless.delivery.dto.v1_0.StructuredContent>
-			getStructuredContentsStructuredContentPage(Long structuredContentId)
+	public com.liferay.headless.delivery.dto.v1_0.StructuredContent
+			postSiteStructuredContentDraft(
+				Long siteId,
+				com.liferay.headless.delivery.dto.v1_0.StructuredContent
+					structuredContent)
 		throws Exception;
 
 	public void deleteStructuredContentByVersion(
@@ -67,6 +70,10 @@ public interface StructuredContentResource {
 	public com.liferay.headless.delivery.dto.v1_0.StructuredContent
 			getStructuredContentByVersion(
 				Long structuredContentId, Double version)
+		throws Exception;
+
+	public Page<com.liferay.headless.delivery.dto.v1_0.StructuredContent>
+			getStructuredContentsVersionsPage(Long structuredContentId)
 		throws Exception;
 
 	public default void setContextAcceptLanguage(

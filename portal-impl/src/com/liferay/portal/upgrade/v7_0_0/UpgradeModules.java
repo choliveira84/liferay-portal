@@ -58,14 +58,14 @@ public class UpgradeModules extends UpgradeProcess {
 	protected boolean hasServiceComponent(String buildNamespace)
 		throws SQLException {
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select serviceComponentId from ServiceComponent where " +
 					"buildNamespace = ?")) {
 
-			ps.setString(1, buildNamespace);
+			preparedStatement.setString(1, buildNamespace);
 
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				if (resultSet.next()) {
 					return true;
 				}
 			}
@@ -82,14 +82,17 @@ public class UpgradeModules extends UpgradeProcess {
 				String oldServletContextName = convertedLegacyModule[0];
 				String newServletContextName = convertedLegacyModule[1];
 
-				try (PreparedStatement ps = connection.prepareStatement(
-						"select servletContextName, buildNumber from " +
-							"Release_ where servletContextName = ?")) {
+				try (PreparedStatement preparedStatement =
+						connection.prepareStatement(
+							"select servletContextName, buildNumber from " +
+								"Release_ where servletContextName = ?")) {
 
-					ps.setString(1, oldServletContextName);
+					preparedStatement.setString(1, oldServletContextName);
 
-					try (ResultSet rs = ps.executeQuery()) {
-						if (!rs.next()) {
+					try (ResultSet resultSet =
+							preparedStatement.executeQuery()) {
+
+						if (!resultSet.next()) {
 							String buildNamespace = convertedLegacyModule[2];
 
 							if (hasServiceComponent(buildNamespace)) {
@@ -191,6 +194,7 @@ public class UpgradeModules extends UpgradeProcess {
 			"com.liferay.portal.workflow.kaleo.forms.service", "KaleoForms"
 		},
 		{"kaleo-web", "com.liferay.portal.workflow.kaleo.service", "Kaleo"},
+		{"knowledge-base-portlet", "com.liferay.knowledge.base.service", "KB"},
 		{
 			"marketplace-portlet", "com.liferay.marketplace.service",
 			"Marketplace"

@@ -15,6 +15,7 @@
 package com.liferay.portal.tools;
 
 import com.liferay.document.library.kernel.service.DLFileEntryTypeLocalServiceUtil;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.dao.orm.common.SQLTransformer;
 import com.liferay.portal.events.StartupHelperUtil;
@@ -27,6 +28,7 @@ import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.dependency.manager.DependencyManagerSyncUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.messaging.proxy.ProxyModeThreadLocal;
 import com.liferay.portal.kernel.model.ReleaseConstants;
 import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
 import com.liferay.portal.kernel.service.ClassNameLocalServiceUtil;
@@ -120,7 +122,11 @@ public class DBUpgrader {
 
 			StartupHelperUtil.printPatchLevel();
 
-			upgrade();
+			try (SafeCloseable safeCloseable =
+					ProxyModeThreadLocal.setWithSafeCloseable(false)) {
+
+				upgrade();
+			}
 
 			_registerModuleServiceLifecycle("portlets.initialized");
 
@@ -206,16 +212,16 @@ public class DBUpgrader {
 	private static int _getReleaseColumnValue(String columnName)
 		throws Exception {
 
-		try (Connection con = DataAccess.getConnection();
-			PreparedStatement ps = con.prepareStatement(
+		try (Connection connection = DataAccess.getConnection();
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				"select " + columnName +
 					" from Release_ where releaseId = ?")) {
 
-			ps.setLong(1, ReleaseConstants.DEFAULT_ID);
+			preparedStatement.setLong(1, ReleaseConstants.DEFAULT_ID);
 
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
-					return rs.getInt(columnName);
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				if (resultSet.next()) {
+					return resultSet.getInt(columnName);
 				}
 			}
 
@@ -251,33 +257,33 @@ public class DBUpgrader {
 
 	private static void _updateReleaseBuildInfo() throws Exception {
 		try (Connection connection = DataAccess.getConnection();
-			PreparedStatement ps = connection.prepareStatement(
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				"update Release_ set buildNumber = ?, buildDate = ? where " +
 					"releaseId = ?")) {
 
-			ps.setInt(1, ReleaseInfo.getParentBuildNumber());
+			preparedStatement.setInt(1, ReleaseInfo.getParentBuildNumber());
 
 			java.util.Date buildDate = ReleaseInfo.getBuildDate();
 
-			ps.setDate(2, new Date(buildDate.getTime()));
+			preparedStatement.setDate(2, new Date(buildDate.getTime()));
 
-			ps.setLong(3, ReleaseConstants.DEFAULT_ID);
+			preparedStatement.setLong(3, ReleaseConstants.DEFAULT_ID);
 
-			ps.executeUpdate();
+			preparedStatement.executeUpdate();
 		}
 	}
 
 	private static void _updateReleaseState(int state) throws Exception {
-		try (Connection con = DataAccess.getConnection();
-			PreparedStatement ps = con.prepareStatement(
+		try (Connection connection = DataAccess.getConnection();
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				"update Release_ set modifiedDate = ?, state_ = ? where " +
 					"releaseId = ?")) {
 
-			ps.setDate(1, new Date(System.currentTimeMillis()));
-			ps.setInt(2, state);
-			ps.setLong(3, ReleaseConstants.DEFAULT_ID);
+			preparedStatement.setDate(1, new Date(System.currentTimeMillis()));
+			preparedStatement.setInt(2, state);
+			preparedStatement.setLong(3, ReleaseConstants.DEFAULT_ID);
 
-			ps.executeUpdate();
+			preparedStatement.executeUpdate();
 		}
 	}
 

@@ -121,6 +121,16 @@ public class UserIndexerTest {
 	}
 
 	@Test
+	public void testEmailAddressDomain() throws Exception {
+		String emailAddress = StringUtil.toLowerCase(
+			RandomTestUtil.randomString() + "@test.com");
+
+		addUserWithEmailAddress(emailAddress);
+
+		assertEmailAddressFieldValue(emailAddress, byQueryString("test.com"));
+	}
+
+	@Test
 	public void testEmailAddressField() throws Exception {
 		User user = addUser();
 
@@ -140,18 +150,6 @@ public class UserIndexerTest {
 			emailAddress,
 			byQueryString(
 				StringUtil.removeSubstring(emailAddress, "@liferay.com")));
-	}
-
-	@Test
-	public void testEmailAddressSubstring() throws Exception {
-		User user = addUser();
-
-		String emailAddress = user.getEmailAddress();
-
-		assertEmailAddressFieldValue(
-			emailAddress,
-			byQueryString(
-				emailAddress.substring(4, emailAddress.length() - 7)));
 	}
 
 	@Test
@@ -209,10 +207,9 @@ public class UserIndexerTest {
 
 	@Test
 	public void testLuceneQueryParserUnfriendlyCharacters() {
-		User user = addUser();
+		addUser();
 
-		assertUserId(user.getUserId(), byQueryString(StringPool.AT));
-
+		assertNoHits(byQueryString(StringPool.AT));
 		assertNoHits(
 			byQueryString(StringPool.AT + RandomTestUtil.randomString()));
 		assertNoHits(byQueryString(StringPool.EXCLAMATION));
@@ -293,14 +290,15 @@ public class UserIndexerTest {
 	}
 
 	@Test
-	public void testScreenNameSubstring() throws Exception {
+	public void testScreenNamePrefix() throws Exception {
 		String screenName = "Open4Life" + RandomTestUtil.randomString();
 
 		addUserWithScreenName(screenName);
 
-		assertScreenNameFieldValue(screenName, byQueryString("open lite"));
+		assertNoHits(byQueryString("4lif"));
+		assertScreenNameFieldValue(screenName, byQueryString("open"));
+		assertScreenNameFieldValue(screenName, byQueryString("open4life"));
 		assertScreenNameFieldValue(screenName, byQueryString("OPE"));
-		assertScreenNameFieldValue(screenName, byQueryString("4lif"));
 	}
 
 	@Test
@@ -507,6 +505,14 @@ public class UserIndexerTest {
 	protected UserGroup addUserGroup() {
 		return _userGroupSearchFixture.addUserGroup(
 			UserGroupSearchFixture.getTestUserGroupBlueprintBuilder());
+	}
+
+	protected void addUserWithEmailAddress(String emailAddress) {
+		UserBlueprint.UserBlueprintBuilder userBlueprintBuilder =
+			getUserBlueprintBuilder();
+
+		_userSearchFixture.addUser(
+			userBlueprintBuilder.emailAddress(emailAddress));
 	}
 
 	protected User addUserWithNameFields(

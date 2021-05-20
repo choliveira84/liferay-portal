@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -153,7 +154,7 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 	}
 
 	public List<String> getBuildURLs() {
-		return _buildURLs;
+		return new ArrayList<>(_buildURLs);
 	}
 
 	public int getIdleJenkinsSlavesCount() {
@@ -247,7 +248,7 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 	}
 
 	public Map<String, JSONObject> getQueuedBuildURLs() {
-		return _queuedBuildURLs;
+		return new HashMap<>(_queuedBuildURLs);
 	}
 
 	public Integer getSlaveRAM() {
@@ -317,6 +318,8 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 
 		_available = true;
 
+		List<String> buildURLs = new ArrayList<>();
+
 		JSONArray computerJSONArray = computerAPIJSONObject.getJSONArray(
 			"computer");
 
@@ -360,7 +363,7 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 								"currentExecutable");
 
 						if (currentExecutableJSONObject.has("url")) {
-							_buildURLs.add(
+							buildURLs.add(
 								currentExecutableJSONObject.getString("url"));
 						}
 					}
@@ -368,11 +371,17 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 			}
 		}
 
+		_buildURLs.clear();
+
+		_buildURLs.addAll(buildURLs);
+
 		_queueCount = 0;
 
 		if (!queueAPIJSONObject.has("items")) {
 			return;
 		}
+
+		Map<String, JSONObject> queuedBuildURLs = new HashMap<>();
 
 		JSONArray itemsJSONArray = queueAPIJSONObject.getJSONArray("items");
 
@@ -404,7 +413,7 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 				}
 
 				if (itemJSONObject.has("url")) {
-					_queuedBuildURLs.put(
+					queuedBuildURLs.put(
 						getURL() + "/" + itemJSONObject.getString("url"),
 						itemJSONObject);
 				}
@@ -412,6 +421,10 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 
 			_queueCount++;
 		}
+
+		_queuedBuildURLs.clear();
+
+		_queuedBuildURLs.putAll(queuedBuildURLs);
 	}
 
 	protected static long maxRecentBatchAge = 120 * 1000;
@@ -496,13 +509,14 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 
 	private boolean _available;
 	private final Map<Long, Integer> _batchSizes = new TreeMap<>();
-	private final List<String> _buildURLs = new ArrayList<>();
+	private final List<String> _buildURLs = new CopyOnWriteArrayList<>();
 	private final Map<String, JenkinsSlave> _jenkinsSlavesMap =
 		Collections.synchronizedMap(new HashMap<String, JenkinsSlave>());
 	private final String _masterName;
 	private final String _masterURL;
 	private int _queueCount;
-	private final Map<String, JSONObject> _queuedBuildURLs = new HashMap<>();
+	private final Map<String, JSONObject> _queuedBuildURLs =
+		Collections.synchronizedMap(new HashMap<String, JSONObject>());
 	private int _reportedAvailableSlavesCount;
 	private final Integer _slaveRAM;
 	private final Integer _slavesPerHost;

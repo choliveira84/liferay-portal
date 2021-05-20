@@ -24,7 +24,7 @@ import com.liferay.portal.kernel.messaging.MessageBus;
 import com.liferay.portal.kernel.messaging.MessageListener;
 import com.liferay.portal.kernel.messaging.proxy.ProxyMessageListener;
 import com.liferay.portal.kernel.scheduler.messaging.SchedulerEventMessageListenerWrapper;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.workflow.WorkflowDefinitionManager;
 import com.liferay.portal.kernel.workflow.WorkflowEngineManager;
 import com.liferay.portal.kernel.workflow.WorkflowInstanceManager;
@@ -88,9 +88,10 @@ public class KaleoWorkflowMessagingConfigurator {
 		Destination destination = _destinationFactory.createDestination(
 			kaleoGraphWalkerDestinationConfiguration);
 
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put("destination.name", destination.getName());
+		Dictionary<String, Object> properties =
+			HashMapDictionaryBuilder.<String, Object>put(
+				"destination.name", destination.getName()
+			).build();
 
 		ServiceRegistration<Destination> serviceRegistration =
 			_bundleContext.registerService(
@@ -156,15 +157,13 @@ public class KaleoWorkflowMessagingConfigurator {
 		schedulerEventMessageListenerWrapper.setMessageListener(
 			_timerMessageListener);
 
-		Dictionary<String, Object> properties = new HashMapDictionary<>();
-
-		properties.put(
-			"destination.name", KaleoRuntimeDestinationNames.WORKFLOW_TIMER);
-
 		_schedulerEventMessageListenerServiceRegistration =
 			_bundleContext.registerService(
 				MessageListener.class, schedulerEventMessageListenerWrapper,
-				properties);
+				HashMapDictionaryBuilder.<String, Object>put(
+					"destination.name",
+					KaleoRuntimeDestinationNames.WORKFLOW_TIMER
+				).build());
 	}
 
 	protected void registerWorkflowDefinitionLinkDestination() {

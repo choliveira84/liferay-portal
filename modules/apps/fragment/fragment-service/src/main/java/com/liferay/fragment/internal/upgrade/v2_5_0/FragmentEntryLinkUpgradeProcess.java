@@ -38,32 +38,34 @@ public class FragmentEntryLinkUpgradeProcess extends UpgradeProcess {
 	}
 
 	protected void upgradeRendererKey() throws Exception {
-		try (PreparedStatement ps1 = connection.prepareStatement(
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
 				"select fragmentEntryLinkId, rendererKey from " +
 					"FragmentEntryLink where rendererKey like " +
 						"'BASIC_SECTION%'");
-			ResultSet rs = ps1.executeQuery();
-			PreparedStatement ps2 = AutoBatchPreparedStatementUtil.autoBatch(
-				connection.prepareStatement(
-					"update FragmentEntryLink set rendererKey = ? where " +
-						"fragmentEntryLinkId = ?"))) {
+			ResultSet resultSet = preparedStatement1.executeQuery();
+			PreparedStatement preparedStatement2 =
+				AutoBatchPreparedStatementUtil.autoBatch(
+					connection.prepareStatement(
+						"update FragmentEntryLink set rendererKey = ? where " +
+							"fragmentEntryLinkId = ?"))) {
 
-			while (rs.next()) {
-				long fragmentEntryLinkId = rs.getLong("fragmentEntryLinkId");
+			while (resultSet.next()) {
+				long fragmentEntryLinkId = resultSet.getLong(
+					"fragmentEntryLinkId");
 
-				String rendererKey = rs.getString("rendererKey");
+				String rendererKey = resultSet.getString("rendererKey");
 
-				ps2.setString(
+				preparedStatement2.setString(
 					1,
 					_contributedFragmentKeys.getOrDefault(
 						rendererKey, rendererKey));
 
-				ps2.setLong(2, fragmentEntryLinkId);
+				preparedStatement2.setLong(2, fragmentEntryLinkId);
 
-				ps2.addBatch();
+				preparedStatement2.addBatch();
 			}
 
-			ps2.executeBatch();
+			preparedStatement2.executeBatch();
 		}
 	}
 

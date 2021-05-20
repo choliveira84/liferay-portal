@@ -2,13 +2,17 @@ definition {
 
 	macro configureRatingType {
 		if (isSet(siteName)) {
-			Site.openSiteConfigurationAdmin(siteURLKey = "${siteName}");
+			Site.openSiteSettingsAdmin(siteURLKey = "${siteName}");
 		}
 		else {
-			Site.openSiteConfigurationAdmin(siteURLKey = "guest");
+			Site.openSiteSettingsAdmin(siteURLKey = "guest");
 		}
 
-		Navigator.gotoNavTab(navTab = "Social");
+		Click(
+			key_url = "site-configuration-mentions",
+			locator1 = "ListGroupItem#CONFIGURATION_ITEM_LINK");
+
+		Navigator.gotoNavTab(navTab = "Ratings");
 
 		Select(
 			key_applications = "${applications}",

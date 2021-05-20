@@ -110,7 +110,7 @@ public class PostgreSQLDB extends BaseDB {
 	}
 
 	@Override
-	public List<Index> getIndexes(Connection con) throws SQLException {
+	public List<Index> getIndexes(Connection connection) throws SQLException {
 		List<Index> indexes = new ArrayList<>();
 
 		StringBundler sb = new StringBundler(3);
@@ -121,14 +121,15 @@ public class PostgreSQLDB extends BaseDB {
 
 		String sql = sb.toString();
 
-		try (PreparedStatement ps = con.prepareStatement(sql);
-			ResultSet rs = ps.executeQuery()) {
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				sql);
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			while (rs.next()) {
-				String indexName = rs.getString("indexname");
-				String tableName = rs.getString("tablename");
+			while (resultSet.next()) {
+				String indexName = resultSet.getString("indexname");
+				String tableName = resultSet.getString("tablename");
 				String indexSQL = StringUtil.toLowerCase(
-					StringUtil.trim(rs.getString("indexdef")));
+					StringUtil.trim(resultSet.getString("indexdef")));
 
 				boolean unique = true;
 

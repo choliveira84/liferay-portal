@@ -323,16 +323,16 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 			return ddmForm;
 		}
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select parentStructureId, definition, storageType from " +
 					"DDMStructure where structureId = ?")) {
 
-			ps.setLong(1, structureId);
+			preparedStatement.setLong(1, structureId);
 
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
-					String definition = rs.getString("definition");
-					String storageType = rs.getString("storageType");
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				if (resultSet.next()) {
+					String definition = resultSet.getString("definition");
+					String storageType = resultSet.getString("storageType");
 
 					if (storageType.equals("expando") ||
 						storageType.equals("xml")) {
@@ -354,7 +354,8 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 								mndfn.getFieldName(), structureId));
 					}
 
-					long parentStructureId = rs.getLong("parentStructureId");
+					long parentStructureId = resultSet.getLong(
+						"parentStructureId");
 
 					if (parentStructureId > 0) {
 						DDMForm parentDDMForm = getDDMForm(parentStructureId);
@@ -410,19 +411,20 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 	protected Map<String, String> getDDMTemplateScriptMap(long structureId)
 		throws Exception {
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select * from DDMTemplate where classPK = ? and type_ = ?")) {
 
-			ps.setLong(1, structureId);
-			ps.setString(2, DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY);
+			preparedStatement.setLong(1, structureId);
+			preparedStatement.setString(
+				2, DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY);
 
-			try (ResultSet rs = ps.executeQuery()) {
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
 				Map<String, String> ddmTemplateScriptMap = new HashMap<>();
 
-				while (rs.next()) {
-					long templateId = rs.getLong("templateId");
-					String language = rs.getString("language");
-					String script = rs.getString("script");
+				while (resultSet.next()) {
+					long templateId = resultSet.getLong("templateId");
+					String language = resultSet.getString("language");
+					String script = resultSet.getString("script");
 
 					String key = templateId + StringPool.DOLLAR + language;
 
@@ -474,15 +476,16 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 			return fullHierarchyDDMForm;
 		}
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select parentStructureId from DDMStructure where " +
 					"structureId = ?")) {
 
-			ps.setLong(1, structureId);
+			preparedStatement.setLong(1, structureId);
 
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
-					long parentStructureId = rs.getLong("parentStructureId");
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				if (resultSet.next()) {
+					long parentStructureId = resultSet.getLong(
+						"parentStructureId");
 
 					fullHierarchyDDMForm = getDDMForm(structureId);
 
@@ -564,15 +567,15 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 	protected boolean hasStructureVersion(long structureId, String version)
 		throws Exception {
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select * from DDMStructureVersion where structureId = ? and " +
 					"version = ?")) {
 
-			ps.setLong(1, structureId);
-			ps.setString(2, version);
+			preparedStatement.setLong(1, structureId);
+			preparedStatement.setString(2, version);
 
-			try (ResultSet rs = ps.executeQuery()) {
-				return rs.next();
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				return resultSet.next();
 			}
 		}
 	}
@@ -580,15 +583,15 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 	protected boolean hasTemplateVersion(long templateId, String version)
 		throws Exception {
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select * from DDMTemplateVersion where templateId = ? and " +
 					"version = ?")) {
 
-			ps.setLong(1, templateId);
-			ps.setString(2, version);
+			preparedStatement.setLong(1, templateId);
+			preparedStatement.setString(2, version);
 
-			try (ResultSet rs = ps.executeQuery()) {
-				return rs.next();
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				return resultSet.next();
 			}
 		}
 	}
@@ -764,13 +767,13 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 	protected void updateTemplateScript(long templateId, String script)
 		throws Exception {
 
-		try (PreparedStatement ps = connection.prepareStatement(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"update DDMTemplate set script = ? where templateId = ?")) {
 
-			ps.setString(1, script);
-			ps.setLong(2, templateId);
+			preparedStatement.setString(1, script);
+			preparedStatement.setLong(2, templateId);
 
-			ps.executeUpdate();
+			preparedStatement.executeUpdate();
 		}
 		catch (Exception exception) {
 			_log.error(
@@ -974,25 +977,26 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 		sb.append("inner join DDMStructure on DDLRecordSet.DDMStructureId = ");
 		sb.append("DDMStructure.structureId");
 
-		try (PreparedStatement ps1 = connection.prepareStatement(sb.toString());
-			PreparedStatement ps2 =
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
+				sb.toString());
+			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection,
 					"update DDMContent set data_= ? where contentId = ?");
-			ResultSet rs = ps1.executeQuery()) {
+			ResultSet resultSet = preparedStatement1.executeQuery()) {
 
-			while (rs.next()) {
-				long groupId = rs.getLong("groupId");
-				long companyId = rs.getLong("companyId");
-				long userId = rs.getLong("userId");
-				String userName = rs.getString("userName");
-				Timestamp createDate = rs.getTimestamp("createDate");
-				long entryId = rs.getLong("recordId");
-				String entryVersion = rs.getString("version");
-				long contentId = rs.getLong("ddmStorageId");
-				String data_ = rs.getString("data_");
+			while (resultSet.next()) {
+				long groupId = resultSet.getLong("groupId");
+				long companyId = resultSet.getLong("companyId");
+				long userId = resultSet.getLong("userId");
+				String userName = resultSet.getString("userName");
+				Timestamp createDate = resultSet.getTimestamp("createDate");
+				long entryId = resultSet.getLong("recordId");
+				String entryVersion = resultSet.getString("version");
+				long contentId = resultSet.getLong("ddmStorageId");
+				String data_ = resultSet.getString("data_");
 
-				long ddmStructureId = rs.getLong("structureId");
+				long ddmStructureId = resultSet.getLong("structureId");
 
 				DDMForm ddmForm = getFullHierarchyDDMForm(ddmStructureId);
 
@@ -1004,14 +1008,14 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 					groupId, companyId, userId, userName, createDate, entryId,
 					entryVersion, "DDLRecord", ddmFormValues);
 
-				ps2.setString(1, toJSON(ddmFormValues));
+				preparedStatement2.setString(1, toJSON(ddmFormValues));
 
-				ps2.setLong(2, contentId);
+				preparedStatement2.setLong(2, contentId);
 
-				ps2.addBatch();
+				preparedStatement2.addBatch();
 			}
 
-			ps2.executeBatch();
+			preparedStatement2.executeBatch();
 		}
 	}
 
@@ -1029,25 +1033,26 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 		sb.append("fileVersionId and DLFileEntryMetadata.fileEntryId = ");
 		sb.append("DLFileVersion.fileEntryId");
 
-		try (PreparedStatement ps1 = connection.prepareStatement(sb.toString());
-			PreparedStatement ps2 =
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
+				sb.toString());
+			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection,
 					"update DDMContent set data_= ? where contentId = ?");
-			ResultSet rs = ps1.executeQuery()) {
+			ResultSet resultSet = preparedStatement1.executeQuery()) {
 
-			while (rs.next()) {
-				long groupId = rs.getLong("groupId");
-				long companyId = rs.getLong("companyId");
-				long userId = rs.getLong("userId");
-				String userName = rs.getString("userName");
-				Timestamp createDate = rs.getTimestamp("createDate");
-				long entryId = rs.getLong("fileEntryId");
-				String entryVersion = rs.getString("version");
-				long contentId = rs.getLong("contentId");
-				String data_ = rs.getString("data_");
+			while (resultSet.next()) {
+				long groupId = resultSet.getLong("groupId");
+				long companyId = resultSet.getLong("companyId");
+				long userId = resultSet.getLong("userId");
+				String userName = resultSet.getString("userName");
+				Timestamp createDate = resultSet.getTimestamp("createDate");
+				long entryId = resultSet.getLong("fileEntryId");
+				String entryVersion = resultSet.getString("version");
+				long contentId = resultSet.getLong("contentId");
+				String data_ = resultSet.getString("data_");
 
-				long ddmStructureId = rs.getLong("structureId");
+				long ddmStructureId = resultSet.getLong("structureId");
 
 				DDMForm ddmForm = getFullHierarchyDDMForm(ddmStructureId);
 
@@ -1059,14 +1064,14 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 					groupId, companyId, userId, userName, createDate, entryId,
 					entryVersion, "DLFileEntry", ddmFormValues);
 
-				ps2.setString(1, toJSON(ddmFormValues));
+				preparedStatement2.setString(1, toJSON(ddmFormValues));
 
-				ps2.setLong(2, contentId);
+				preparedStatement2.setLong(2, contentId);
 
-				ps2.addBatch();
+				preparedStatement2.addBatch();
 			}
 
-			ps2.executeBatch();
+			preparedStatement2.executeBatch();
 		}
 	}
 
@@ -1092,48 +1097,50 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 			sb3.append("update DDMStorageLink set classNameId = ? where ");
 			sb3.append("classNameId = ? and classPK = ?");
 
-			try (PreparedStatement ps1 = connection.prepareStatement(
-					sb1.toString());
-				PreparedStatement ps2 =
+			try (PreparedStatement preparedStatement1 =
+					connection.prepareStatement(sb1.toString());
+				PreparedStatement preparedStatement2 =
 					AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 						connection, sb2.toString());
-				PreparedStatement ps3 =
+				PreparedStatement preparedStatement3 =
 					AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 						connection, sb3.toString());
-				ResultSet rs = ps1.executeQuery()) {
+				ResultSet resultSet = preparedStatement1.executeQuery()) {
 
 				Set<Long> expandoRowIds = new HashSet<>();
 
-				while (rs.next()) {
-					long groupId = rs.getLong("groupId");
-					long companyId = rs.getLong("companyId");
-					long userId = rs.getLong("userId");
-					String userName = rs.getString("userName");
-					Timestamp createDate = rs.getTimestamp("createDate");
+				while (resultSet.next()) {
+					long groupId = resultSet.getLong("groupId");
+					long companyId = resultSet.getLong("companyId");
+					long userId = resultSet.getLong("userId");
+					String userName = resultSet.getString("userName");
+					Timestamp createDate = resultSet.getTimestamp("createDate");
 
-					long expandoRowId = rs.getLong("classPK");
+					long expandoRowId = resultSet.getLong("classPK");
 
 					String xml = toXML(getExpandoValuesMap(expandoRowId));
 
-					ps2.setString(1, PortalUUIDUtil.generate());
-					ps2.setLong(2, expandoRowId);
-					ps2.setLong(3, groupId);
-					ps2.setLong(4, companyId);
-					ps2.setLong(5, userId);
-					ps2.setString(6, userName);
-					ps2.setTimestamp(7, createDate);
-					ps2.setTimestamp(8, createDate);
-					ps2.setString(9, DDMStorageLink.class.getName());
-					ps2.setString(10, null);
-					ps2.setString(11, xml);
+					preparedStatement2.setString(1, PortalUUIDUtil.generate());
+					preparedStatement2.setLong(2, expandoRowId);
+					preparedStatement2.setLong(3, groupId);
+					preparedStatement2.setLong(4, companyId);
+					preparedStatement2.setLong(5, userId);
+					preparedStatement2.setString(6, userName);
+					preparedStatement2.setTimestamp(7, createDate);
+					preparedStatement2.setTimestamp(8, createDate);
+					preparedStatement2.setString(
+						9, DDMStorageLink.class.getName());
+					preparedStatement2.setString(10, null);
+					preparedStatement2.setString(11, xml);
 
-					ps2.addBatch();
+					preparedStatement2.addBatch();
 
-					ps3.setLong(1, _ddmContentClassNameId);
-					ps3.setLong(2, _expandoStorageAdapterClassNameId);
-					ps3.setLong(3, expandoRowId);
+					preparedStatement3.setLong(1, _ddmContentClassNameId);
+					preparedStatement3.setLong(
+						2, _expandoStorageAdapterClassNameId);
+					preparedStatement3.setLong(3, expandoRowId);
 
-					ps3.addBatch();
+					preparedStatement3.addBatch();
 
 					expandoRowIds.add(expandoRowId);
 				}
@@ -1142,9 +1149,9 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 					return;
 				}
 
-				ps2.executeBatch();
+				preparedStatement2.executeBatch();
 
-				ps3.executeBatch();
+				preparedStatement3.executeBatch();
 
 				updateDDMStructureStorageType();
 
@@ -1206,25 +1213,25 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 		sb2.append("definition) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 		try (LoggingTimer loggingTimer = new LoggingTimer();
-			PreparedStatement ps1 = connection.prepareStatement(
+			PreparedStatement preparedStatement1 = connection.prepareStatement(
 				"select * from DDMStructure");
-			PreparedStatement ps2 =
+			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection,
 					"update DDMStructure set definition = ? where " +
 						"structureId = ?");
-			PreparedStatement ps3 =
+			PreparedStatement preparedStatement3 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection, sb1.toString());
-			PreparedStatement ps4 =
+			PreparedStatement preparedStatement4 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection, sb2.toString());
-			ResultSet rs = ps1.executeQuery()) {
+			ResultSet resultSet = preparedStatement1.executeQuery()) {
 
-			while (rs.next()) {
-				long structureId = rs.getLong("structureId");
-				long classNameId = rs.getLong("classNameId");
-				String version = rs.getString("version");
+			while (resultSet.next()) {
+				long structureId = resultSet.getLong("structureId");
+				long classNameId = resultSet.getLong("classNameId");
+				String version = resultSet.getString("version");
 
 				_structureClassNameIds.put(structureId, classNameId);
 
@@ -1238,11 +1245,11 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 				String definition = DDMFormSerializeUtil.serialize(
 					ddmForm, _ddmFormSerializer);
 
-				ps2.setString(1, definition);
+				preparedStatement2.setString(1, definition);
 
-				ps2.setLong(2, structureId);
+				preparedStatement2.setLong(2, structureId);
 
-				ps2.addBatch();
+				preparedStatement2.addBatch();
 
 				updateTemplateScriptDateFields(structureId, ddmForm);
 
@@ -1252,77 +1259,79 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 					continue;
 				}
 
-				long groupId = rs.getLong("groupId");
-				long companyId = rs.getLong("companyId");
-				long userId = rs.getLong("userId");
-				String userName = rs.getString("userName");
-				Timestamp modifiedDate = rs.getTimestamp("modifiedDate");
-				long parentStructureId = rs.getLong("parentStructureId");
-				String name = rs.getString("name");
-				String description = rs.getString("description");
-				String storageType = rs.getString("storageType");
-				int type = rs.getInt("type_");
+				long groupId = resultSet.getLong("groupId");
+				long companyId = resultSet.getLong("companyId");
+				long userId = resultSet.getLong("userId");
+				String userName = resultSet.getString("userName");
+				Timestamp modifiedDate = resultSet.getTimestamp("modifiedDate");
+				long parentStructureId = resultSet.getLong("parentStructureId");
+				String name = resultSet.getString("name");
+				String description = resultSet.getString("description");
+				String storageType = resultSet.getString("storageType");
+				int type = resultSet.getInt("type_");
 
 				long structureVersionId = increment();
 
-				ps3.setLong(1, structureVersionId);
+				preparedStatement3.setLong(1, structureVersionId);
 
-				ps3.setLong(2, groupId);
-				ps3.setLong(3, companyId);
-				ps3.setLong(4, userId);
-				ps3.setString(5, userName);
-				ps3.setTimestamp(6, modifiedDate);
-				ps3.setLong(7, structureId);
-				ps3.setString(8, DDMStructureConstants.VERSION_DEFAULT);
-				ps3.setLong(9, parentStructureId);
-				ps3.setString(10, name);
-				ps3.setString(11, description);
-				ps3.setString(12, definition);
-				ps3.setString(13, storageType);
-				ps3.setInt(14, type);
-				ps3.setInt(15, WorkflowConstants.STATUS_APPROVED);
-				ps3.setLong(16, userId);
-				ps3.setString(17, userName);
-				ps3.setTimestamp(18, modifiedDate);
+				preparedStatement3.setLong(2, groupId);
+				preparedStatement3.setLong(3, companyId);
+				preparedStatement3.setLong(4, userId);
+				preparedStatement3.setString(5, userName);
+				preparedStatement3.setTimestamp(6, modifiedDate);
+				preparedStatement3.setLong(7, structureId);
+				preparedStatement3.setString(
+					8, DDMStructureConstants.VERSION_DEFAULT);
+				preparedStatement3.setLong(9, parentStructureId);
+				preparedStatement3.setString(10, name);
+				preparedStatement3.setString(11, description);
+				preparedStatement3.setString(12, definition);
+				preparedStatement3.setString(13, storageType);
+				preparedStatement3.setInt(14, type);
+				preparedStatement3.setInt(
+					15, WorkflowConstants.STATUS_APPROVED);
+				preparedStatement3.setLong(16, userId);
+				preparedStatement3.setString(17, userName);
+				preparedStatement3.setTimestamp(18, modifiedDate);
 
-				ps3.addBatch();
+				preparedStatement3.addBatch();
 
 				// Structure layout
 
 				String ddmFormLayoutDefinition =
 					getDefaultDDMFormLayoutDefinition(ddmForm);
 
-				ps4.setString(1, PortalUUIDUtil.generate());
-				ps4.setLong(2, increment());
-				ps4.setLong(3, groupId);
-				ps4.setLong(4, companyId);
-				ps4.setLong(5, userId);
-				ps4.setString(6, userName);
-				ps4.setTimestamp(7, modifiedDate);
-				ps4.setTimestamp(8, modifiedDate);
-				ps4.setLong(9, structureVersionId);
-				ps4.setString(10, ddmFormLayoutDefinition);
+				preparedStatement4.setString(1, PortalUUIDUtil.generate());
+				preparedStatement4.setLong(2, increment());
+				preparedStatement4.setLong(3, groupId);
+				preparedStatement4.setLong(4, companyId);
+				preparedStatement4.setLong(5, userId);
+				preparedStatement4.setString(6, userName);
+				preparedStatement4.setTimestamp(7, modifiedDate);
+				preparedStatement4.setTimestamp(8, modifiedDate);
+				preparedStatement4.setLong(9, structureVersionId);
+				preparedStatement4.setString(10, ddmFormLayoutDefinition);
 
-				ps4.addBatch();
+				preparedStatement4.addBatch();
 			}
 
-			ps2.executeBatch();
+			preparedStatement2.executeBatch();
 
-			ps3.executeBatch();
+			preparedStatement3.executeBatch();
 
-			ps4.executeBatch();
+			preparedStatement4.executeBatch();
 		}
 	}
 
 	protected void upgradeStructuresPermissions() throws Exception {
 		try (LoggingTimer loggingTimer = new LoggingTimer();
-			PreparedStatement ps = connection.prepareStatement(
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				"select * from DDMStructure");
-			ResultSet rs = ps.executeQuery()) {
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			while (rs.next()) {
-				long companyId = rs.getLong("companyId");
-				long structureId = rs.getLong("structureId");
+			while (resultSet.next()) {
+				long companyId = resultSet.getLong("companyId");
+				long structureId = resultSet.getLong("structureId");
 
 				upgradeStructurePermissions(companyId, structureId);
 			}
@@ -1365,27 +1374,27 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 		sb.append("?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 		try (LoggingTimer loggingTimer = new LoggingTimer();
-			PreparedStatement ps1 = connection.prepareStatement(
+			PreparedStatement preparedStatement1 = connection.prepareStatement(
 				"select * from DDMTemplate");
-			PreparedStatement ps2 =
+			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection,
 					"update DDMTemplate set resourceClassNameId = ? where " +
 						"templateId = ?");
-			PreparedStatement ps3 =
+			PreparedStatement preparedStatement3 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection,
 					"update DDMTemplate set language = ?, script = ? where " +
 						"templateId = ?");
-			PreparedStatement ps4 =
+			PreparedStatement preparedStatement4 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection, sb.toString());
-			ResultSet rs = ps1.executeQuery()) {
+			ResultSet resultSet = preparedStatement1.executeQuery()) {
 
-			while (rs.next()) {
-				long classNameId = rs.getLong("classNameId");
-				long classPK = rs.getLong("classPK");
-				long templateId = rs.getLong("templateId");
+			while (resultSet.next()) {
+				long classNameId = resultSet.getLong("classNameId");
+				long classPK = resultSet.getLong("classPK");
+				long templateId = resultSet.getLong("templateId");
 
 				// Template resource class name ID
 
@@ -1398,15 +1407,15 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 					continue;
 				}
 
-				String version = rs.getString("version");
-				String language = rs.getString("language");
-				String script = rs.getString("script");
+				String version = resultSet.getString("version");
+				String language = resultSet.getString("language");
+				String script = resultSet.getString("script");
 
-				ps2.setLong(1, resourceClassNameId);
+				preparedStatement2.setLong(1, resourceClassNameId);
 
-				ps2.setLong(2, templateId);
+				preparedStatement2.setLong(2, templateId);
 
-				ps2.addBatch();
+				preparedStatement2.addBatch();
 
 				_templateResourceClassNameIds.put(
 					templateId, resourceClassNameId);
@@ -1428,11 +1437,11 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 				}
 
 				if (!script.equals(updatedScript)) {
-					ps3.setString(1, language);
-					ps3.setString(2, updatedScript);
-					ps3.setLong(3, templateId);
+					preparedStatement3.setString(1, language);
+					preparedStatement3.setString(2, updatedScript);
+					preparedStatement3.setLong(3, templateId);
 
-					ps3.addBatch();
+					preparedStatement3.addBatch();
 				}
 
 				// Template version
@@ -1441,49 +1450,52 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 					continue;
 				}
 
-				long userId = rs.getLong("userId");
-				String userName = rs.getString("userName");
-				Timestamp modifiedDate = rs.getTimestamp("modifiedDate");
+				long userId = resultSet.getLong("userId");
+				String userName = resultSet.getString("userName");
+				Timestamp modifiedDate = resultSet.getTimestamp("modifiedDate");
 
-				ps4.setLong(1, increment());
-				ps4.setLong(2, rs.getLong("groupId"));
-				ps4.setLong(3, rs.getLong("companyId"));
-				ps4.setLong(4, userId);
-				ps4.setString(5, userName);
-				ps4.setTimestamp(6, modifiedDate);
-				ps4.setLong(7, classNameId);
-				ps4.setLong(8, classPK);
-				ps4.setLong(9, templateId);
-				ps4.setString(10, DDMStructureConstants.VERSION_DEFAULT);
-				ps4.setString(11, rs.getString("name"));
-				ps4.setString(12, rs.getString("description"));
-				ps4.setString(13, language);
-				ps4.setString(14, updatedScript);
-				ps4.setInt(15, WorkflowConstants.STATUS_APPROVED);
-				ps4.setLong(16, userId);
-				ps4.setString(17, userName);
-				ps4.setTimestamp(18, modifiedDate);
+				preparedStatement4.setLong(1, increment());
+				preparedStatement4.setLong(2, resultSet.getLong("groupId"));
+				preparedStatement4.setLong(3, resultSet.getLong("companyId"));
+				preparedStatement4.setLong(4, userId);
+				preparedStatement4.setString(5, userName);
+				preparedStatement4.setTimestamp(6, modifiedDate);
+				preparedStatement4.setLong(7, classNameId);
+				preparedStatement4.setLong(8, classPK);
+				preparedStatement4.setLong(9, templateId);
+				preparedStatement4.setString(
+					10, DDMStructureConstants.VERSION_DEFAULT);
+				preparedStatement4.setString(11, resultSet.getString("name"));
+				preparedStatement4.setString(
+					12, resultSet.getString("description"));
+				preparedStatement4.setString(13, language);
+				preparedStatement4.setString(14, updatedScript);
+				preparedStatement4.setInt(
+					15, WorkflowConstants.STATUS_APPROVED);
+				preparedStatement4.setLong(16, userId);
+				preparedStatement4.setString(17, userName);
+				preparedStatement4.setTimestamp(18, modifiedDate);
 
-				ps4.addBatch();
+				preparedStatement4.addBatch();
 			}
 
-			ps2.executeBatch();
+			preparedStatement2.executeBatch();
 
-			ps3.executeBatch();
+			preparedStatement3.executeBatch();
 
-			ps4.executeBatch();
+			preparedStatement4.executeBatch();
 		}
 	}
 
 	protected void upgradeTemplatesPermissions() throws Exception {
 		try (LoggingTimer loggingTimer = new LoggingTimer();
-			PreparedStatement ps = connection.prepareStatement(
+			PreparedStatement preparedStatement = connection.prepareStatement(
 				"select * from DDMTemplate");
-			ResultSet rs = ps.executeQuery()) {
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			while (rs.next()) {
-				long companyId = rs.getLong("companyId");
-				long templateId = rs.getLong("templateId");
+			while (resultSet.next()) {
+				long companyId = resultSet.getLong("companyId");
+				long templateId = resultSet.getLong("templateId");
 
 				upgradeTemplatePermissions(companyId, templateId);
 			}
@@ -1500,50 +1512,54 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 			sb.append("DDMStructure.structureId) where DDMStorageLink.");
 			sb.append("classNameId = ? and DDMStructure.storageType = ?");
 
-			try (PreparedStatement ps1 = connection.prepareStatement(
-					sb.toString());
-				PreparedStatement ps2 = connection.prepareStatement(
-					"select companyId, data_ from DDMContent where contentId " +
-						"= ? and data_ like '<%'");
-				PreparedStatement ps3 =
+			try (PreparedStatement preparedStatement1 =
+					connection.prepareStatement(sb.toString());
+				PreparedStatement preparedStatement2 =
+					connection.prepareStatement(
+						"select companyId, data_ from DDMContent where " +
+							"contentId = ? and data_ like '<%'");
+				PreparedStatement preparedStatement3 =
 					AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 						connection,
 						"update DDMContent set data_= ? where contentId = ?")) {
 
-				ps1.setLong(1, _ddmContentClassNameId);
-				ps1.setString(2, "xml");
+				preparedStatement1.setLong(1, _ddmContentClassNameId);
+				preparedStatement1.setString(2, "xml");
 
-				try (ResultSet rs = ps1.executeQuery()) {
-					while (rs.next()) {
-						long structureId = rs.getLong("structureId");
-						long classPK = rs.getLong("classPK");
+				try (ResultSet resultSet = preparedStatement1.executeQuery()) {
+					while (resultSet.next()) {
+						long structureId = resultSet.getLong("structureId");
+						long classPK = resultSet.getLong("classPK");
 
 						DDMForm ddmForm = getFullHierarchyDDMForm(structureId);
 
-						ps2.setLong(1, classPK);
+						preparedStatement2.setLong(1, classPK);
 
-						try (ResultSet rs2 = ps2.executeQuery()) {
-							if (rs2.next()) {
-								long companyId = rs2.getLong("companyId");
+						try (ResultSet resultSet2 =
+								preparedStatement2.executeQuery()) {
+
+							if (resultSet2.next()) {
+								long companyId = resultSet2.getLong(
+									"companyId");
 
 								String xml = renameInvalidDDMFormFieldNames(
-									structureId, rs2.getString("data_"));
+									structureId, resultSet2.getString("data_"));
 
 								DDMFormValues ddmFormValues = getDDMFormValues(
 									companyId, ddmForm, xml);
 
 								String content = toJSON(ddmFormValues);
 
-								ps3.setString(1, content);
+								preparedStatement3.setString(1, content);
 
-								ps3.setLong(2, classPK);
+								preparedStatement3.setLong(2, classPK);
 
-								ps3.addBatch();
+								preparedStatement3.addBatch();
 							}
 						}
 					}
 
-					ps3.executeBatch();
+					preparedStatement3.executeBatch();
 				}
 			}
 
@@ -2670,10 +2686,10 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 
 				// File
 
-				try (InputStream is = new FileInputStream(file)) {
+				try (InputStream inputStream = new FileInputStream(file)) {
 					_store.addFile(
 						_companyId, dlFolderId, name, Store.VERSION_DEFAULT,
-						is);
+						inputStream);
 				}
 
 				file.delete();
