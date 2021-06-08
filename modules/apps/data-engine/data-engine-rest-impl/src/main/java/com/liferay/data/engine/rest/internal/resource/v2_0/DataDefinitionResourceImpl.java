@@ -177,6 +177,8 @@ public class DataDefinitionResourceImpl
 		Stream<DEDataDefinitionFieldLink> stream =
 			deDataDefinitionFieldLinks.stream();
 
+		Long companyId = contextCompany.getGroupId();
+
 		if ((ddmStructureLinks.size() > 1) ||
 			(!dataDefinitionContentType.
 				allowReferencedDataDefinitionDeletion() &&
@@ -184,7 +186,7 @@ public class DataDefinitionResourceImpl
 				 deDataDefinitionFieldLink -> StringUtil.equals(
 					deDataDefinitionFieldLink.getClassName(),
 					DDMStructure.class.getName())
-			 ).count() > 0))) {
+			 ).count() > 0) && !companyId.equals(ddmStructure.getGroupId()))) {
 
 			throw new RequiredStructureException.
 				MustNotDeleteStructureReferencedByStructureLinks(
